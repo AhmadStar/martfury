@@ -23,11 +23,11 @@ class HandleRemoveCouponService
     }
 
     /**
-     * @param string $prefix
+     * @param string|null $prefix
      * @param bool $isForget
      * @return array
      */
-    public function execute($prefix = '', $isForget = true)
+    public function execute(?string $prefix = '', bool $isForget = true): array
     {
         if (!session()->has('applied_coupon_code')) {
             return [

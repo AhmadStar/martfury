@@ -52,7 +52,7 @@ class MediaFileController extends Controller
             $receiver = new FileReceiver('file', $request, DropZoneUploadHandler::class);
             // Check if the upload is success, throw exception or return response you need
             if ($receiver->isUploaded() === false) {
-                throw new UploadMissingFileException;
+                throw new UploadMissingFileException();
             }
             // Receive the file
             $save = $receiver->receive();
@@ -78,7 +78,7 @@ class MediaFileController extends Controller
      * @param array $result
      * @return JsonResponse
      */
-    protected function handleUploadResponse(array $result)
+    protected function handleUploadResponse(array $result): JsonResponse
     {
         if (!$result['error']) {
             return RvMedia::responseSuccess([

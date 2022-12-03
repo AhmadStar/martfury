@@ -9,7 +9,6 @@ use Language;
 
 class AddDefaultTranslations
 {
-
     /**
      * Handle the event.
      *
@@ -19,7 +18,6 @@ class AddDefaultTranslations
     public function handle(CreatedContentEvent $event)
     {
         if (LanguageAdvancedManager::isSupported($event->data)) {
-
             $table = $event->data->getTable() . '_translations';
 
             foreach (Language::getActiveLanguage(['lang_code', 'lang_is_default']) as $language) {

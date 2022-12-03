@@ -2,6 +2,7 @@
 
 namespace Botble\Translation\Providers;
 
+use Botble\Translation\Console\DownloadLocaleCommand;
 use Botble\Translation\Console\RemoveUnusedTranslationsCommand;
 use Botble\Translation\Console\UpdateThemeTranslationCommand;
 use Illuminate\Routing\Events\RouteMatched;
@@ -33,6 +34,7 @@ class TranslationServiceProvider extends ServiceProvider
                 CleanCommand::class,
                 UpdateThemeTranslationCommand::class,
                 RemoveUnusedTranslationsCommand::class,
+                DownloadLocaleCommand::class,
             ]);
         }
     }

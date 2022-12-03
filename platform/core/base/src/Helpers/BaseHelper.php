@@ -8,6 +8,7 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\HtmlString;
 
 class BaseHelper
 {
@@ -137,7 +138,7 @@ class BaseHelper
      */
     public function jsonEncodePrettify($data): string
     {
-        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -270,7 +271,7 @@ class BaseHelper
     {
         $value = str_replace('<span class="style-scope yt-formatted-string" dir="auto">', '', $value);
 
-        return htmlentities(clean($value));
+        return htmlentities($this->clean($value));
     }
 
     /**
@@ -294,7 +295,6 @@ class BaseHelper
         }
 
         return $collection->sortByDesc(function ($item) use ($searchTerms, $column) {
-
             $searchTerms = explode(' ', $searchTerms);
 
             // The bigger the weight, the higher the record
@@ -345,7 +345,17 @@ class BaseHelper
             return $dirty;
         }
 
-        return clean($dirty, $config);
+        return clean($dirty ?: '', $config);
+    }
+
+    /**
+     * @param string|null|array $dirty
+     * @param array|string|null $config
+     * @return HtmlString
+     */
+    public function html($dirty, $config = null): HtmlString
+    {
+        return new HtmlString($this->clean($dirty, $config));
     }
 
     /**
@@ -375,5 +385,78 @@ class BaseHelper
         $blue = $blue === null ? 0 : $blue;
 
         return compact('red', 'green', 'blue');
+    }
+
+    /**
+     * @param string $key
+     * @param $value
+     * @return $this
+     */
+    public function iniSet(string $key, $value): self
+    {
+        if (config('core.base.general.enable_ini_set', true)) {
+            try {
+                @ini_set($key, $value);
+            } catch (Exception $exception) {
+                return $this;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function maximumExecutionTimeAndMemoryLimit(): self
+    {
+        $this->iniSet('max_execution_time', -1);
+        $this->iniSet('memory_limit', -1);
+
+        return $this;
+    }
+
+    /**
+     * @param string|null $string
+     * @return array|string|string[]|null
+     */
+    public function removeSpecialCharacters(?string $string)
+    {
+        $string = str_replace(' ', '-', $string); // Replaces all spaces with hyphens.
+        $string = preg_replace('/[^A-Za-z0-9\-]/', '', $string); // Removes special chars.
+
+        return preg_replace('/-+/', '-', $string); // Replaces multiple hyphens with single one.
+    }
+
+    /**
+     * @param string $name
+     * @return string
+     */
+    public function getInputValueFromQueryString(string $name): string
+    {
+        $value = request()->input($name);
+
+        if (!is_string($value)) {
+            return '';
+        }
+
+        return $value;
+    }
+
+    /**
+     * @param string|null $content
+     * @return string|null
+     */
+    public function cleanShortcodes(?string $content): ?string
+    {
+        if (!$content) {
+            return $content;
+        }
+
+        $content = $this->clean($content);
+
+        $shortcodeCompiler = shortcode()->getCompiler();
+
+        return $shortcodeCompiler->strip($content, []);
     }
 }

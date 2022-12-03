@@ -2,6 +2,7 @@
 
 namespace Botble\Marketplace\Http\Controllers\Fronts;
 
+use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Ecommerce\Services\Products\GetProductService;
@@ -15,9 +16,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
-use MarketplaceHelper;
 use Response;
 use RvMedia;
 use SeoHelper;
@@ -60,7 +59,7 @@ class PublicStoreController
 
         $condition = ['status' => BaseStatusEnum::PUBLISHED];
 
-        $search = clean($request->input('q'));
+        $search = BaseHelper::clean($request->input('q'));
         if ($search) {
             $condition[] = ['name', 'LIKE', '%' . $search . '%'];
         }
@@ -137,7 +136,7 @@ class PublicStoreController
 
         SeoHelper::setTitle($store->name)->setDescription($store->description);
 
-        $meta = new SeoOpenGraph;
+        $meta = new SeoOpenGraph();
         if ($store->logo) {
             $meta->setImage(RvMedia::getImageUrl($store->logo));
         }
@@ -167,8 +166,10 @@ class PublicStoreController
 
         if ($request->ajax()) {
             $total = $products->total();
-            $message = $total > 1 ? __(':total Products found', compact('total')) : __(':total Product found',
-                compact('total'));
+            $message = $total > 1 ? __(':total Products found', compact('total')) : __(
+                ':total Product found',
+                compact('total')
+            );
 
             $view = Theme::getThemeNamespace('views.marketplace.stores.items');
 

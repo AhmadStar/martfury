@@ -8,6 +8,7 @@ use Botble\Ads\Models\Ads;
 use Botble\Ads\Repositories\Caches\AdsCacheDecorator;
 use Botble\Ads\Repositories\Eloquent\AdsRepository;
 use Botble\Ads\Repositories\Interfaces\AdsInterface;
+use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Supports\Helper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\LanguageAdvanced\Supports\LanguageAdvancedManager;
@@ -24,7 +25,7 @@ class AdsServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(AdsInterface::class, function () {
-            return new AdsCacheDecorator(new AdsRepository(new Ads));
+            return new AdsCacheDecorator(new AdsRepository(new Ads()));
         });
 
         Helper::autoload(__DIR__ . '/../../helpers');
@@ -61,6 +62,14 @@ class AdsServiceProvider extends ServiceProvider
 
                 return AdsManager::displayAds((string)$shortcode->key);
             });
+
+            shortcode()->setAdminConfig('ads', function ($attributes) {
+                $ads = $this->app->make(AdsInterface::class)
+                    ->pluck('name', 'key', ['status' => BaseStatusEnum::PUBLISHED]);
+
+                return view('plugins/ads::partials.ads-admin-config', compact('ads', 'attributes'))
+                    ->render();
+            });
         }
 
         if (defined('LANGUAGE_MODULE_SCREEN_NAME') && defined('LANGUAGE_ADVANCED_MODULE_SCREEN_NAME')) {
@@ -72,7 +81,6 @@ class AdsServiceProvider extends ServiceProvider
         }
 
         add_action(BASE_ACTION_TOP_FORM_CONTENT_NOTIFICATION, function ($request, $data = null) {
-
             if (!$data instanceof Ads || !in_array(Route::currentRouteName(), ['ads.create', 'ads.edit'])) {
                 return false;
             }

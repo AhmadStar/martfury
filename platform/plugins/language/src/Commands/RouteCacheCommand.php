@@ -2,6 +2,7 @@
 
 namespace Botble\Language\Commands;
 
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Foundation\Console\RouteCacheCommand as BaseRouteCacheCommand;
 use Illuminate\Routing\RouteCollection;
 use Language;
@@ -12,13 +13,13 @@ class RouteCacheCommand extends BaseRouteCacheCommand
      * Execute the console command.
      *
      * @return int
+     * @throws FileNotFoundException
      */
     public function handle()
     {
         $this->call('route:clear');
 
         foreach (Language::getSupportedLanguagesKeys() as $locale) {
-
             $path = $this->makeLocaleRoutesPath($locale);
 
             if ($this->files->exists($path)) {
@@ -41,17 +42,17 @@ class RouteCacheCommand extends BaseRouteCacheCommand
 
     /**
      * Cache the routes separately for each locale.
+     * @throws FileNotFoundException
      */
-    protected function cacheRoutesPerLocale()
+    protected function cacheRoutesPerLocale(): int
     {
         // Store the default routes cache,
         // this way the Application will detect that routes are cached.
         $allLocales = Language::getSupportedLanguagesKeys();
 
-        array_push($allLocales, null);
+        $allLocales[] = null;
 
         foreach ($allLocales as $locale) {
-
             if (Language::hideDefaultLocaleInURL() && $locale == Language::getCurrentLocale()) {
                 continue;
             }
@@ -69,7 +70,8 @@ class RouteCacheCommand extends BaseRouteCacheCommand
             }
 
             $this->files->put(
-                $this->makeLocaleRoutesPath($locale), $this->buildRouteCacheFile($routes)
+                $this->makeLocaleRoutesPath($locale),
+                $this->buildRouteCacheFile($routes)
             );
         }
 
@@ -80,9 +82,9 @@ class RouteCacheCommand extends BaseRouteCacheCommand
      * Boot a fresh copy of the application and get the routes for a given locale.
      *
      * @param string|null $locale
-     * @return \Illuminate\Routing\RouteCollection
+     * @return RouteCollection
      */
-    protected function getFreshApplicationRoutesForLocale($locale = null)
+    protected function getFreshApplicationRoutesForLocale(?string $locale = null)
     {
         if ($locale === null) {
             return $this->getFreshApplicationRoutes();
@@ -100,11 +102,11 @@ class RouteCacheCommand extends BaseRouteCacheCommand
     /**
      * Build the route cache file.
      *
-     * @param  \Illuminate\Routing\RouteCollection $routes
+     * @param RouteCollection $routes
      * @return string
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     * @throws FileNotFoundException
      */
-    protected function buildRouteCacheFile(RouteCollection $routes)
+    protected function buildRouteCacheFile(RouteCollection $routes): string
     {
         $stub = $this->files->get(realpath(__DIR__ . '/../../stubs/routes.stub'));
 
@@ -127,16 +129,16 @@ class RouteCacheCommand extends BaseRouteCacheCommand
      * @param string $locale
      * @return bool
      */
-    protected function isSupportedLocale($locale)
+    protected function isSupportedLocale($locale): bool
     {
         return in_array($locale, Language::getSupportedLanguagesKeys());
     }
 
     /**
-     * @param string $locale
+     * @param string|null $locale
      * @return string
      */
-    protected function makeLocaleRoutesPath($locale = '')
+    protected function makeLocaleRoutesPath(?string $locale = ''): string
     {
         $path = $this->laravel->getCachedRoutesPath();
 

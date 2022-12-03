@@ -7,9 +7,9 @@
 
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <!-- Fonts-->
-        <link href="https://fonts.googleapis.com/css?family={{ urlencode(theme_option('primary_font', 'Work Sans')) }}:300,400,500,600,700&amp;amp;subset=latin-ext" rel="stylesheet" type="text/css">
-        <!-- CSS Library-->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family={{ urlencode(theme_option('primary_font', 'Work Sans')) }}:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
         <style>
             :root {
@@ -71,11 +71,7 @@
                                     <div class="product-cat-label">{{ __('All') }}</div>
                                     <select class="form-control product-category-select" name="categories[]">
                                         <option value="0">{{ __('All') }}</option>
-                                        @if (!empty($categoriesWithIndent))
-                                            @foreach ($categoriesWithIndent as $id => $name)
-                                                <option value="{{ $id }}" >{!! $name !!} </option>
-                                            @endforeach
-                                        @endif
+                                        {!! Theme::partial('product-categories-select', ['categories' => $categories, 'indent' => null]) !!}
                                     </select>
                                 </div>
                                 <input class="form-control input-search-product" name="q" type="text" placeholder="{{ __("I'm shopping for...") }}" autocomplete="off">
@@ -140,7 +136,7 @@
                         @if (is_plugin_active('ecommerce'))
                             <ul class="navigation__extra">
                                 @if (is_plugin_active('marketplace'))
-                                    <li><a href="{{ !auth('customer')->check() ? route('customer.login') : (auth('customer')->user()->is_vendor ? route('marketplace.vendor.dashboard') : route('marketplace.vendor.become-vendor')) }}">{{ __('Sell On Martfury') }}</a></li>
+                                    <li><a href="{{ !auth('customer')->check() ? route('customer.register') : (auth('customer')->user()->is_vendor ? route('marketplace.vendor.dashboard') : route('marketplace.vendor.become-vendor')) }}">{{ __('Sell On Martfury') }}</a></li>
                                 @endif
                                 @if (EcommerceHelper::isOrderTrackingEnabled())
                                     <li><a href="{{ route('public.orders.tracking') }}">{{ __('Track your order') }}</a></li>

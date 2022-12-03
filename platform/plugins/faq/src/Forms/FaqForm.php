@@ -10,14 +10,13 @@ use Botble\Faq\Repositories\Interfaces\FaqCategoryInterface;
 
 class FaqForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new Faq)
+            ->setupModel(new Faq())
             ->setValidatorClass(FaqRequest::class)
             ->withCustomFields()
             ->add('category_id', 'customSelect', [

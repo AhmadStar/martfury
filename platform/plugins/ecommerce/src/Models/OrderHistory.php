@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderHistory extends BaseModel
 {
-
     /**
      * @var string
      */

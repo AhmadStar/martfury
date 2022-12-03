@@ -7,7 +7,6 @@ use MarketplaceHelper;
 
 class CustomImagesField extends FormField
 {
-
     /**
      * @return string
      */

@@ -24,7 +24,7 @@ class SslCommerzPaymentController extends BaseController
         $currency = $request->input('currency');
         $checkoutToken = $request->input('value_b');
 
-        $sslc = new SslCommerzNotification;
+        $sslc = new SslCommerzNotification();
 
         $validation = $sslc->orderValidate($request->input(), $transactionId, $amount, $currency);
 
@@ -50,7 +50,7 @@ class SslCommerzPaymentController extends BaseController
         ]);
 
         return $response
-            ->setNextUrl(PaymentHelper::getRedirectURL($checkoutToken))
+            ->setNextUrl(route('public.account.package.subscribe.callback', $checkoutToken) . '?charge_id=' . $transactionId)
             ->setMessage(__('Checkout successfully!'));
     }
 
@@ -112,14 +112,19 @@ class SslCommerzPaymentController extends BaseController
         }
 
         if ($transaction->status == PaymentStatusEnum::PENDING) {
-            $sslc = new SslCommerzNotification;
-            $validation = $sslc->orderValidate($request->all(), $transactionId, $transaction->amount,
-                $transaction->currency);
-            if ($validation == true) {
+            $sslc = new SslCommerzNotification();
+            $validation = $sslc->orderValidate(
+                $request->all(),
+                $transactionId,
+                $transaction->amount,
+                $transaction->currency
+            );
+
+            if ($validation) {
                 /*
                 That means IPN worked. Here you need to update order status
                 in order table as Processing or Complete.
-                Here you can also sent sms or email for successful transaction to customer
+                Here you can also send sms or email for successful transaction to customer
                 */
                 Payment::where('charge_id', $transactionId)
                     ->update(['status' => PaymentStatusEnum::COMPLETED]);

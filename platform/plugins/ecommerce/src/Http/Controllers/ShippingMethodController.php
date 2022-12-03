@@ -21,7 +21,6 @@ use Throwable;
 
 class ShippingMethodController extends BaseController
 {
-
     /**
      * @var ShippingInterface
      */

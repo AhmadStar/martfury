@@ -24,7 +24,6 @@ class AddLanguageForVariantsListener
             get_class($event->data) == Product::class &&
             $event->data->is_variation == 0
         ) {
-
             $variations = $event->data->variations()->get();
 
             $records = [];

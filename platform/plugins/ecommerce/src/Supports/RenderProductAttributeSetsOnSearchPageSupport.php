@@ -34,7 +34,7 @@ class RenderProductAttributeSetsOnSearchPageSupport
 
         $with = ['attributes'];
 
-        if (is_plugin_active('language-advanced')) {
+        if (is_plugin_active('language') && is_plugin_active('language-advanced')) {
             $with[] = 'attributes.translations';
         }
 

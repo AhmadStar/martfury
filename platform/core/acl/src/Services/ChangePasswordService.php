@@ -2,6 +2,7 @@
 
 namespace Botble\ACL\Services;
 
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Auth;
 use Botble\ACL\Repositories\Interfaces\UserInterface;
 use Botble\Support\Services\ProduceServiceInterface;
@@ -28,6 +29,7 @@ class ChangePasswordService implements ProduceServiceInterface
     /**
      * @param Request $request
      * @return bool|Exception
+     * @throws AuthenticationException
      */
     public function execute(Request $request)
     {

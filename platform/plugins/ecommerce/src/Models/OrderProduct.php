@@ -4,10 +4,10 @@ namespace Botble\Ecommerce\Models;
 
 use Botble\Base\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderProduct extends BaseModel
 {
-
     /**
      * @var string
      */
@@ -20,12 +20,15 @@ class OrderProduct extends BaseModel
         'order_id',
         'product_id',
         'product_name',
+        'product_image',
         'qty',
         'weight',
         'price',
         'tax_amount',
         'options',
+        'product_options',
         'restock_quantity',
+        'product_type',
     ];
 
     /**
@@ -40,13 +43,14 @@ class OrderProduct extends BaseModel
      * @var array
      */
     protected $casts = [
-        'options' => 'json',
+        'options'         => 'json',
+        'product_options' => 'json',
     ];
 
     /**
      * @return BelongsTo
      */
-    public function product()
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class)->withDefault();
     }
@@ -54,7 +58,7 @@ class OrderProduct extends BaseModel
     /**
      * @return BelongsTo
      */
-    public function order()
+    public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class)->withDefault();
     }
@@ -62,7 +66,7 @@ class OrderProduct extends BaseModel
     /**
      * @return string
      */
-    public function getAmountFormatAttribute()
+    public function getAmountFormatAttribute(): string
     {
         return format_price($this->price);
     }
@@ -70,8 +74,16 @@ class OrderProduct extends BaseModel
     /**
      * @return string
      */
-    public function getTotalFormatAttribute()
+    public function getTotalFormatAttribute(): string
     {
         return format_price($this->price * $this->qty);
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function productFiles(): HasMany
+    {
+        return $this->hasMany(ProductFile::class, 'product_id');
     }
 }

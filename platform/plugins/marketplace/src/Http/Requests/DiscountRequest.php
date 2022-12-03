@@ -8,7 +8,6 @@ use MarketplaceHelper;
 
 class DiscountRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class Translation extends BaseModel
 {
-    const STATUS_SAVED = 0;
-    const STATUS_CHANGED = 1;
+    public const STATUS_SAVED = 0;
+    public const STATUS_CHANGED = 1;
 
     /**
      * @var string

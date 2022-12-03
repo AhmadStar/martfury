@@ -38,6 +38,13 @@
             </div>
             <div class="number-items-available" style="display: none; margin-bottom: 10px;"></div>
         @endif
+
+        @if ($product->options()->count() > 0 && isset($product->toArray()['options']))
+            <div class="pr_switch_wrap" id="product-option">
+                {!! render_product_options($product, $product->toArray()['options']) !!}
+            </div>
+        @endif
+
         <form class="add-to-cart-form" method="POST" action="{{ route('public.cart.add-to-cart') }}">
             @csrf
             <div class="ps-product__shopping">

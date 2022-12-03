@@ -23,15 +23,15 @@ trait ImportTrait
     /**
      * @return int
      */
-    public function getTotalImported()
+    public function getTotalImported(): int
     {
         return $this->totalImported;
     }
 
     /**
-     * @return ProductImport
+     * @return ImportTrait
      */
-    public function setTotalImported()
+    public function setTotalImported(): ImportTrait
     {
         ++$this->totalImported;
 
@@ -80,7 +80,6 @@ trait ImportTrait
         try {
             $date = DateTime::createFromFormat('!' . $format, $value);
             return $date ? $date->format(config('core.base.general.date_format.date_time')) : $value;
-
         } catch (Exception $exception) {
             return $default;
         }

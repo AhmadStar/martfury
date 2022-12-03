@@ -4,7 +4,6 @@ namespace Botble\ACL\Services;
 
 use Botble\ACL\Models\User;
 use Botble\ACL\Repositories\Interfaces\ActivationInterface;
-use InvalidArgumentException;
 
 class ActivateUserService
 {
@@ -27,14 +26,9 @@ class ActivateUserService
      *
      * @param User $user
      * @return bool
-     * @throws InvalidArgumentException
      */
-    public function activate($user)
+    public function activate(User $user): bool
     {
-        if (!$user instanceof User) {
-            throw new InvalidArgumentException('No valid user was provided.');
-        }
-
         if ($this->activationRepository->completed($user)) {
             return false;
         }

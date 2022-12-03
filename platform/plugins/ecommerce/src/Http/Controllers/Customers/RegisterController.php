@@ -8,14 +8,15 @@ use Botble\ACL\Traits\RegistersUsers;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Ecommerce\Models\Customer;
 use Botble\Ecommerce\Repositories\Interfaces\CustomerInterface;
+use Carbon\Carbon;
 use EcommerceHelper;
-use Exception;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Contracts\Auth\StatefulGuard;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\View\View;
 use Response;
 use SeoHelper;
 use Theme;
@@ -99,11 +100,12 @@ class RegisterController extends Controller
 
         if (EcommerceHelper::isEnableEmailVerification()) {
             return $this->registered($request, $customer)
-                ?: $response->setNextUrl(route('customer.login'))
-                    ->setMessage(__('Please confirm your email address.'));
+                ?: $response
+                    ->setNextUrl(route('customer.login'))
+                    ->setMessage(__('We have sent you an email to verify your email. Please check and confirm your email address!'));
         }
 
-        $customer->confirmed_at = now();
+        $customer->confirmed_at = Carbon::now();
         $this->customerRepository->createOrUpdate($customer);
         $this->guard()->login($customer);
 
@@ -124,8 +126,10 @@ class RegisterController extends Controller
             'password' => 'required|min:6|confirmed',
         ];
 
-        if (is_plugin_active('captcha') && setting('enable_captcha') && get_ecommerce_setting('enable_recaptcha_in_register_page',
-                0)) {
+        if (is_plugin_active('captcha') && setting('enable_captcha') && get_ecommerce_setting(
+            'enable_recaptcha_in_register_page',
+            0
+        )) {
             $rules += ['g-recaptcha-response' => 'required|captcha'];
         }
 
@@ -204,7 +208,7 @@ class RegisterController extends Controller
 
         $customer = $customerRepository->findOrFail($id);
 
-        $customer->confirmed_at = now();
+        $customer->confirmed_at = Carbon::now();
         $this->customerRepository->createOrUpdate($customer);
 
         $this->guard()->login($customer);
@@ -242,7 +246,7 @@ class RegisterController extends Controller
     }
 
     /**
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function getVerify()
     {

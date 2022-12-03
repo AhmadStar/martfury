@@ -8,7 +8,6 @@ use Botble\ACL\Repositories\Interfaces\RoleInterface;
 use Botble\ACL\Repositories\Interfaces\UserInterface;
 use Botble\Support\Services\ProduceServiceInterface;
 use Hash;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class CreateUserService implements ProduceServiceInterface
@@ -47,9 +46,9 @@ class CreateUserService implements ProduceServiceInterface
     /**
      * @param Request $request
      *
-     * @return User|false|Model|mixed
+     * @return User
      */
-    public function execute(Request $request)
+    public function execute(Request $request): User
     {
         /**
          * @var User $user

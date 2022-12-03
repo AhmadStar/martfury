@@ -20,7 +20,6 @@ use Throwable;
 
 class TaxController extends BaseController
 {
-
     /**
      * @var TaxInterface
      */

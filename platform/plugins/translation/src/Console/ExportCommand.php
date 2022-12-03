@@ -5,10 +5,10 @@ namespace Botble\Translation\Console;
 use Botble\Translation\Manager;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\VarExporter\Exception\ExceptionInterface;
 
 class ExportCommand extends Command
 {
-
     /**
      * The console command name.
      *
@@ -42,7 +42,7 @@ class ExportCommand extends Command
      * Execute the console command.
      *
      * @return void
-     * @throws \Symfony\Component\VarExporter\Exception\ExceptionInterface
+     * @throws ExceptionInterface
      */
     public function handle()
     {
@@ -56,9 +56,7 @@ class ExportCommand extends Command
 
         $this->manager->exportTranslations($group);
 
-        if (!empty($group)) {
-            $this->info('Done writing language files for ' . ($group == '*' ? 'ALL groups' : $group . ' group'));
-        }
+        $this->info('Done writing language files for ' . ($group == '*' ? 'ALL groups' : $group . ' group'));
     }
 
     /**

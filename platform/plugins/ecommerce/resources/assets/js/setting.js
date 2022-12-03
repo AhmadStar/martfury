@@ -28,13 +28,12 @@ $(document).ready(() => {
         });
     });
 
-    const $reviewCheckbox = $('input[name="review_enabled"]');
-    const $reviewContentContainer = $('.review-settings-container');
-    $reviewCheckbox.on('change', function() {
+    $('.trigger-input-option').on('change', function() {
+        let $settingContentContainer = $($(this).data('setting-container'));
         if ($(this).val() == '1') {
-            $reviewContentContainer.removeClass('d-none');
+            $settingContentContainer.removeClass('d-none');
         } else {
-            $reviewContentContainer.addClass('d-none');
+            $settingContentContainer.addClass('d-none');
         }
     });
 });

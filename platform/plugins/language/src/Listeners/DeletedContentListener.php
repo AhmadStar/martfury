@@ -8,7 +8,6 @@ use Language;
 
 class DeletedContentListener
 {
-
     /**
      * Handle the event.
      *

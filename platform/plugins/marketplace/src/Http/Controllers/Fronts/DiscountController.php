@@ -24,7 +24,6 @@ use Throwable;
 
 class DiscountController extends BaseController
 {
-
     /**
      * @var DiscountInterface
      */

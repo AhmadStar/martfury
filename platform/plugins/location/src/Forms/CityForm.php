@@ -12,7 +12,6 @@ use Botble\Location\Repositories\Interfaces\StateInterface;
 
 class CityForm extends FormAbstract
 {
-
     /**
      * @var CountryInterface
      */
@@ -46,12 +45,15 @@ class CityForm extends FormAbstract
 
         $states = [];
         if ($this->getModel()) {
-            $states = $this->stateRepository->pluck('states.name', 'states.id',
-                [['country_id', '=', $this->model->country_id]]);
+            $states = $this->stateRepository->pluck(
+                'states.name',
+                'states.id',
+                [['country_id', '=', $this->model->country_id]]
+            );
         }
 
         $this
-            ->setupModel(new City)
+            ->setupModel(new City())
             ->setValidatorClass(CityRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

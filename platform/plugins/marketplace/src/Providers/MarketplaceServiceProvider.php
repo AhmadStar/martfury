@@ -50,25 +50,25 @@ class MarketplaceServiceProvider extends ServiceProvider
         if (is_plugin_active('ecommerce')) {
             $this->app->bind(StoreInterface::class, function () {
                 return new StoreCacheDecorator(
-                    new StoreRepository(new Store)
+                    new StoreRepository(new Store())
                 );
             });
 
             $this->app->bind(RevenueInterface::class, function () {
                 return new RevenueCacheDecorator(
-                    new RevenueRepository(new Revenue)
+                    new RevenueRepository(new Revenue())
                 );
             });
 
             $this->app->bind(WithdrawalInterface::class, function () {
                 return new WithdrawalCacheDecorator(
-                    new WithdrawalRepository(new Withdrawal)
+                    new WithdrawalRepository(new Withdrawal())
                 );
             });
 
             $this->app->bind(VendorInfoInterface::class, function () {
                 return new VendorInfoCacheDecorator(
-                    new VendorInfoRepository(new VendorInfo)
+                    new VendorInfoRepository(new VendorInfo())
                 );
             });
 
@@ -138,8 +138,8 @@ class MarketplaceServiceProvider extends ServiceProvider
                         'permissions' => ['marketplace.settings'],
                     ]);
 
-                    if (MarketplaceHelper::getSetting('verify_vendor', 1)) {
-                        dashboard_menu()->registerItem([
+                if (MarketplaceHelper::getSetting('verify_vendor', 1)) {
+                    dashboard_menu()->registerItem([
                             'id'          => 'cms-plugins-marketplace-unverified-vendor',
                             'priority'    => 4,
                             'parent_id'   => 'cms-plugins-marketplace',
@@ -148,9 +148,9 @@ class MarketplaceServiceProvider extends ServiceProvider
                             'url'         => route('marketplace.unverified-vendors.index'),
                             'permissions' => ['marketplace.unverified-vendors.index'],
                         ]);
-                    } else {
-                        config(['plugins.marketplace.email.templates' => Arr::except(config('plugins.marketplace.email.templates'), 'verify_vendor')]);
-                    }
+                } else {
+                    config(['plugins.marketplace.email.templates' => Arr::except(config('plugins.marketplace.email.templates'), 'verify_vendor')]);
+                }
 
                 EmailHandler::addTemplateSettings(MARKETPLACE_MODULE_SCREEN_NAME, config('plugins.marketplace.email', []));
             });
@@ -246,7 +246,7 @@ class MarketplaceServiceProvider extends ServiceProvider
      * @param bool $isInAdmin
      * @return bool
      */
-    public function setInAdmin($isInAdmin): bool
+    public function setInAdmin(bool $isInAdmin): bool
     {
         return request()->segment(1) === 'vendor' || $isInAdmin;
     }

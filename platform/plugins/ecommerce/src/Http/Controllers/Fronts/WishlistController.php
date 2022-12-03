@@ -62,7 +62,6 @@ class WishlistController extends Controller
         if (auth('customer')->check()) {
             $products = $this->productRepository->getProductsWishlist(auth('customer')->id(), $queryParams);
         } else {
-
             $products = new LengthAwarePaginator([], 0, 10);
 
             $itemIds = collect(Cart::instance('wishlist')->content())
@@ -94,7 +93,6 @@ class WishlistController extends Controller
         $product = $this->productRepository->findOrFail($productId);
 
         if (!auth('customer')->check()) {
-
             $duplicates = Cart::instance('wishlist')->search(function ($cartItem) use ($productId) {
                 return $cartItem->id == $productId;
             });

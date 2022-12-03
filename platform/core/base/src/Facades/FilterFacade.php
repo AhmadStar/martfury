@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Facade;
 
 class FilterFacade extends Facade
 {
-
     /**
      * @return string
      * @since 2.1

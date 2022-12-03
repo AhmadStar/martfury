@@ -10,7 +10,6 @@ use Botble\Location\Models\State;
 
 class StateForm extends FormAbstract
 {
-
     /**
      * @var CountryInterface
      */
@@ -32,11 +31,10 @@ class StateForm extends FormAbstract
      */
     public function buildForm()
     {
-
         $countries = $this->countryRepository->pluck('countries.name', 'countries.id');
 
         $this
-            ->setupModel(new State)
+            ->setupModel(new State())
             ->setValidatorClass(StateRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

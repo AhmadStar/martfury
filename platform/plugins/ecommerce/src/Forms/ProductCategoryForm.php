@@ -11,7 +11,6 @@ use ProductCategoryHelper;
 
 class ProductCategoryForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -26,7 +25,7 @@ class ProductCategoryForm extends FormAbstract
             ->value('order');
 
         $this
-            ->setupModel(new ProductCategory)
+            ->setupModel(new ProductCategory())
             ->setValidatorClass(ProductCategoryRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

@@ -36,7 +36,7 @@ if (!function_exists('get_all_brands')) {
      * @param array $withCount
      * @return Collection
      */
-    function get_all_brands(array $conditions = [], array $with = ['slugable'], array $withCount = [])
+    function get_all_brands(array $conditions = [], array $with = ['slugable'], array $withCount = []): Collection
     {
         return app(BrandInterface::class)->advancedGet([
             'condition' => $conditions,

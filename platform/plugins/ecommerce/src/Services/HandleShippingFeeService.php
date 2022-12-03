@@ -15,7 +15,6 @@ use Illuminate\Support\Arr;
 
 class HandleShippingFeeService
 {
-
     /**
      * @var ShippingInterface
      */
@@ -86,7 +85,7 @@ class HandleShippingFeeService
      * @param null $option
      * @return array
      */
-    public function execute(array $data, $method = null, $option = null)
+    public function execute(array $data, $method = null, $option = null): array
     {
         if (!empty($method)) {
             return $this->getShippingFee($data, $method, $option);
@@ -106,13 +105,12 @@ class HandleShippingFeeService
     /**
      * @param array $data
      * @param string $method
-     * @param string $option
+     * @param string|null $option
      * @return array
      */
-    protected function getShippingFee(array $data, $method, $option = null)
+    protected function getShippingFee(array $data, string $method, ?string $option = null): array
     {
-        $weight = Arr::get($data, 'weight', 0.1);
-        $weight = $weight ?: 0.1;
+        $weight = EcommerceHelper::validateOrderWeight(Arr::get($data, 'weight'));
 
         $orderTotal = Arr::get($data, 'order_total', 0);
 
@@ -183,7 +181,7 @@ class HandleShippingFeeService
      * @param null $option
      * @return array
      */
-    protected function calculateDefaultFeeByAddress($address, $weight, $orderTotal, $city, $option = null)
+    protected function calculateDefaultFeeByAddress($address, $weight, $orderTotal, $city, $option = null): array
     {
         $result = [];
 
@@ -224,7 +222,7 @@ class HandleShippingFeeService
                             ->where(function (Builder $sub) use ($orderTotal) {
                                 $sub
                                     ->whereNull('to')
-                                    ->orWhere('to', '<=', 0)
+                                    // ->orWhere('to', '<=', 0)
                                     ->orWhere('to', '>=', $orderTotal);
                             });
                     })
@@ -236,7 +234,7 @@ class HandleShippingFeeService
                             ->where(function (Builder $sub) use ($weight) {
                                 $sub
                                     ->whereNull('to')
-                                    ->orWhere('to', '<=', 0)
+                                    // ->orWhere('to', '<=', 0)
                                     ->orWhere('to', '>=', $weight);
                             });
                     })

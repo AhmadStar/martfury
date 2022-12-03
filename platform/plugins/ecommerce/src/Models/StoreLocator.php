@@ -7,6 +7,7 @@ use Botble\Ecommerce\Traits\LocationTrait;
 
 class StoreLocator extends BaseModel
 {
+    use LocationTrait;
 
     /**
      * @var string
@@ -35,6 +36,4 @@ class StoreLocator extends BaseModel
         'created_at',
         'updated_at',
     ];
-
-    use LocationTrait;
 }

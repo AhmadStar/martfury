@@ -10,7 +10,6 @@ use Botble\Menu\Models\Menu;
 
 class MenuForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -32,7 +31,7 @@ class MenuForm extends FormAbstract
         }
 
         $this
-            ->setupModel(new Menu)
+            ->setupModel(new Menu())
             ->setFormOption('class', 'form-save-menu')
             ->withCustomFields()
             ->setValidatorClass(MenuRequest::class)

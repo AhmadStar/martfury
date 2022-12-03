@@ -6,15 +6,15 @@ use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Theme\Commands\ThemeActivateCommand;
 use Botble\Theme\Commands\ThemeAssetsPublishCommand;
 use Botble\Theme\Commands\ThemeAssetsRemoveCommand;
+use Botble\Theme\Commands\ThemeOptionCheckMissingCommand;
 use Botble\Theme\Commands\ThemeRemoveCommand;
 use Botble\Theme\Commands\ThemeRenameCommand;
 use Botble\Theme\Contracts\Theme as ThemeContract;
 use Botble\Theme\Http\Middleware\AdminBarMiddleware;
 use Botble\Theme\Supports\ThemeSupport;
 use Botble\Theme\Theme;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Routing\Events\RouteMatched;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -26,12 +26,6 @@ class ThemeServiceProvider extends ServiceProvider
 
     public function register()
     {
-        /**
-         * @var Router $router
-         */
-        $router = $this->app['router'];
-        $router->pushMiddlewareToGroup('web', AdminBarMiddleware::class);
-
         $this->setNamespace('packages/theme')
             ->loadHelpers();
 
@@ -41,6 +35,7 @@ class ThemeServiceProvider extends ServiceProvider
             ThemeActivateCommand::class,
             ThemeRemoveCommand::class,
             ThemeAssetsPublishCommand::class,
+            ThemeOptionCheckMissingCommand::class,
             ThemeAssetsRemoveCommand::class,
             ThemeRenameCommand::class,
         ]);
@@ -66,6 +61,8 @@ class ThemeServiceProvider extends ServiceProvider
                     'url'         => '#',
                     'permissions' => [],
                 ]);
+
+            $this->app['router']->pushMiddlewareToGroup('web', AdminBarMiddleware::class);
 
             if ($this->app['config']->get('packages.theme.general.display_theme_manager_in_admin_panel', true)) {
                 dashboard_menu()
@@ -126,7 +123,7 @@ class ThemeServiceProvider extends ServiceProvider
                     ]);
             }
 
-            ThemeFacade::composer('*', function() {
+            ThemeFacade::composer('*', function () {
                 if (Auth::check()) {
                     if (Auth::user()->hasPermission('theme.index')) {
                         admin_bar()->registerLink(trans('packages/theme::theme.name'), route('theme.index'), 'appearance');
@@ -145,7 +142,7 @@ class ThemeServiceProvider extends ServiceProvider
                 ThemeFacade::asset()
                     ->container('after_header')
                     ->usePath()
-                    ->add('theme-style-integration-css', str_replace(public_path(ThemeFacade::path()), '', $file), [], [], filectime($file));
+                    ->add('theme-style-integration-css', 'css/style.integration.css', [], [], filectime($file));
             }
 
             if (!$this->app->environment('demo')) {

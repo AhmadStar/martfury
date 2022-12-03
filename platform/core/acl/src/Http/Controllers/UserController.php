@@ -5,8 +5,12 @@ namespace Botble\ACL\Http\Controllers;
 use Assets;
 use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Media\Services\ThumbnailService;
-use File;
+use Carbon\Carbon;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Support\Facades\File;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Botble\ACL\Forms\PasswordForm;
@@ -30,13 +34,12 @@ use Botble\Media\Repositories\Interfaces\MediaFileInterface;
 use Botble\ACL\Http\Requests\AvatarRequest;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use RvMedia;
 use Throwable;
 
 class UserController extends BaseController
 {
-
     /**
      * @var UserInterface
      */
@@ -70,7 +73,7 @@ class UserController extends BaseController
 
     /**
      * @param UserTable $dataTable
-     * @return Factory|View
+     * @return JsonResponse|View
      *
      * @throws Throwable
      */
@@ -188,7 +191,7 @@ class UserController extends BaseController
      * @param int $id
      * @param Request $request
      * @param FormBuilder $formBuilder
-     * @return Factory|View| RedirectResponse
+     * @return Factory|Application|View
      */
     public function getUserProfile($id, Request $request, FormBuilder $formBuilder)
     {
@@ -202,6 +205,7 @@ class UserController extends BaseController
         $form = $formBuilder
             ->create(ProfileForm::class, ['model' => $user])
             ->setUrl(route('users.update-profile', $user->id));
+
         $passwordForm = $formBuilder
             ->create(PasswordForm::class)
             ->setUrl(route('users.change-password', $user->id));
@@ -241,10 +245,12 @@ class UserController extends BaseController
             $currentUser->isSuperUser()
         ) {
             if ($user->email !== $request->input('email')) {
-                $users = $this->userRepository->getModel()
+                $users = $this->userRepository
+                    ->getModel()
                     ->where('email', $request->input('email'))
                     ->where('id', '<>', $user->id)
-                    ->count();
+                    ->exists();
+
                 if ($users) {
                     return $response
                         ->setError()
@@ -254,10 +260,12 @@ class UserController extends BaseController
             }
 
             if ($user->username !== $request->input('username')) {
-                $users = $this->userRepository->getModel()
+                $users = $this->userRepository
+                    ->getModel()
                     ->where('username', $request->input('username'))
                     ->where('id', '<>', $user->id)
-                    ->count();
+                    ->exists();
+
                 if ($users) {
                     return $response
                         ->setError()
@@ -282,6 +290,7 @@ class UserController extends BaseController
      * @param ChangePasswordService $service
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse
+     * @throws AuthenticationException
      */
     public function postChangePassword(
         $id,
@@ -315,7 +324,7 @@ class UserController extends BaseController
 
             $result = RvMedia::handleUpload($request->file('avatar_file'), 0, 'users');
 
-            if ($result['error'] != false) {
+            if ($result['error']) {
                 return $response->setError()->setMessage($result['message']);
             }
 
@@ -422,12 +431,14 @@ class UserController extends BaseController
 
     /**
      * @param Request $request
-     * @return RedirectResponse
+     * @param BaseHttpResponse $response
+     * @return BaseHttpResponse
      */
     public function toggleSidebarMenu(Request $request, BaseHttpResponse $response)
     {
         $status = $request->input('status') == 'true';
-        session()->put('sidebar-menu-toggle', $status ? now() : '');
+
+        session()->put('sidebar-menu-toggle', $status ? Carbon::now() : '');
 
         return $response->setMessage($status);
     }

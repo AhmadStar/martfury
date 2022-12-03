@@ -6,7 +6,6 @@ use Botble\Base\Models\BaseModel;
 
 class FaqTranslation extends BaseModel
 {
-
     /**
      * The database table used by the model.
      *

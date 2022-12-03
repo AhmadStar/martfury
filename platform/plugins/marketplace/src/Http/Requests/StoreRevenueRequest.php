@@ -9,7 +9,6 @@ use Illuminate\Validation\Rule;
 
 class StoreRevenueRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

@@ -5,6 +5,7 @@ namespace Botble\Menu;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Events\CreatedContentEvent;
 use Botble\Base\Events\UpdatedContentEvent;
+use Botble\Base\Models\BaseModel;
 use Botble\Menu\Models\MenuNode;
 use Botble\Menu\Repositories\Eloquent\MenuRepository;
 use Botble\Menu\Repositories\Interfaces\MenuInterface;
@@ -73,11 +74,11 @@ class Menu
      * @param Repository $config
      */
     public function __construct(
-        MenuInterface $menuRepository,
-        HtmlBuilder $html,
+        MenuInterface     $menuRepository,
+        HtmlBuilder       $html,
         MenuNodeInterface $menuNodeRepository,
-        CacheManager $cache,
-        Repository $config
+        CacheManager      $cache,
+        Repository        $config
     ) {
         $this->config = $config;
         $this->menuRepository = $menuRepository;
@@ -92,7 +93,7 @@ class Menu
      * @param bool $active
      * @return bool
      */
-    public function hasMenu($slug, $active)
+    public function hasMenu(string $slug, bool $active): bool
     {
         return $this->menuRepository->findBySlug($slug, $active);
     }
@@ -101,12 +102,18 @@ class Menu
      * @param array $menuNodes
      * @param int $menuId
      * @param int $parentId
+     * @return array
      */
-    public function recursiveSaveMenu($menuNodes, $menuId, $parentId)
+    public function recursiveSaveMenu(array $menuNodes, int $menuId, int $parentId): array
     {
         try {
             foreach ($menuNodes as &$row) {
                 $child = Arr::get($row, 'children', []);
+
+                foreach ($child as $index => $item) {
+                    $child[$index]['menuItem']['position'] = $index;
+                }
+
                 $hasChild = !empty($child);
 
                 $row['menuItem'] = $this->saveMenuNode($row['menuItem'], $menuId, $parentId, $hasChild);
@@ -118,7 +125,7 @@ class Menu
 
             return $menuNodes;
         } catch (Exception $ex) {
-            info($ex->getMessage());
+            return [];
         }
     }
 
@@ -129,7 +136,7 @@ class Menu
      * @param bool $hasChild
      * @return array
      */
-    protected function saveMenuNode($menuItem, $menuId, $parentId, $hasChild = false)
+    protected function saveMenuNode(array $menuItem, int $menuId, int $parentId, bool $hasChild = false): array
     {
         $item = $this->menuNodeRepository->findById(Arr::get($menuItem, 'id'));
 
@@ -166,7 +173,7 @@ class Menu
      * @param MenuNode $menuNode
      * @return MenuNode
      */
-    public function getReferenceMenuNode(array $item, MenuNode $menuNode)
+    public function getReferenceMenuNode(array $item, MenuNode $menuNode): MenuNode
     {
         switch (Arr::get($item, 'reference_type')) {
             case 'custom-link':
@@ -275,7 +282,7 @@ class Menu
      *
      * @param boolean $force Force a reload of data. Default false.
      */
-    public function load($force = false)
+    public function load(bool $force = false)
     {
         if (!$this->loaded || $force) {
             $this->data = $this->read();
@@ -286,17 +293,27 @@ class Menu
     /**
      * @return Collection
      */
-    protected function read()
+    protected function read(): Collection
     {
-        return $this->menuRepository->allBy(['status' => BaseStatusEnum::PUBLISHED], ['menuNodes', 'menuNodes.child', 'locations']);
+        return $this->menuRepository->allBy(
+            [
+                'status' => BaseStatusEnum::PUBLISHED,
+            ],
+            [
+                'menuNodes',
+                'menuNodes.child',
+                'menuNodes.metadata',
+                'locations',
+            ]
+        );
     }
 
     /**
      * @param array $args
-     * @return mixed|null|string
+     * @return string|null
      * @throws Throwable
      */
-    public function generateMenu(array $args = [])
+    public function generateMenu(array $args = []): ?string
     {
         $this->load();
 
@@ -357,7 +374,7 @@ class Menu
     public function registerMenuOptions(string $model, string $name)
     {
         $options = Menu::generateSelect([
-            'model'   => new $model,
+            'model'   => new $model(),
             'options' => [
                 'class' => 'list-item',
             ],
@@ -372,8 +389,11 @@ class Menu
      * @throws FileNotFoundException
      * @throws Throwable
      */
-    public function generateSelect(array $args = [])
+    public function generateSelect(array $args = []): ?string
     {
+        /**
+         * @var BaseModel $model
+         */
         $model = Arr::get($args, 'model');
 
         $options = $this->html->attributes(Arr::get($args, 'options', []));

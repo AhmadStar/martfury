@@ -3,17 +3,13 @@
 namespace Botble\Payment\Providers;
 
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Models\Payment;
-use Botble\Payment\Services\Gateways\PayPalPaymentService;
-use Botble\Payment\Services\Gateways\StripePaymentService;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\ServiceProvider;
 use Botble\Payment\Repositories\Caches\PaymentCacheDecorator;
 use Botble\Payment\Repositories\Eloquent\PaymentRepository;
 use Botble\Payment\Repositories\Interfaces\PaymentInterface;
-use Laravel\Cashier\Cashier;
 
 class PaymentServiceProvider extends ServiceProvider
 {
@@ -26,12 +22,8 @@ class PaymentServiceProvider extends ServiceProvider
             ->loadHelpers();
 
         $this->app->singleton(PaymentInterface::class, function () {
-            return new PaymentCacheDecorator(new PaymentRepository(new Payment));
+            return new PaymentCacheDecorator(new PaymentRepository(new Payment()));
         });
-
-        if (class_exists('Laravel\Cashier\Cashier')) {
-            Cashier::ignoreMigrations();
-        }
     }
 
     public function boot()
@@ -74,75 +66,5 @@ class PaymentServiceProvider extends ServiceProvider
                     'permissions' => ['payments.settings'],
                 ]);
         });
-
-        add_shortcode('payment-form', __('Payment form'), __('Payment form'), function ($shortCode) {
-            $data = [
-                'name'        => $shortCode->name,
-                'currency'    => $shortCode->currency,
-                'amount'      => $shortCode->amount,
-                'returnUrl'   => $shortCode->return_url,
-                'callbackUrl' => $shortCode->callback_url,
-            ];
-
-            $view = 'plugins/payment::partials.form';
-
-            if ($shortCode->view && view()->exists($shortCode->view)) {
-                $view = $shortCode->view;
-            }
-
-            return view($view, $data);
-        });
-
-        shortcode()->setAdminConfig('payment-form', function ($attributes) {
-            return view('plugins/payment::partials.payment-form-admin-config', compact('attributes'))->render();
-        });
-
-        add_shortcode('payment-info', __('Payment info'), __('Payment info'), function ($shortCode) {
-            $payment = app(PaymentInterface::class)->getFirstBy(['charge_id' => $shortCode->charge_id]);
-
-            if (!$payment) {
-                return trans('plugins/payment::payment.payment_not_found');
-            }
-
-            $detail = apply_filters(PAYMENT_FILTER_PAYMENT_INFO_DETAIL, null, $payment);
-
-            $view = 'plugins/payment::partials.info';
-
-            if ($shortCode->view && view()->exists($shortCode->view)) {
-                $view = $shortCode->view;
-            }
-
-            return view($view, compact('payment', 'detail'));
-        });
-
-        shortcode()->setAdminConfig('payment-info', function ($attributes) {
-            return view('plugins/payment::partials.payment-info-admin-config', compact('attributes'))->render();
-        });
-
-        add_filter(PAYMENT_FILTER_ADDITIONAL_PAYMENT_METHODS, function ($html, array $data) {
-            $html .= view('plugins/payment::stripe.methods', $data)->render();
-            $html .= view('plugins/payment::paypal.methods', $data)->render();
-
-            return $html;
-        }, 1, 2);
-
-        add_filter(PAYMENT_FILTER_PAYMENT_INFO_DETAIL, function ($data, $payment) {
-            switch ($payment->payment_channel) {
-                case PaymentMethodEnum::PAYPAL:
-                    $paymentDetail = (new PayPalPaymentService)->getPaymentDetails($payment->charge_id);
-                    $data = view('plugins/payment::paypal.detail', ['payment' => $paymentDetail])->render();
-                    break;
-                case PaymentMethodEnum::STRIPE:
-                    $paymentDetail = (new StripePaymentService)->getPaymentDetails($payment->charge_id);
-                    $data = view('plugins/payment::stripe.detail', ['payment' => $paymentDetail])->render();
-                    break;
-                case PaymentMethodEnum::COD:
-                case PaymentMethodEnum::BANK_TRANSFER:
-                default:
-                    break;
-            }
-
-            return $data;
-        }, 10, 2);
     }
 }

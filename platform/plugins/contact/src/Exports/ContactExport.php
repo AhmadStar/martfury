@@ -31,7 +31,6 @@ class ContactExport extends TableExportHandler
             ->setHorizontal(Alignment::HORIZONTAL_LEFT);
 
         for ($index = 2; $index <= $totalRows; $index++) {
-
             $status = $event->sheet->getDelegate()
                 ->getStyle('F' . $index)
                 ->getFont()

@@ -19,7 +19,7 @@ class Validator
     /**
      * Validator extension name.
      */
-    const EXTENSION_NAME = 'js_validation';
+    public const EXTENSION_NAME = 'js_validation';
 
     /**
      * @var BaseValidator

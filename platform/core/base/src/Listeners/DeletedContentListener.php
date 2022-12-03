@@ -8,7 +8,6 @@ use Exception;
 
 class DeletedContentListener
 {
-
     /**
      * @var MetaBoxInterface
      */

@@ -59,7 +59,7 @@
 
     @if (is_plugin_active('newsletter') && theme_option('enable_newsletter_popup', 'yes') === 'yes')
         <div data-session-domain="{{ config('session.domain') ?? request()->getHost() }}"></div>
-        <div class="ps-popup" id="subscribe" data-time="{{ (int)theme_option('newsletter_show_after_seconds', 10) * 1000 }}" style="display: none">
+        <div class="ps-popup" id="subscribe" data-time="{{ (int)theme_option('newsletter_show_after_seconds', 10) * 1000 }}">
             <div class="ps-popup__content bg--cover" data-background="{{ RvMedia::getImageUrl(theme_option('newsletter_image')) }}" style="background-size: cover!important;"><a class="ps-popup__close" href="#"><i class="icon-cross"></i></a>
                 <form method="post" action="{{ route('public.newsletter.subscribe') }}" class="ps-form--subscribe-popup newsletter-form">
                     @csrf
@@ -120,15 +120,14 @@
         window.trans = {
             "View All": "{{ __('View All') }}",
             "No reviews!": "{{ __('No reviews!') }}",
-        }
-        window.siteUrl = "{{ route('public.index') }}";
+        };
     </script>
 
     {!! Theme::footer() !!}
 
      @if (session()->has('success_msg') || session()->has('error_msg') || (isset($errors) && $errors->count() > 0) || isset($error_msg))
          <script type="text/javascript">
-             $(document).ready(function () {
+             window.onload = function () {
                  @if (session()->has('success_msg'))
                     window.showAlert('alert-success', '{{ session('success_msg') }}');
                  @endif
@@ -146,7 +145,7 @@
                         window.showAlert('alert-danger', '{!! $error !!}');
                      @endforeach
                  @endif
-             });
+             };
          </script>
      @endif
     </body>

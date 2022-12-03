@@ -4,7 +4,11 @@ class PaymentMethodManagement {
     init() {
         $('.toggle-payment-item').off('click').on('click', event => {
             $(event.currentTarget).closest('tbody').find('.payment-content-item').toggleClass('hidden');
+
+            window.EDITOR = new EditorManagement().init();
+            window.EditorManagement = window.EditorManagement || EditorManagement;
         });
+
         $('.disable-payment-item').off('click').on('click', event => {
             event.preventDefault();
             let _self = $(event.currentTarget);

@@ -4,7 +4,6 @@ namespace Botble\Base\Supports;
 
 class Action extends ActionHookEvent
 {
-
     /**
      * Filters a value
      * @param string $action Name of action

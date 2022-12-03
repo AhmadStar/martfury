@@ -13,7 +13,7 @@ use Botble\Base\Listeners\DeletedContentListener;
 use Botble\Base\Listeners\SendMailListener;
 use Botble\Base\Listeners\UpdatedContentListener;
 use Illuminate\Support\Facades\Event;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider

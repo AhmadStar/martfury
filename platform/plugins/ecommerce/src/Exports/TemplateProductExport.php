@@ -3,6 +3,7 @@
 namespace Botble\Ecommerce\Exports;
 
 use Botble\Base\Enums\BaseStatusEnum;
+use Botble\Ecommerce\Enums\ProductTypeEnum;
 use Botble\Ecommerce\Enums\StockStatusEnum;
 use Botble\Ecommerce\Repositories\Interfaces\BrandInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductAttributeSetInterface;
@@ -10,6 +11,8 @@ use Botble\Ecommerce\Repositories\Interfaces\ProductCategoryInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductTagInterface;
 use Botble\Ecommerce\Repositories\Interfaces\TaxInterface;
 use Botble\Marketplace\Repositories\Interfaces\StoreInterface;
+use Carbon\Carbon;
+use EcommerceHelper;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -25,7 +28,8 @@ use Maatwebsite\Excel\Excel;
 use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class TemplateProductExport implements FromCollection,
+class TemplateProductExport implements
+    FromCollection,
     WithHeadings,
     WithEvents,
     WithStrictNullComparison,
@@ -58,6 +62,16 @@ class TemplateProductExport implements FromCollection,
      * @var Collection
      */
     protected $brands;
+
+    /**
+     * @var bool
+     */
+    protected $enabledDigital;
+
+    /**
+     * @var bool
+     */
+    protected $isMarketplaceActive;
 
     /**
      * @param string $exportType
@@ -93,6 +107,10 @@ class TemplateProductExport implements FromCollection,
 
         $attributeSets = $productAttributeSets->sortByDesc('order');
 
+        $this->isMarketplaceActive = is_plugin_active('marketplace');
+
+        $this->enabledDigital = EcommerceHelper::isEnabledSupportDigitalProducts();
+
         $product = [
             'name'                             => $productName,
             'description'                      => $descriptions->random(),
@@ -126,7 +144,11 @@ class TemplateProductExport implements FromCollection,
             'tags'                             => $productTags->pluck('name')->implode(','),
         ];
 
-        if (is_plugin_active('marketplace')) {
+        if ($this->enabledDigital) {
+            $product['product_type'] = ProductTypeEnum::PHYSICAL;
+        }
+
+        if ($this->isMarketplaceActive) {
             $stores = app(StoreInterface::class)->pluck('name', 'id');
             $stores = collect($stores);
 
@@ -161,8 +183,8 @@ class TemplateProductExport implements FromCollection,
             'quantity'                         => rand(20, 300),
             'allow_checkout_when_out_of_stock' => '',
             'sale_price'                       => $price - rand(2, 5),
-            'start_date_sale_price'            => now()->startOfDay()->format('Y-m-d H:i:s'),
-            'end_date_sale_price'              => now()->addDays(20)->endOfDay()->format('Y-m-d H:i:s'),
+            'start_date_sale_price'            => Carbon::now()->startOfDay()->format('Y-m-d H:i:s'),
+            'end_date_sale_price'              => Carbon::now()->addDays(20)->endOfDay()->format('Y-m-d H:i:s'),
             'weight'                           => rand(20, 300),
             'length'                           => rand(20, 300),
             'wide'                             => rand(20, 300),
@@ -270,7 +292,11 @@ class TemplateProductExport implements FromCollection,
             'tags'                             => 'Tags',
         ];
 
-        if (is_plugin_active('marketplace')) {
+        if ($this->enabledDigital) {
+            $headings['product_type'] = 'Product type';
+        }
+
+        if ($this->isMarketplaceActive) {
             $headings['vendor'] = 'Vendor';
         }
 
@@ -303,6 +329,7 @@ class TemplateProductExport implements FromCollection,
                 $lengthColumn = 'Z';
                 $wideColumn = 'AA';
                 $heightColumn = 'AB';
+                $productTypeColumn = 'AE';
 
                 // set dropdown list for first data row
                 $statusValidation = $this->getStatusValidation();
@@ -313,6 +340,8 @@ class TemplateProductExport implements FromCollection,
                 $decimalValidation = $this->getDecimalValidation();
                 $taxValidation = $this->getTaxValidation();
                 $brandValidation = $this->getBrandValidation();
+
+                $productTypeValidation = $this->getProductTypeValidation();
 
                 // clone validation to remaining rows
                 for ($index = 2; $index <= $this->totalRow; $index++) {
@@ -338,6 +367,10 @@ class TemplateProductExport implements FromCollection,
                     $event->sheet->getCell($heightColumn . $index)->setDataValidation($decimalValidation);
                     $event->sheet->getCell($saleColumn . $index)->setDataValidation($decimalValidation);
                     $event->sheet->getCell($priceColumn . $index)->setDataValidation($decimalValidation);
+
+                    if ($this->enabledDigital) {
+                        $event->sheet->getCell($productTypeColumn . $index)->setDataValidation($productTypeValidation);
+                    }
                 }
 
                 $delegate = $event->sheet->getDelegate();
@@ -362,13 +395,21 @@ class TemplateProductExport implements FromCollection,
     }
 
     /**
+     * @return DataValidation
+     */
+    protected function getProductTypeValidation()
+    {
+        return $this->getDropDownListValidation(ProductTypeEnum::values());
+    }
+
+    /**
      * @param array $options
      * @return DataValidation
      */
     protected function getDropDownListValidation($options)
     {
         // set dropdown list for first data row
-        $validation = new DataValidation;
+        $validation = new DataValidation();
         $validation->setType(DataValidation::TYPE_LIST);
         $validation->setErrorStyle(DataValidation::STYLE_INFORMATION);
         $validation->setAllowBlank(false);
@@ -415,7 +456,7 @@ class TemplateProductExport implements FromCollection,
     protected function getWholeNumberValidation($min = 0)
     {
         // set dropdown list for first data row
-        $validation = new DataValidation;
+        $validation = new DataValidation();
         $validation->setType(DataValidation::TYPE_WHOLE);
         $validation->setErrorStyle(DataValidation::STYLE_STOP);
         $validation->setAllowBlank(false);
@@ -425,8 +466,10 @@ class TemplateProductExport implements FromCollection,
         $validation->setErrorTitle(trans('plugins/ecommerce::bulk-import.export.template.input_error'));
         $validation->setError(trans('plugins/ecommerce::bulk-import.export.template.number_not_allowed'));
         $validation->setPromptTitle(trans('plugins/ecommerce::bulk-import.export.template.allowed_input'));
-        $validation->setPrompt(trans('plugins/ecommerce::bulk-import.export.template.prompt_whole_number',
-            compact('min')));
+        $validation->setPrompt(trans(
+            'plugins/ecommerce::bulk-import.export.template.prompt_whole_number',
+            compact('min')
+        ));
         $validation->setFormula1($min);
         $validation->setOperator(DataValidation::OPERATOR_GREATERTHANOREQUAL);
 
@@ -440,7 +483,7 @@ class TemplateProductExport implements FromCollection,
     protected function getDecimalValidation($min = 0)
     {
         // set dropdown list for first data row
-        $validation = new DataValidation;
+        $validation = new DataValidation();
         $validation->setType(DataValidation::TYPE_DECIMAL);
         $validation->setErrorStyle(DataValidation::STYLE_STOP);
         $validation->setAllowBlank(false);
@@ -554,7 +597,11 @@ class TemplateProductExport implements FromCollection,
             'tags'                             => 'nullable|[Product tag name]|multiple',
         ];
 
-        if (is_plugin_active('marketplace')) {
+        if ($this->enabledDigital) {
+            $rules['product_type'] = 'nullable|enum:' . implode(',', ProductTypeEnum::values()) .'|default:' . ProductTypeEnum::PHYSICAL;
+        }
+
+        if ($this->isMarketplaceActive) {
             $rules['vendor'] = 'nullable|[Vendor name | Vendor ID]';
         }
 

@@ -10,18 +10,16 @@ use Botble\Contact\Models\Contact;
 
 class ContactForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
-
         Assets::addScriptsDirectly('vendor/core/plugins/contact/js/contact.js')
             ->addStylesDirectly('vendor/core/plugins/contact/css/contact.css');
 
         $this
-            ->setupModel(new Contact)
+            ->setupModel(new Contact())
             ->setValidatorClass(EditContactRequest::class)
             ->withCustomFields()
             ->add('status', 'customSelect', [

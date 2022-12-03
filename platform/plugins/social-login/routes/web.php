@@ -3,10 +3,8 @@
 use Botble\SocialLogin\Facades\SocialServiceFacade;
 
 Route::group(['namespace' => 'Botble\SocialLogin\Http\Controllers', 'middleware' => ['web', 'core']], function () {
-
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'social-login'], function () {
-
             Route::get('settings', [
                 'as'   => 'social-login.settings',
                 'uses' => 'SocialLoginController@getSettings',
@@ -31,5 +29,4 @@ Route::group(['namespace' => 'Botble\SocialLogin\Http\Controllers', 'middleware'
         'as'   => 'auth.social.callback',
         'uses' => 'SocialLoginController@handleProviderCallback',
     ])->where('provider', $providers);
-
 });

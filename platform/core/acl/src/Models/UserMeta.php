@@ -7,16 +7,13 @@ use Botble\Base\Models\BaseModel;
 
 class UserMeta extends BaseModel
 {
-
     /**
-     * The database table used by the model.
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $table = 'user_meta';
 
     /**
-     * @var array
+     * {@inheritdoc}
      */
     protected $fillable = [
         'key',
@@ -25,9 +22,7 @@ class UserMeta extends BaseModel
     ];
 
     /**
-     * The date fields for the model.clear
-     *
-     * @var array
+     * {@inheritdoc}
      */
     protected $dates = [
         'created_at',
@@ -40,7 +35,7 @@ class UserMeta extends BaseModel
      * @param int $userId
      * @return bool
      */
-    public static function setMeta($key, $value = null, $userId = 0)
+    public static function setMeta(string $key, $value = null, int $userId = 0): bool
     {
         if ($userId == 0) {
             $userId = Auth::id();
@@ -60,7 +55,7 @@ class UserMeta extends BaseModel
      * @param int $userId
      * @return string
      */
-    public static function getMeta($key, $default = null, $userId = 0)
+    public static function getMeta(string $key, $default = null, int $userId = 0): ?string
     {
         if ($userId == 0) {
             $userId = Auth::id();

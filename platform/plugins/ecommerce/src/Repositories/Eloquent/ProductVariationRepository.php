@@ -117,8 +117,12 @@ class ProductVariationRepository extends RepositoriesAbstract implements Product
     public function getAttributeIdsOfChildrenProduct($productId)
     {
         $result = $this->model
-            ->join('ec_product_variation_items', 'ec_product_variation_items.variation_id', '=',
-                'ec_product_variations.id')
+            ->join(
+                'ec_product_variation_items',
+                'ec_product_variation_items.variation_id',
+                '=',
+                'ec_product_variations.id'
+            )
             ->distinct()
             ->select('ec_product_variation_items.attribute_id')
             ->where('ec_product_variations.product_id', $productId)

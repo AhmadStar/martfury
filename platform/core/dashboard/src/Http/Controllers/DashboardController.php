@@ -9,15 +9,15 @@ use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Dashboard\Repositories\Interfaces\DashboardWidgetInterface;
 use Botble\Dashboard\Repositories\Interfaces\DashboardWidgetSettingInterface;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\View\View;
 
 class DashboardController extends BaseController
 {
-
     /**
      * @var DashboardWidgetSettingInterface
      */
@@ -51,7 +51,7 @@ class DashboardController extends BaseController
 
     /**
      * @param Request $request
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function getDashboard(Request $request)
     {

@@ -7,7 +7,7 @@ use Botble\Media\Repositories\Interfaces\MediaFolderInterface;
 use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
 use Eloquent;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Arr;
@@ -35,9 +35,11 @@ class MediaFileRepository extends RepositoriesAbstract implements MediaFileInter
     }
 
     /**
-     * {@inheritDoc}
+     * @param string|null $name
+     * @param int|null $folder
+     * @return bool
      */
-    protected function checkIfExistsName($name, $folder)
+    protected function checkIfExistsName(?string $name, ?int $folder): bool
     {
         $count = $this->model
             ->where('name', $name)
@@ -51,7 +53,7 @@ class MediaFileRepository extends RepositoriesAbstract implements MediaFileInter
     /**
      * {@inheritDoc}
      */
-    public function createSlug($name, $extension, $folderPath)
+    public function createSlug($name, $extension, $folderPath): string
     {
         $slug = Str::slug($name, '-', !RvMedia::turnOffAutomaticUrlTranslationIntoLatin() ? 'en' : false);
         $index = 1;
@@ -340,8 +342,12 @@ class MediaFileRepository extends RepositoriesAbstract implements MediaFileInter
                 /**
                  * @var Eloquent $folder
                  */
-                $folder = $folder->leftJoin('media_folders as mf_parent', 'mf_parent.id', '=',
-                    'media_folders.parent_id')
+                $folder = $folder->leftJoin(
+                    'media_folders as mf_parent',
+                    'mf_parent.id',
+                    '=',
+                    'media_folders.parent_id'
+                )
                     ->where(function ($query) {
                         /**
                          * @var Eloquent $query

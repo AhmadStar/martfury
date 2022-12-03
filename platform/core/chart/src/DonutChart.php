@@ -7,7 +7,6 @@ use Botble\Chart\Supports\ChartTypes;
 
 class DonutChart extends Chart
 {
-
     /**
      * An array of strings containing HTML-style hex colors for each of the donut segments. Note: if there are fewer
      * colors than segments, the colors will cycle back to the start of the array when exhausted.

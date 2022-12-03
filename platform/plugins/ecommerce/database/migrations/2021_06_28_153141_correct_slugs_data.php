@@ -4,7 +4,7 @@ use Botble\Ecommerce\Models\Product;
 use Botble\Slug\Models\Slug;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class () extends Migration {
     /**
      * Run the migrations.
      *

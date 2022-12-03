@@ -8,7 +8,6 @@ use MarketplaceHelper;
 
 class CustomImageField extends FormField
 {
-
     /**
      * {@inheritDoc}
      */

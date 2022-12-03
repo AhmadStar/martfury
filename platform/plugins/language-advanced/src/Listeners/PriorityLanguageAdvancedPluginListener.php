@@ -7,7 +7,6 @@ use Exception;
 
 class PriorityLanguageAdvancedPluginListener
 {
-
     /**
      * Handle the event.
      *

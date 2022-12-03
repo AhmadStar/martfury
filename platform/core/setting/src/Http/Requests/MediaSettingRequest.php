@@ -6,7 +6,6 @@ use Botble\Support\Http\Requests\Request;
 
 class MediaSettingRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      * @return array

@@ -4,7 +4,7 @@ use Botble\ACL\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-return new class extends Migration {
+return new class () extends Migration {
     /**
      * Run the migrations.
      *

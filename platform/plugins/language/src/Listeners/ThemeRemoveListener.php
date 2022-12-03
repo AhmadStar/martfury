@@ -10,7 +10,6 @@ use Language;
 
 class ThemeRemoveListener
 {
-
     /**
      * Handle the event.
      *
@@ -28,7 +27,6 @@ class ThemeRemoveListener
                 app(SettingInterface::class)
                     ->deleteBy(['key', 'like', 'theme-' . $event->theme . '-' . $language->lang_code . '-%']);
             }
-
         } catch (Exception $exception) {
             info($exception->getMessage());
         }

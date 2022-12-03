@@ -39,13 +39,12 @@ class StoreForm extends FormAbstract
      */
     public function buildForm()
     {
-
         Assets::addScriptsDirectly('vendor/core/plugins/location/js/location.js');
 
         $customers = $this->customerRepository->pluck('name', 'id', ['is_vendor' => true]);
 
         $this
-            ->setupModel(new Store)
+            ->setupModel(new Store())
             ->setValidatorClass(StoreRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [
@@ -76,8 +75,11 @@ class StoreForm extends FormAbstract
         if (EcommerceHelper::loadCountriesStatesCitiesFromPluginLocation()) {
             $states = [];
             if ($this->model) {
-                $states = app(StateInterface::class)->pluck('states.name', 'states.id',
-                    [['country_id', '=', $this->model->country]]);
+                $states = app(StateInterface::class)->pluck(
+                    'states.name',
+                    'states.id',
+                    [['country_id', '=', $this->model->country]]
+                );
             }
 
             $this

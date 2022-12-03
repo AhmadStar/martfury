@@ -143,8 +143,11 @@ class BrandTable extends TableAbstract
      */
     public function bulkActions(): array
     {
-        return $this->addDeleteAction(route('brands.deletes'), 'brands.destroy',
-            parent::bulkActions());
+        return $this->addDeleteAction(
+            route('brands.deletes'),
+            'brands.destroy',
+            parent::bulkActions()
+        );
     }
 
     /**

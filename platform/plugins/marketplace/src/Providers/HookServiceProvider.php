@@ -29,6 +29,7 @@ use Botble\Marketplace\Repositories\Interfaces\WithdrawalInterface;
 use Botble\Slug\Models\Slug;
 use Exception;
 use Html;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
@@ -81,15 +82,16 @@ class HookServiceProvider extends ServiceProvider
                         $data->id &&
                         LanguageAdvancedManager::isSupported($data)
                     ) {
-
                         $refLang = null;
 
                         if (Language::getCurrentAdminLocaleCode() != Language::getDefaultLocaleCode()) {
                             $refLang = '?ref_lang=' . Language::getCurrentAdminLocaleCode();
                         }
 
-                        $form->setFormOption('url',
-                            route('marketplace.vendor.language-advanced.save', $data->id) . $refLang);
+                        $form->setFormOption(
+                            'url',
+                            route('marketplace.vendor.language-advanced.save', $data->id) . $refLang
+                        );
                     }
 
                     return $form;
@@ -104,7 +106,6 @@ class HookServiceProvider extends ServiceProvider
 
             add_action('customer_register_validation', function ($request) {
                 if (is_plugin_active('marketplace') && $request->input('is_vendor') == 1) {
-
                     Validator::make(
                         $request->input(),
                         [
@@ -198,7 +199,7 @@ class HookServiceProvider extends ServiceProvider
                             'user_id'         => Auth::id(),
                             'type'            => RevenueTypeEnum::SUBTRACT_AMOUNT,
                             'description'     => trans('plugins/marketplace::order.refund.description', [
-                                'order' => get_order_code($order->id),
+                                'order' => $order->code,
                             ]),
                             'amount'          => $refundAmount,
                             'sub_amount'      => $refundAmount,
@@ -258,7 +259,7 @@ class HookServiceProvider extends ServiceProvider
     /**
      * @param FormAbstract $form
      * @param BaseModel $data
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws BindingResolutionException
      */
     public function registerAdditionalData($form, $data)
     {
@@ -298,7 +299,7 @@ class HookServiceProvider extends ServiceProvider
      * @param Request $request
      * @param BaseModel $object
      * @return bool
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws BindingResolutionException
      */
     public function saveAdditionalData($type, $request, $object)
     {
@@ -306,7 +307,7 @@ class HookServiceProvider extends ServiceProvider
             return false;
         }
 
-        if (in_array($type, [STORE_MODULE_SCREEN_NAME, (new Store)->getTable()])) {
+        if (in_array($type, [STORE_MODULE_SCREEN_NAME, (new Store())->getTable()])) {
             $customer = $object->customer;
             if ($customer && $customer->id) {
                 if ($object->status->getValue() == BaseStatusEnum::PUBLISHED) {
@@ -320,7 +321,7 @@ class HookServiceProvider extends ServiceProvider
         } elseif (in_array($type, [PRODUCT_MODULE_SCREEN_NAME]) && $request->has('store_id') && request()->segment(1) !== 'vendor') {
             $object->store_id = $request->input('store_id');
             $object->save();
-        } elseif (in_array($type, [CUSTOMER_MODULE_SCREEN_NAME, (new Customer)->getTable()])
+        } elseif (in_array($type, [CUSTOMER_MODULE_SCREEN_NAME, (new Customer())->getTable()])
             && in_array(Route::currentRouteName(), ['customers.create', 'customers.create.store', 'customers.edit', 'customers.edit.update'])
         ) {
             if ($type == CUSTOMER_MODULE_SCREEN_NAME && $request->has('is_vendor')) {
@@ -410,7 +411,6 @@ class HookServiceProvider extends ServiceProvider
                     ->filter(function ($query) use ($model) {
                         $keyword = request()->input('search.value');
                         if ($keyword) {
-
                             $query = $query
                                 ->whereHas('store', function ($subQuery) use ($keyword) {
                                     return $subQuery->where('name', 'LIKE', '%' . $keyword . '%');
@@ -418,7 +418,10 @@ class HookServiceProvider extends ServiceProvider
 
                             if (get_class($model) == Order::class) {
                                 $query = $query
-                                    ->orWhereHas('address', function ($subQuery) use ($keyword) {
+                                    ->whereHas('address', function ($subQuery) use ($keyword) {
+                                        return $subQuery->where('name', 'LIKE', '%' . $keyword . '%');
+                                    })
+                                    ->orWhereHas('user', function ($subQuery) use ($keyword) {
                                         return $subQuery->where('name', 'LIKE', '%' . $keyword . '%');
                                     });
                             }
@@ -432,7 +435,6 @@ class HookServiceProvider extends ServiceProvider
             case Product::class:
                 return $data
                     ->addColumn('store_id', function ($item) {
-
                         $store = $item->original_product && $item->original_product->store->name ? $item->original_product->store : $item->store;
 
                         if (!$store->name) {
@@ -444,7 +446,6 @@ class HookServiceProvider extends ServiceProvider
                     ->filter(function ($query) use ($model) {
                         $keyword = request()->input('search.value');
                         if ($keyword) {
-
                             $query
                                 ->where('name', 'LIKE', '%' . $keyword . '%')
                                 ->where('is_variation', 0)
@@ -725,7 +726,6 @@ class HookServiceProvider extends ServiceProvider
             $data->created_by_type == Customer::class &&
             Auth::user()->hasPermission('products.edit')
         ) {
-
             $isApproved = $data->status == BaseStatusEnum::PUBLISHED;
             if (!$isApproved) {
                 Assets::addScriptsDirectly(['vendor/core/plugins/marketplace/js/marketplace-product.js']);

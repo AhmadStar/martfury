@@ -40,6 +40,10 @@ if (!defined('PRODUCT_TAG_MODULE_SCREEN_NAME')) {
     define('PRODUCT_TAG_MODULE_SCREEN_NAME', 'product-tag');
 }
 
+if (!defined('GLOBAL_OPTION_MODULE_SCREEN_NAME')) {
+    define('GLOBAL_OPTION_MODULE_SCREEN_NAME', 'global-option');
+}
+
 if (!defined('PRODUCT_ATTRIBUTE_SETS_MODULE_SCREEN_NAME')) {
     define('PRODUCT_ATTRIBUTE_SETS_MODULE_SCREEN_NAME', 'product-attribute-sets');
 }
@@ -70,6 +74,10 @@ if (!defined('SHIPPING_METHOD_MODULE_SCREEN_NAME')) {
 
 if (!defined('ORDER_MODULE_SCREEN_NAME')) {
     define('ORDER_MODULE_SCREEN_NAME', 'plugin-order');
+}
+
+if (!defined('ORDER_RETURN_MODULE_SCREEN_NAME')) {
+    define('ORDER_RETURN_MODULE_SCREEN_NAME', 'plugin-order-return');
 }
 
 if (!defined('ORDER_INCOMPLETE_MODULE_SCREEN_NAME')) {
@@ -154,16 +162,16 @@ if (!defined('PROCESS_GET_CHECKOUT_RECOVER_ECOMMERCE')) {
     define('PROCESS_GET_CHECKOUT_RECOVER_ECOMMERCE', 'get_checkout_recover');
 }
 
-if (!defined('PROCESS_CHECOUT_RULES_REQUEST_ECOMMERCE')) {
-    define('PROCESS_CHECOUT_RULES_REQUEST_ECOMMERCE', 'checkout_rules_request');
+if (!defined('PROCESS_CHECKOUT_RULES_REQUEST_ECOMMERCE')) {
+    define('PROCESS_CHECKOUT_RULES_REQUEST_ECOMMERCE', 'checkout_rules_request');
 }
 
 if (!defined('PROCESS_CHECKOUT_MESSAGES_REQUEST_ECOMMERCE')) {
     define('PROCESS_CHECKOUT_MESSAGES_REQUEST_ECOMMERCE', 'checkout_messages_request');
 }
 
-if (!defined('ACTION_AFTER_ORDER_STATUS_COMPELETED_ECOMMERCE')) {
-    define('ACTION_AFTER_ORDER_STATUS_COMPELETED_ECOMMERCE', 'after_order_completed');
+if (!defined('ACTION_AFTER_ORDER_STATUS_COMPLETED_ECOMMERCE')) {
+    define('ACTION_AFTER_ORDER_STATUS_COMPLETED_ECOMMERCE', 'after_order_completed');
 }
 
 if (!defined('HANDLE_CUSTOMER_UPDATED_ECOMMERCE')) {
@@ -176,4 +184,16 @@ if (!defined('ACTION_BEFORE_POST_ORDER_REFUND_ECOMMERCE')) {
 
 if (!defined('ACTION_AFTER_POST_ORDER_REFUNDED_ECOMMERCE')) {
     define('ACTION_AFTER_POST_ORDER_REFUNDED_ECOMMERCE', 'after_post_order_refunded');
+}
+
+if (!defined('FILTER_ECOMMERCE_PROCESS_PAYMENT')) {
+    define('FILTER_ECOMMERCE_PROCESS_PAYMENT', 'filter_ecommerce_process_payment');
+}
+
+if (!defined('INVOICE_MODULE_SCREEN_NAME')) {
+    define('INVOICE_MODULE_SCREEN_NAME', 'invoice');
+}
+
+if (!defined('INVOICE_PAYMENT_CREATED')) {
+    define('INVOICE_PAYMENT_CREATED', 'invoice_payment_created');
 }

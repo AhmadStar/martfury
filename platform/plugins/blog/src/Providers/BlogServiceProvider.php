@@ -2,6 +2,7 @@
 
 namespace Botble\Blog\Providers;
 
+use ApiHelper;
 use Botble\LanguageAdvanced\Supports\LanguageAdvancedManager;
 use Botble\Shortcode\View\View;
 use Illuminate\Routing\Events\RouteMatched;
@@ -35,15 +36,15 @@ class BlogServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(PostInterface::class, function () {
-            return new PostCacheDecorator(new PostRepository(new Post));
+            return new PostCacheDecorator(new PostRepository(new Post()));
         });
 
         $this->app->bind(CategoryInterface::class, function () {
-            return new CategoryCacheDecorator(new CategoryRepository(new Category));
+            return new CategoryCacheDecorator(new CategoryRepository(new Category()));
         });
 
         $this->app->bind(TagInterface::class, function () {
-            return new TagCacheDecorator(new TagRepository(new Tag));
+            return new TagCacheDecorator(new TagRepository(new Tag()));
         });
     }
 
@@ -62,9 +63,13 @@ class BlogServiceProvider extends ServiceProvider
             ->loadAndPublishConfigurations(['permissions', 'general'])
             ->loadAndPublishViews()
             ->loadAndPublishTranslations()
-            ->loadRoutes(['web', 'api'])
+            ->loadRoutes(['web'])
             ->loadMigrations()
             ->publishAssets();
+
+        if (ApiHelper::enabled()) {
+            $this->loadRoutes(['api']);
+        }
 
         $this->app->register(EventServiceProvider::class);
 

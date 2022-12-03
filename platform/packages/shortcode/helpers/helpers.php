@@ -1,10 +1,13 @@
 <?php
 
+use Botble\Shortcode\Shortcode;
+use Illuminate\Support\HtmlString;
+
 if (!function_exists('shortcode')) {
     /**
-     * @return \Botble\Shortcode\Shortcode
+     * @return Shortcode
      */
-    function shortcode()
+    function shortcode(): Shortcode
     {
         return app('shortcode');
     }
@@ -16,22 +19,23 @@ if (!function_exists('add_shortcode')) {
      * @param string|null $name
      * @param null|string $description
      * @param null $callback
-     * @return \Botble\Shortcode\Shortcode
+     * @param string $previewImage
+     * @return Shortcode
      */
-    function add_shortcode(string $key, ?string $name, ?string $description = null, $callback = null)
+    function add_shortcode(string $key, ?string $name, ?string $description = null, $callback = null, $previewImage = ''): Shortcode
     {
-        return shortcode()->register($key, $name, $description, $callback);
+        return shortcode()->register($key, $name, $description, $callback, $previewImage);
     }
 }
 
 if (!function_exists('do_shortcode')) {
     /**
      * @param string $content
-     * @return string
+     * @return HtmlString
      */
-    function do_shortcode(string $content)
+    function do_shortcode(string $content): HtmlString
     {
-        return shortcode()->compile($content);
+        return shortcode()->compile($content, true);
     }
 }
 

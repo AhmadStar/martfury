@@ -7,5 +7,4 @@ use Botble\Location\Repositories\Interfaces\CountryInterface;
 
 class CountryCacheDecorator extends CacheAbstractDecorator implements CountryInterface
 {
-
 }

@@ -87,7 +87,7 @@ abstract class PaystackPaymentAbstract implements ProduceServiceInterface
                 'to'   => $payment->created_at->addDays(1)->toISOString(),
             ];
 
-            $response = (new Paystack)->getListTransactions($params);
+            $response = (new Paystack())->getListTransactions($params);
             if ($response['status']) {
                 return collect($response['data'])->firstWhere('reference', $payment->charge_id);
             }
@@ -105,7 +105,7 @@ abstract class PaystackPaymentAbstract implements ProduceServiceInterface
     public function refundOrder($paymentId, $amount)
     {
         try {
-            $response = (new Paystack)->refundOrder($paymentId, $amount);
+            $response = (new Paystack())->refundOrder($paymentId, $amount);
 
             if ($response['status']) {
                 $response = array_merge($response, ['_refund_id' => Arr::get($response, 'data.id')]);
@@ -133,12 +133,11 @@ abstract class PaystackPaymentAbstract implements ProduceServiceInterface
      *
      * @param string $refundId
      * @return mixed Object refund details
-     * @throws Exception
      */
     public function getRefundDetails($refundId)
     {
         try {
-            $response = (new Paystack)->getRefundDetails($refundId);
+            $response = (new Paystack())->getRefundDetails($refundId);
             if ($response['status']) {
                 return [
                     'error'   => false,

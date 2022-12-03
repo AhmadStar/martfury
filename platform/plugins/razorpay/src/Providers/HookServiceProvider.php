@@ -42,8 +42,11 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter(BASE_FILTER_ENUM_HTML, function ($value, $class) {
             if ($class == PaymentMethodEnum::class && $value == RAZORPAY_PAYMENT_METHOD_NAME) {
-                $value = Html::tag('span', PaymentMethodEnum::getLabel($value),
-                    ['class' => 'label-success status-label'])
+                $value = Html::tag(
+                    'span',
+                    PaymentMethodEnum::getLabel($value),
+                    ['class' => 'label-success status-label']
+                )
                     ->toHtml();
             }
 
@@ -60,7 +63,7 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter(PAYMENT_FILTER_PAYMENT_INFO_DETAIL, function ($data, $payment) {
             if ($payment->payment_channel == RAZORPAY_PAYMENT_METHOD_NAME) {
-                $paymentService = new RazorpayPaymentService;
+                $paymentService = new RazorpayPaymentService();
                 $paymentDetail = $paymentService->getPaymentDetails($payment->charge_id);
 
                 if ($paymentDetail) {
@@ -73,7 +76,7 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter(PAYMENT_FILTER_GET_REFUND_DETAIL, function ($data, $payment, $refundId) {
             if ($payment->payment_channel == RAZORPAY_PAYMENT_METHOD_NAME) {
-                $refundDetail = (new RazorpayPaymentService)->getRefundDetails($refundId);
+                $refundDetail = (new RazorpayPaymentService())->getRefundDetails($refundId);
                 if (!Arr::get($refundDetail, 'error')) {
                     $refunds = Arr::get($payment->metadata, 'refunds', []);
                     $refund = collect($refunds)->firstWhere('id', $refundId);
@@ -125,7 +128,7 @@ class HookServiceProvider extends ServiceProvider
 
             $order = $api->order->create([
                 'receipt'  => $receiptId,
-                'amount'   => (int) $amount,
+                'amount'   => (int)round($amount),
                 'currency' => $data['currency'],
             ]);
 
@@ -146,8 +149,10 @@ class HookServiceProvider extends ServiceProvider
     {
         if ($request->input('payment_method') == RAZORPAY_PAYMENT_METHOD_NAME) {
             try {
-                $api = new Api(get_payment_setting('key', RAZORPAY_PAYMENT_METHOD_NAME),
-                    get_payment_setting('secret', RAZORPAY_PAYMENT_METHOD_NAME));
+                $api = new Api(
+                    get_payment_setting('key', RAZORPAY_PAYMENT_METHOD_NAME),
+                    get_payment_setting('secret', RAZORPAY_PAYMENT_METHOD_NAME)
+                );
 
                 $api->utility->verifyPaymentSignature([
                     'razorpay_signature'  => $request->input('razorpay_signature'),
@@ -159,7 +164,7 @@ class HookServiceProvider extends ServiceProvider
 
                 $order = $order->toArray();
 
-                if (in_array($order['status'], ['paid', 'attempted'])) {
+                if (in_array($order['status'], ['created', 'paid', 'attempted'])) {
                     $amount = $order['amount_paid'] / 100;
 
                     $status = PaymentStatusEnum::COMPLETED;
@@ -184,7 +189,6 @@ class HookServiceProvider extends ServiceProvider
                     $data['error'] = true;
                     $data['message'] = __('Payment failed!');
                 }
-
             } catch (SignatureVerificationError $exception) {
                 $data['message'] = $exception->getMessage();
                 $data['error'] = true;

@@ -2,9 +2,10 @@
 
 namespace Botble\Backup\Commands;
 
+use BaseHelper;
 use Botble\Backup\Supports\Backup;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Console\Command;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -55,7 +56,7 @@ class BackupRestoreCommand extends Command
                     return 1;
                 }
             } else {
-                $backups = scan_folder($this->backup->getBackupPath());
+                $backups = BaseHelper::scanFolder($this->backup->getBackupPath());
 
                 if (empty($backups)) {
                     $this->error('No backup found to restore!');
@@ -68,7 +69,7 @@ class BackupRestoreCommand extends Command
             $this->info('Restoring backup...');
 
             $path = $this->backup->getBackupPath($backup);
-            foreach (scan_folder($path) as $file) {
+            foreach (BaseHelper::scanFolder($path) as $file) {
                 if (Str::contains(basename($file), 'database')) {
                     $this->info('Restoring database...');
                     $this->backup->restoreDatabase($path . DIRECTORY_SEPARATOR . $file, $path);
@@ -87,7 +88,6 @@ class BackupRestoreCommand extends Command
             do_action(BACKUP_ACTION_AFTER_RESTORE, BACKUP_MODULE_SCREEN_NAME, request());
 
             $this->info(trans('plugins/backup::backup.restore_backup_success'));
-
         } catch (Exception $exception) {
             $this->error($exception->getMessage());
         }

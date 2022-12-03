@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class TopSellingProductsTable extends TableAbstract
 {
-
     /**
      * @var string
      */

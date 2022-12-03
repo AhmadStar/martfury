@@ -17,9 +17,8 @@ use Botble\Location\Models\City;
 use Botble\Location\Repositories\Interfaces\CityInterface;
 use Botble\Location\Tables\CityTable;
 use Exception;
-use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Throwable;
 
 class CityController extends BaseController
@@ -45,7 +44,6 @@ class CityController extends BaseController
      */
     public function index(CityTable $table)
     {
-
         page_title()->setTitle(trans('plugins/location::city.name'));
 
         return $table->renderTable();

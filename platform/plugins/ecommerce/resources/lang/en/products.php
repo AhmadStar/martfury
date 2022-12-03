@@ -3,6 +3,10 @@
 return [
     'name'                                           => 'Products',
     'create'                                         => 'New product',
+    'create_product_type'                            => [
+        'physical' => 'New physical product',
+        'digital'  => 'New digital product',
+    ],
     'edit'                                           => 'Edit product - :name',
     'form'                                           => [
         'name'                               => 'Name',
@@ -18,8 +22,8 @@ return [
         'height'                             => 'Height',
         'weight'                             => 'Weight',
         'date'                               => [
-            'end'   => 'From date',
-            'start' => 'To date',
+            'start' => 'From date',
+            'end'   => 'To date',
         ],
         'image'                              => 'Images',
         'collections'                        => 'Product collections',
@@ -145,4 +149,17 @@ return [
     'category'                                       => 'Category',
     'product_price_flash_sale_warning'               => 'This product is in flash sale <strong>:name</strong> so its price is <strong>:price</strong>.',
     'product_price_discount_warning'                 => 'This product is in discount <strong>:name</strong> so its price is <strong>:price</strong>.',
+    'product_image'                                  => 'Product image',
+    'product_name'                                   => 'Product name',
+    'types'                                          => [
+        'physical' => 'Physical',
+        'digital'  => 'Digital',
+    ],
+    'digital_attachments'                            => [
+        'title'     => 'Digital attachments',
+        'add'       => 'Add Attachment',
+        'file_name' => 'File name',
+        'file_size' => 'File size',
+        'unsaved'   => 'Unsaved',
+    ],
 ];

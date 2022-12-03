@@ -7,7 +7,7 @@ use EmailHandler;
 use Html;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Throwable;
-use URL;
+use Illuminate\Support\Facades\URL;
 
 class SubscribeNewsletterListener implements ShouldQueue
 {
@@ -25,8 +25,10 @@ class SubscribeNewsletterListener implements ShouldQueue
                 'newsletter_name'             => $event->newsletter->name ?? 'N/A',
                 'newsletter_email'            => $event->newsletter->email,
                 'newsletter_unsubscribe_link' => Html::link(
-                    URL::signedRoute('public.newsletter.unsubscribe',
-                        ['user' => $event->newsletter->id]),
+                    URL::signedRoute(
+                        'public.newsletter.unsubscribe',
+                        ['user' => $event->newsletter->id]
+                    ),
                     __('here')
                 )->toHtml(),
             ]);

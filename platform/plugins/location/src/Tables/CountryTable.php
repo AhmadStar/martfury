@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class CountryTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

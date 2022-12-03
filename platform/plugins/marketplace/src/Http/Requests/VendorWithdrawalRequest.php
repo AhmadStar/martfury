@@ -7,7 +7,6 @@ use MarketplaceHelper;
 
 class VendorWithdrawalRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

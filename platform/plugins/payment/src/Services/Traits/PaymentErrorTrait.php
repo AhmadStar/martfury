@@ -2,10 +2,10 @@
 
 namespace Botble\Payment\Services\Traits;
 
-use Botble\Payment\Supports\StripeHelper;
+use Botble\Payment\Supports\PaymentHelper;
 use Exception;
 use Illuminate\Support\Arr;
-use Log;
+use Illuminate\Support\Facades\Log;
 use Stripe\Exception\ApiErrorException;
 
 trait PaymentErrorTrait
@@ -16,9 +16,9 @@ trait PaymentErrorTrait
     protected $errorMessage = null;
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getErrorMessage()
+    public function getErrorMessage(): ?string
     {
         return $this->errorMessage;
     }
@@ -56,7 +56,7 @@ trait PaymentErrorTrait
 
             Log::error(
                 'Failed to make a payment charge.',
-                StripeHelper::formatLog([
+                PaymentHelper::formatLog([
                     'catch_case'    => $case,
                     'http_status'   => ($exception instanceof ApiErrorException) ? $exception->getHttpStatus() : 'not-have-http-status',
                     'error_type'    => Arr::get($error, 'type', 'not-have-error-type'),
@@ -68,7 +68,7 @@ trait PaymentErrorTrait
         } catch (Exception $exception) {
             Log::error(
                 'Failed to make a payment charge.',
-                StripeHelper::formatLog([
+                PaymentHelper::formatLog([
                     'catch_case'    => $case,
                     'error_message' => $exception->getMessage(),
                 ], __LINE__, __FUNCTION__, __CLASS__)

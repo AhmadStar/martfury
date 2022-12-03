@@ -70,7 +70,6 @@ class SimpleSliderSeeder extends BaseSeeder
 
         foreach ($sliders as $locale => $sliderItem) {
             foreach ($sliderItem as $index => $value) {
-
                 $slider = SimpleSlider::create($value);
 
                 $originValue = null;
@@ -106,4 +105,3 @@ class SimpleSliderSeeder extends BaseSeeder
         ]);
     }
 }
-

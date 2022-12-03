@@ -3,6 +3,7 @@
         <span>{{ $item['name'] }}</span>
     </td>
     <td class="text-center">{{ $item['locale'] }}</td>
+    <td class="text-center">{{ $item['locale'] == app()->getLocale() ? trans('core/base::base.yes') : trans('core/base::base.no') }}</td>
     <td class="text-center">
         <span>
             @if ($item['locale'] != 'en')

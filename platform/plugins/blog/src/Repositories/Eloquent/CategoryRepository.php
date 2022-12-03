@@ -9,7 +9,6 @@ use Eloquent;
 
 class CategoryRepository extends RepositoriesAbstract implements CategoryInterface
 {
-
     /**
      * {@inheritDoc}
      */

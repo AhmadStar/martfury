@@ -15,19 +15,18 @@ use Botble\Theme\Http\Requests\CustomHtmlRequest;
 use Botble\Theme\Http\Requests\CustomJsRequest;
 use Botble\Theme\Services\ThemeService;
 use Exception;
-use File;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Support\Facades\File;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\View\View;
 use Theme;
 use ThemeOption;
 
 class ThemeController extends BaseController
 {
     /**
-     * @return Factory|View
+     * @return Factory|Application|\Illuminate\Contracts\View\View
      */
     public function index()
     {
@@ -47,7 +46,7 @@ class ThemeController extends BaseController
     }
 
     /**
-     * @return Factory|View
+     * @return Application|Factory|\Illuminate\Contracts\View\View
      */
     public function getOptions()
     {
@@ -81,7 +80,7 @@ class ThemeController extends BaseController
                 $field = ThemeOption::getField($key);
 
                 if ($field && Arr::get($field, 'clean_tags', true)) {
-                    $value = BaseHelper::clean(strip_tags($value));
+                    $value = BaseHelper::clean(strip_tags((string)$value));
                 }
             }
 
@@ -98,7 +97,6 @@ class ThemeController extends BaseController
      * @param BaseHttpResponse $response
      * @param ThemeService $themeService
      * @return BaseHttpResponse
-     * @throws FileNotFoundException
      */
     public function postActivateTheme(Request $request, BaseHttpResponse $response, ThemeService $themeService)
     {
@@ -152,12 +150,12 @@ class ThemeController extends BaseController
 
         $file = Theme::getStyleIntegrationPath();
         $css = $request->input('custom_css');
-        $css = strip_tags($css);
+        $css = strip_tags((string)$css);
 
         if (empty($css)) {
             File::delete($file);
         } else {
-            $saved = save_file_data($file, $css, false);
+            $saved = BaseHelper::saveFileData($file, $css, false);
 
             if (!$saved) {
                 return $response
@@ -236,7 +234,7 @@ class ThemeController extends BaseController
 
         $theme = strtolower($request->input('theme'));
 
-        if (in_array($theme, scan_folder(theme_path()))) {
+        if (in_array($theme, BaseHelper::scanFolder(theme_path()))) {
             try {
                 $result = $themeService->remove($theme);
 

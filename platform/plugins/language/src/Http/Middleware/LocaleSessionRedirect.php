@@ -10,7 +10,6 @@ use Language;
 
 class LocaleSessionRedirect extends LaravelLocalizationMiddlewareBase
 {
-
     /**
      * Handle an incoming request.
      *

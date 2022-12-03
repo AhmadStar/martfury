@@ -27,6 +27,6 @@ class SettingsManager extends Manager
      */
     public function createDatabaseDriver(): DatabaseSettingStore
     {
-        return new DatabaseSettingStore;
+        return new DatabaseSettingStore();
     }
 }

@@ -73,7 +73,9 @@ class AnalyticsClient
             $this->cache->forget($cacheName);
         }
 
-        return $this->cache->remember($cacheName, $this->cacheLifeTimeInMinutes,
+        return $this->cache->remember(
+            $cacheName,
+            $this->cacheLifeTimeInMinutes,
             function () use ($viewId, $startDate, $endDate, $metrics, $others) {
                 $result = $this->service->data_ga->get(
                     'ga:' . $viewId,
@@ -102,7 +104,8 @@ class AnalyticsClient
                 }
 
                 return $result;
-            });
+            }
+        );
     }
 
     /**

@@ -41,7 +41,7 @@ class DashboardWidgetSetting extends BaseModel
     /**
      * @return BelongsTo
      */
-    public function widget()
+    public function widget(): BelongsTo
     {
         return $this->belongsTo(DashboardWidget::class);
     }

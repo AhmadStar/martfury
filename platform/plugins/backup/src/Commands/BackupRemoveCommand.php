@@ -4,7 +4,7 @@ namespace Botble\Backup\Commands;
 
 use Botble\Backup\Supports\Backup;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 
@@ -62,7 +62,6 @@ class BackupRemoveCommand extends Command
             $this->backup->deleteFolderBackup($this->backup->getBackupPath($backup));
 
             $this->info('Remove a backup successfully!');
-
         } catch (Exception $exception) {
             $this->error($exception->getMessage());
         }

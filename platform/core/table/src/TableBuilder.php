@@ -28,7 +28,7 @@ class TableBuilder
      * @return TableAbstract
      * @throws BindingResolutionException
      */
-    public function create($tableClass)
+    public function create(string $tableClass): TableAbstract
     {
         if (!class_exists($tableClass)) {
             throw new InvalidArgumentException(

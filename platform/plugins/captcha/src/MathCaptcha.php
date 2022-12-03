@@ -4,6 +4,7 @@ namespace Botble\Captcha;
 
 use Exception;
 use Illuminate\Session\SessionManager;
+use Illuminate\Support\Facades\Cache;
 
 class MathCaptcha
 {
@@ -13,8 +14,7 @@ class MathCaptcha
     protected $session;
 
     /**
-     *
-     * @param SessionManager|null $session
+     * @param SessionManager|null|Cache $session
      */
     public function __construct(SessionManager $session = null)
     {
@@ -30,17 +30,17 @@ class MathCaptcha
      */
     public function label(): string
     {
-        $label = sprintf('%d %s %d', $this->getMathSecondOperator(), $this->getMathOperand(), $this->getMathFirstOperator());
-
-        if (config('plugins.captcha.general.math-captcha.text')) {
-            $label = sprintf('%s %s %s',
-                trans('plugins/captcha::captcha.math-captcha.numbers.' . $this->getMathSecondOperator()),
-                trans('plugins/captcha::captcha.math-captcha.operands.' . $this->getMathOperand()),
-                trans('plugins/captcha::captcha.math-captcha.numbers.' . $this->getMathFirstOperator())
-            );
-        }
+        $label = $this->getMathLabelOnly();
 
         return __('Please solve the following math function: :label = ?', compact('label'));
+    }
+
+    /**
+     * @return string
+     */
+    public function getMathLabelOnly(): string
+    {
+        return sprintf('%d %s %d', $this->getMathSecondOperator(), $this->getMathOperand(), $this->getMathFirstOperator());
     }
 
     /**

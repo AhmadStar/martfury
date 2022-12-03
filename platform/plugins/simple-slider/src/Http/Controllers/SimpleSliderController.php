@@ -41,8 +41,7 @@ class SimpleSliderController extends BaseController
     public function __construct(
         SimpleSliderInterface $simpleSliderRepository,
         SimpleSliderItemInterface $simpleSliderItemRepository
-    )
-    {
+    ) {
         $this->simpleSliderRepository = $simpleSliderRepository;
         $this->simpleSliderItemRepository = $simpleSliderItemRepository;
     }

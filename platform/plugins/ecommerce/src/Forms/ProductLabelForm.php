@@ -9,14 +9,13 @@ use Botble\Ecommerce\Models\ProductLabel;
 
 class ProductLabelForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new ProductLabel)
+            ->setupModel(new ProductLabel())
             ->setValidatorClass(ProductLabelRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

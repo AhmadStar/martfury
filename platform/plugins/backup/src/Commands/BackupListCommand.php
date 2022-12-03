@@ -2,6 +2,7 @@
 
 namespace Botble\Backup\Commands;
 
+use BaseHelper;
 use Botble\Backup\Supports\Backup;
 use Exception;
 use Illuminate\Console\Command;
@@ -44,7 +45,7 @@ class BackupListCommand extends Command
     public function handle()
     {
         try {
-            $backups = get_file_data($this->backup->getBackupPath('backup.json'));
+            $backups = BaseHelper::getFileData($this->backup->getBackupPath('backup.json'));
 
             foreach ($backups as $key => &$backup) {
                 $backup['key'] = $key;
@@ -58,7 +59,6 @@ class BackupListCommand extends Command
             ];
 
             $this->table($header, $backups);
-
         } catch (Exception $exception) {
             $this->error($exception->getMessage());
         }

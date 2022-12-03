@@ -379,9 +379,13 @@ class OrderAdminManagement {
                 data: _self.closest('.modal-dialog').find('form').serialize(),
                 success: res => {
                     if (!res.error) {
-                        $('#main-order-content').load(window.location.href + ' #main-order-content > *');
-                        Botble.showSuccess(res.message);
-                        _self.closest('.modal').modal('hide');
+                        if (res.data && res.data.refund_redirect_url) {
+                            window.location.href = res.data.refund_redirect_url;
+                        } else {
+                            $('#main-order-content').load(window.location.href + ' #main-order-content > *');
+                            Botble.showSuccess(res.message);
+                            _self.closest('.modal').modal('hide');
+                        }
                     } else {
                         Botble.showError(res.message);
                     }

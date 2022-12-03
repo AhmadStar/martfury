@@ -2,8 +2,8 @@
 
 namespace Botble\Base\Supports;
 
-use Cache;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use Intervention\Image\AbstractFont;
 use Intervention\Image\AbstractShape;
@@ -74,7 +74,7 @@ class Avatar
     /**
      * @var int
      */
-    protected $borderSize = 1;
+    protected $borderSize = 0;
 
     /**
      * @var string
@@ -186,7 +186,7 @@ class Avatar
      */
     public function __toString()
     {
-        return (string)$this->toBase64();
+        return $this->toBase64();
     }
 
     /**
@@ -278,17 +278,17 @@ class Avatar
     }
 
     /**
-     * @param string $name
+     * @param string|array $name
      * @param int $length
      * @param bool $uppercase
      * @param bool $ascii
      * @return string
      */
-    public function make($name, $length = 1, $uppercase = false, $ascii = false)
+    public function make($name, int $length = 1, bool $uppercase = false, bool $ascii = false): string
     {
         $this->setName($name, $ascii);
 
-        $words = new Collection(explode(' ', $this->name));
+        $words = collect(explode(' ', $this->name));
 
         // if name contains single word, use first N character
         if ($words->count() === 1) {
@@ -299,7 +299,7 @@ class Avatar
             }
         } else {
             // otherwise, use initial char from each word
-            $initials = new Collection;
+            $initials = new Collection();
             $words->each(function ($word) use ($initials) {
                 $initials->push(Str::substr($word, 0, 1));
             });
@@ -315,10 +315,10 @@ class Avatar
     }
 
     /**
-     * @param string $name
+     * @param string|array $name
      * @param bool $ascii
      */
-    protected function setName($name, $ascii)
+    protected function setName($name, bool $ascii)
     {
         if (is_array($name)) {
             throw new InvalidArgumentException(
@@ -343,10 +343,10 @@ class Avatar
     }
 
     /**
-     * @param string $name
+     * @param string|null $name
      * @return $this
      */
-    public function create($name): self
+    public function create(?string $name): self
     {
         $this->name = $name;
 
@@ -358,7 +358,7 @@ class Avatar
      * @param int $quality
      * @return Image
      */
-    public function save($path, $quality = 90)
+    public function save(string $path, int $quality = 90): Image
     {
         $this->buildAvatar();
 
@@ -369,8 +369,8 @@ class Avatar
     {
         $this->image->circle(
             $this->width - $this->borderSize,
-            $this->width / 2,
-            $this->height / 2,
+            intval($this->width / 2),
+            intval($this->height / 2),
             function (AbstractShape $draw) {
                 $draw->background($this->background);
                 $draw->border($this->borderSize, $this->getBorderColor());

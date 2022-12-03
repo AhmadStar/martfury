@@ -2,9 +2,9 @@
 
 namespace Botble\Base\Supports;
 
-use App;
-use File;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use BaseHelper;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\File;
 use Request;
 
 class SystemManagement
@@ -12,11 +12,10 @@ class SystemManagement
     /**
      * Get the Composer file contents as an array
      * @return array
-     * @throws FileNotFoundException
      */
-    public static function getComposerArray()
+    public static function getComposerArray(): array
     {
-        return get_file_data(base_path('composer.json'));
+        return BaseHelper::getFileData(base_path('composer.json'));
     }
 
     /**
@@ -64,7 +63,7 @@ class SystemManagement
             'debug_mode'           => config('app.debug'),
             'storage_dir_writable' => File::isWritable(base_path('storage')),
             'cache_dir_writable'   => File::isReadable(base_path('bootstrap/cache')),
-            'app_size'             => human_file_size(self::folderSize(base_path())),
+            'app_size'             => BaseHelper::humanFilesize(self::folderSize(base_path())),
         ];
     }
 
@@ -74,7 +73,7 @@ class SystemManagement
      * @param string $directory
      * @return int
      */
-    protected static function folderSize($directory): int
+    protected static function folderSize(string $directory): int
     {
         $size = 0;
         foreach (File::glob(rtrim($directory, '/') . '/*', GLOB_NOSORT) as $each) {

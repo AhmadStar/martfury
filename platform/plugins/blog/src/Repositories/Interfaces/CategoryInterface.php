@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 
 interface CategoryInterface extends RepositoryInterface
 {
-
     /**
      * @return array
      */

@@ -7,5 +7,4 @@ use Botble\Payment\Repositories\Interfaces\PaymentInterface;
 
 class PaymentCacheDecorator extends CacheAbstractDecorator implements PaymentInterface
 {
-
 }

@@ -6,7 +6,6 @@ use Botble\Support\Http\Requests\Request;
 
 class ShippingMethodRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -20,8 +19,10 @@ class ShippingMethodRequest extends Request
             'order' => 'required|integer|min:0',
         ];
 
-        foreach (config('plugins.ecommerce.shipping.integration_rules.' . $this->input('method_code'),
-            []) as $key => $rule) {
+        foreach (config(
+            'plugins.ecommerce.shipping.integration_rules.' . $this->input('method_code'),
+            []
+        ) as $key => $rule) {
             $rules[$this->input('method_code') . '.' . $key] = $rule['rule'];
         }
 
@@ -35,8 +36,10 @@ class ShippingMethodRequest extends Request
     public function attributes()
     {
         $attributes = [];
-        foreach (config('plugins.ecommerce.shipping.integration_rules.' . $this->input('method_code'),
-            []) as $key => $rule) {
+        foreach (config(
+            'plugins.ecommerce.shipping.integration_rules.' . $this->input('method_code'),
+            []
+        ) as $key => $rule) {
             $attributes[$this->input('method_code') . '.' . $key] = $rule['name'];
         }
         return $attributes;

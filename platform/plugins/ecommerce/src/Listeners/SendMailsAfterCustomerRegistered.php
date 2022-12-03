@@ -6,13 +6,18 @@ use Botble\Ecommerce\Models\Customer;
 use EcommerceHelper;
 use EmailHandler;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Throwable;
 
 class SendMailsAfterCustomerRegistered
 {
     /**
      * Handle the event.
      *
+     * @param Registered $event
      * @return void
+     * @throws FileNotFoundException
+     * @throws Throwable
      */
     public function handle(Registered $event)
     {
@@ -26,14 +31,7 @@ class SendMailsAfterCustomerRegistered
                 ->sendUsingTemplate('welcome', $customer->email);
 
             if (EcommerceHelper::isEnableEmailVerification()) {
-
-                // Notify the user
-                $notificationConfig = config('plugins.ecommerce.general.customer.notification');
-
-                if ($notificationConfig) {
-                    $notification = app($notificationConfig);
-                    $customer->notify($notification);
-                }
+                $customer->sendEmailVerificationNotification();
             }
         }
     }

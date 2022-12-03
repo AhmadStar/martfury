@@ -7,7 +7,6 @@ use Illuminate\Support\ServiceProvider;
 
 class FormServiceProvider extends ServiceProvider
 {
-
     public function boot()
     {
         Form::component('mediaImage', 'core/base::forms.partials.image', [
@@ -144,6 +143,12 @@ class FormServiceProvider extends ServiceProvider
             'name',
             'value'      => null,
             'fields'     => [],
+            'attributes' => [],
+        ]);
+
+        Form::component('phoneNumber', 'core/base::forms.partials.phone-number', [
+            'name',
+            'value'      => null,
             'attributes' => [],
         ]);
     }

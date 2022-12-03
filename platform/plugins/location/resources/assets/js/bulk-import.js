@@ -153,38 +153,62 @@ $(() => {
         });
     });
 
-    $(document).on('click', '.btn-import-location-data', function (event) {
-        event.preventDefault();
+    let $availableRemoteLocations = $('#available-remote-locations');
 
-        $('.button-confirm-import').data('url', $(this).data('url'));
-        $('.modal-confirm-import').modal('show');
-    });
-
-    $('.button-confirm-import').on('click', event => {
-        event.preventDefault();
-        let _self = $(event.currentTarget);
-
-        _self.addClass('button-loading');
-
-        let url = _self.data('url');
-
-        $.ajax({
-            url: url,
-            type: 'POST',
-            success: data => {
-                if (data.error) {
-                    Botble.showError(data.message);
-                } else {
-                    Botble.showSuccess(data.message);
+    if ($availableRemoteLocations.length) {
+        let getRemoteLocations = () => {
+            $.ajax({
+                url: $availableRemoteLocations.data('url'),
+                type: 'GET',
+                success: res => {
+                    if (res.error) {
+                        Botble.showError(res.message);
+                    } else {
+                        $availableRemoteLocations.html(res.data);
+                    }
+                },
+                error: res => {
+                    Botble.handleError(res);
                 }
+            });
+        };
 
-                _self.closest('.modal').modal('hide');
-                _self.removeClass('button-loading');
-            },
-            error: data => {
-                Botble.handleError(data);
-                _self.removeClass('button-loading');
-            }
+        getRemoteLocations();
+
+        $(document).on('click', '.btn-import-location-data', function (event) {
+            event.preventDefault();
+
+            $('.button-confirm-import').data('url', $(this).data('url'));
+            $('.modal-confirm-import').modal('show');
         });
-    });
+
+        $('.button-confirm-import').on('click', event => {
+            event.preventDefault();
+            let _self = $(event.currentTarget);
+
+            _self.addClass('button-loading');
+
+            let url = _self.data('url');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                success: data => {
+                    if (data.error) {
+                        Botble.showError(data.message);
+                    } else {
+                        Botble.showSuccess(data.message);
+                        getRemoteLocations();
+                    }
+
+                    _self.closest('.modal').modal('hide');
+                    _self.removeClass('button-loading');
+                },
+                error: data => {
+                    Botble.handleError(data);
+                    _self.removeClass('button-loading');
+                }
+            });
+        });
+    }
 });

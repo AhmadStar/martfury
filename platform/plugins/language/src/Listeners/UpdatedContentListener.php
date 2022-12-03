@@ -8,7 +8,6 @@ use Language;
 
 class UpdatedContentListener
 {
-
     /**
      * Handle the event.
      *

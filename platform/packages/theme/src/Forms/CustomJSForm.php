@@ -14,7 +14,7 @@ class CustomJSForm extends FormAbstract
     public function buildForm()
     {
         $this
-            ->setupModel(new BaseModel)
+            ->setupModel(new BaseModel())
             ->setUrl(route('theme.custom-js.post'))
             ->setValidatorClass(CustomJsRequest::class)
             ->add('header_js', 'textarea', [

@@ -14,10 +14,12 @@ use Botble\Ecommerce\Repositories\Interfaces\OrderInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ShipmentHistoryInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ShipmentInterface;
 use Botble\Ecommerce\Tables\ShipmentTable;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use OrderHelper;
 use Throwable;
 
@@ -50,9 +52,9 @@ class ShipmentController extends BaseController
      * @param ShipmentHistoryInterface $shipmentHistoryRepository
      */
     public function __construct(
-        OrderInterface $orderRepository,
-        ShipmentInterface $shipmentRepository,
-        OrderHistoryInterface $orderHistoryRepository,
+        OrderInterface           $orderRepository,
+        ShipmentInterface        $shipmentRepository,
+        OrderHistoryInterface    $orderHistoryRepository,
         ShipmentHistoryInterface $shipmentHistoryRepository
     ) {
         $this->orderRepository = $orderRepository;
@@ -63,7 +65,7 @@ class ShipmentController extends BaseController
 
     /**
      * @param ShipmentTable $dataTable
-     * @return Factory|View
+     * @return View|JsonResponse
      *
      * @throws Throwable
      */
@@ -112,17 +114,21 @@ class ShipmentController extends BaseController
 
         switch ($request->input('status')) {
             case ShippingStatusEnum::DELIVERED:
-                $shipment->date_shipped = now();
+                $shipment->date_shipped = Carbon::now();
                 $shipment->save();
 
+                // Update status and time order complete
                 $order = $this->orderRepository->createOrUpdate(
-                    ['status' => OrderStatusEnum::COMPLETED],
+                    [
+                        'status'       => OrderStatusEnum::COMPLETED,
+                        'completed_at' => Carbon::now(),
+                    ],
                     ['id' => $shipment->order_id]
                 );
 
                 event(new OrderCompletedEvent($order));
 
-                do_action(ACTION_AFTER_ORDER_STATUS_COMPELETED_ECOMMERCE, $order, $request);
+                do_action(ACTION_AFTER_ORDER_STATUS_COMPLETED_ECOMMERCE, $order, $request);
 
                 $this->orderHistoryRepository->createOrUpdate([
                     'action'      => 'update_status',

@@ -4,12 +4,14 @@ namespace Botble\Ecommerce\Models;
 
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Traits\EnumCastable;
+use Botble\Ecommerce\Enums\OrderAddressTypeEnum;
 use Botble\Ecommerce\Enums\OrderStatusEnum;
 use Botble\Ecommerce\Enums\ShippingMethodEnum;
 use Botble\Ecommerce\Enums\ShippingStatusEnum;
 use Botble\Ecommerce\Repositories\Interfaces\ShipmentInterface;
 use Botble\Payment\Models\Payment;
 use Botble\Payment\Repositories\Interfaces\PaymentInterface;
+use Carbon\Carbon;
 use EcommerceHelper;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -44,6 +46,7 @@ class Order extends BaseModel
         'discount_description',
         'is_finished',
         'token',
+        'completed_at',
     ];
 
     /**
@@ -60,6 +63,7 @@ class Order extends BaseModel
     protected $dates = [
         'created_at',
         'updated_at',
+        'completed_at',
     ];
 
     protected static function boot()
@@ -73,18 +77,22 @@ class Order extends BaseModel
             OrderAddress::where('order_id', $order->id)->delete();
             app(PaymentInterface::class)->deleteBy(['order_id' => $order->id]);
         });
+
+        static::creating(function (Order $order) {
+            $order->code = static::generateUniqueCode();
+        });
     }
 
     /**
      * @return BelongsTo
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'user_id', 'id')->withDefault();
     }
 
     /**
-     * @return mixed
+     * @return string|null
      */
     public function getUserNameAttribute()
     {
@@ -94,23 +102,53 @@ class Order extends BaseModel
     /**
      * @return HasOne
      */
-    public function address()
+    public function address(): HasOne
     {
-        return $this->hasOne(OrderAddress::class, 'order_id')->withDefault();
+        return $this->hasOne(OrderAddress::class, 'order_id')
+            ->where('type', OrderAddressTypeEnum::SHIPPING)
+            ->withDefault();
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function shippingAddress(): HasOne
+    {
+        return $this->hasOne(OrderAddress::class, 'order_id')
+            ->where('type', OrderAddressTypeEnum::SHIPPING)
+            ->withDefault();
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function billingAddress(): HasOne
+    {
+        return $this->hasOne(OrderAddress::class, 'order_id')
+            ->where('type', OrderAddressTypeEnum::BILLING)
+            ->withDefault();
+    }
+
+    /**
+     * @return HasOne
+     */
+    public function referral(): HasOne
+    {
+        return $this->hasOne(OrderReferral::class, 'order_id')->withDefault();
     }
 
     /**
      * @return string
      */
-    public function getFullAddressAttribute()
+    public function getFullAddressAttribute(): string
     {
-        return $this->address->address . ', ' . $this->address->city_name . ', ' . $this->address->state_name . ', ' . $this->address->country_name . (EcommerceHelper::isZipCodeEnabled() ? ', ' . $this->address->zip_code : '');
+        return $this->shippingAddress->full_address;
     }
 
     /**
      * @return HasMany
      */
-    public function products()
+    public function products(): HasMany
     {
         return $this->hasMany(OrderProduct::class, 'order_id')->with(['product']);
     }
@@ -118,7 +156,7 @@ class Order extends BaseModel
     /**
      * @return HasMany
      */
-    public function histories()
+    public function histories(): HasMany
     {
         return $this->hasMany(OrderHistory::class, 'order_id')->with(['user', 'order']);
     }
@@ -137,7 +175,7 @@ class Order extends BaseModel
     /**
      * @return HasOne
      */
-    public function shipment()
+    public function shipment(): HasOne
     {
         return $this->hasOne(Shipment::class)->withDefault();
     }
@@ -145,15 +183,23 @@ class Order extends BaseModel
     /**
      * @return BelongsTo
      */
-    public function payment()
+    public function payment(): BelongsTo
     {
         return $this->belongsTo(Payment::class, 'payment_id')->withDefault();
     }
 
     /**
+     * @return HasOne
+     */
+    public function invoice(): HasOne
+    {
+        return $this->hasOne(Invoice::class, 'reference_id')->withDefault();
+    }
+
+    /**
      * @return bool
      */
-    public function canBeCanceled()
+    public function canBeCanceled(): bool
     {
         if ($this->shipment && in_array($this->shipment->status, [ShippingStatusEnum::PICKED, ShippingStatusEnum::DELIVERED, ShippingStatusEnum::AUDITED])) {
             return false;
@@ -165,19 +211,33 @@ class Order extends BaseModel
     /**
      * @return bool
      */
-    public function canBeCanceledByAdmin()
+    public function canBeCanceledByAdmin(): bool
     {
         if ($this->shipment && in_array($this->shipment->status, [ShippingStatusEnum::DELIVERED, ShippingStatusEnum::AUDITED])) {
             return false;
         }
 
-        return !in_array($this->status, [OrderStatusEnum::COMPLETED, OrderStatusEnum::CANCELED]);
+        if (in_array($this->status, [OrderStatusEnum::COMPLETED, OrderStatusEnum::CANCELED])) {
+            return false;
+        }
+
+        if ($this->shipment && in_array($this->shipment->status, [
+            ShippingStatusEnum::PENDING,
+            ShippingStatusEnum::APPROVED,
+            ShippingStatusEnum::NOT_APPROVED,
+            ShippingStatusEnum::ARRANGE_SHIPMENT,
+            ShippingStatusEnum::READY_TO_BE_SHIPPED_OUT,
+        ])) {
+            return true;
+        }
+
+        return true;
     }
 
     /**
      * @return bool
      */
-    public function getIsFreeShippingAttribute()
+    public function getIsFreeShippingAttribute(): bool
     {
         return $this->shipping_amount == 0 && $this->discount_amount == 0 && $this->coupon_code;
     }
@@ -185,15 +245,15 @@ class Order extends BaseModel
     /**
      * @return string
      */
-    public function getAmountFormatAttribute()
+    public function getAmountFormatAttribute(): string
     {
         return format_price($this->amount);
     }
 
     /**
-     * @return bool
+     * @return string
      */
-    public function getDiscountAmountFormatAttribute()
+    public function getDiscountAmountFormatAttribute(): string
     {
         return format_price($this->shipping_amount);
     }
@@ -203,7 +263,7 @@ class Order extends BaseModel
      */
     public function isInvoiceAvailable(): bool
     {
-        return !EcommerceHelper::disableOrderInvoiceUntilOrderConfirmed() || $this->is_confirmed;
+        return $this->invoice()->exists() && !EcommerceHelper::disableOrderInvoiceUntilOrderConfirmed() || $this->is_confirmed;
     }
 
     /**
@@ -219,8 +279,50 @@ class Order extends BaseModel
             }
         }
 
-        $weight = $weight ?: 0.1;
+        return EcommerceHelper::validateOrderWeight($weight);
+    }
 
-        return $weight;
+    /**
+     * @return HasOne
+     */
+    public function returnRequest(): HasOne
+    {
+        return $this->hasOne(OrderReturn::class, 'order_id')->withDefault();
+    }
+
+    /**
+     * @return bool
+     */
+    public function canBeReturned(): bool
+    {
+        if ($this->status != OrderStatusEnum::COMPLETED || !$this->completed_at) {
+            return false;
+        }
+
+        $shipmentDayCount = Carbon::now()->diffInDays($this->completed_at);
+
+        if ($shipmentDayCount > EcommerceHelper::getReturnableDays()) {
+            return false;
+        }
+
+        if (EcommerceHelper::isEnabledSupportDigitalProducts()) {
+            if ($this->products->where('times_downloaded')->count()) {
+                return false;
+            }
+        }
+
+        return !$this->returnRequest()->exists();
+    }
+
+    public static function generateUniqueCode(): string
+    {
+        $nextInsertId = static::query()->max('id') + 1;
+
+        do {
+            $code = get_order_code($nextInsertId);
+            $nextInsertId++;
+        } while (static::query()->where('code', $code)->exists());
+
+        return $code;
     }
 }

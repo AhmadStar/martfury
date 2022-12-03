@@ -7,7 +7,6 @@ use Botble\Menu\Models\MenuNode;
 
 class MenuNodeForm extends FormAbstract
 {
-
     /**
      * @var string
      */
@@ -18,7 +17,7 @@ class MenuNodeForm extends FormAbstract
      */
     public function buildForm()
     {
-        $this->setupModel(new MenuNode);
+        $this->setupModel(new MenuNode());
 
         $id = $this->model->id ?? 'new';
 

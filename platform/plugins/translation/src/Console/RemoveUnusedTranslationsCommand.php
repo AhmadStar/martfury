@@ -4,15 +4,12 @@ namespace Botble\Translation\Console;
 
 use Botble\Translation\Manager;
 use Botble\Translation\Models\Translation;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Console\Command;
-use Illuminate\Support\Arr;
 use Symfony\Component\VarExporter\Exception\ExceptionInterface;
-use Theme;
 
 class RemoveUnusedTranslationsCommand extends Command
 {
-
     /**
      * The console command name.
      *
@@ -52,50 +49,19 @@ class RemoveUnusedTranslationsCommand extends Command
     {
         $this->info('Remove unused translations in resource/lang...');
 
-        foreach (File::directories(resource_path('lang/vendor/packages')) as $package) {
+        foreach (File::directories(lang_path('vendor/packages')) as $package) {
             if (!File::isDirectory(package_path(File::basename($package)))) {
                 File::deleteDirectory($package);
             }
         }
 
-        foreach (File::directories(resource_path('lang/vendor/plugins')) as $plugin) {
+        foreach (File::directories(lang_path('vendor/plugins')) as $plugin) {
             if (!File::isDirectory(plugin_path(File::basename($plugin)))) {
                 File::deleteDirectory($plugin);
             }
         }
 
-        if (defined('THEME_MODULE_SCREEN_NAME')) {
-            foreach (File::allFiles(resource_path('lang')) as $file) {
-                if (File::isFile($file) && $file->getExtension() === 'json') {
-                    $locale = $file->getFilenameWithoutExtension();
-
-                    if ($locale == 'en') {
-                        continue;
-                    }
-
-                    $translations = get_file_data($file->getRealPath(), true);
-
-                    $defaultEnglishFile = theme_path(Theme::getThemeName() . '/lang/en.json');
-
-                    if ($defaultEnglishFile) {
-                        $enTranslations = get_file_data($defaultEnglishFile, true);
-                        $translations = array_merge($enTranslations, $translations);
-
-                        $enTranslationKeys = array_keys($enTranslations);
-
-                        foreach ($translations as $key => $translation) {
-                            if (!in_array($key, $enTranslationKeys)) {
-                                Arr::forget($translations, $key);
-                            }
-                        }
-                    }
-
-                    ksort($translations);
-
-                    File::put($file->getRealPath(), json_encode($translations, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                }
-            }
-        }
+        $this->manager->removeUnusedThemeTranslations();
 
         $this->info('Importing...');
         $this->manager->importTranslations();

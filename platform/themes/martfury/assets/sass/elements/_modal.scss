@@ -97,7 +97,7 @@
     @include hidden;
     @include transition(all .4s ease);
     background-color: rgba(#000, .5);
-    display: flex;
+    display: flex !important;
     flex-flow: row nowrap;
     justify-content: center;
     align-items: center;

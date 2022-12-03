@@ -51,3 +51,19 @@ if (!defined('PAYMENT_FILTER_GET_SERVICE_CLASS')) {
 if (!defined('PAYMENT_FILTER_GET_REFUND_DETAIL')) {
     define('PAYMENT_FILTER_GET_REFUND_DETAIL', 'payment-refund-detail');
 }
+
+if (!defined('PAYMENT_FILTER_PAYMENT_FORM')) {
+    define('PAYMENT_FILTER_PAYMENT_FORM', 'payment-form');
+}
+
+if (!defined('PAYMENT_FILTER_HEADER_ASSETS')) {
+    define('PAYMENT_FILTER_HEADER_ASSETS', 'payment-header-assets');
+}
+
+if (!defined('PAYMENT_FILTER_FOOTER_ASSETS')) {
+    define('PAYMENT_FILTER_FOOTER_ASSETS', 'payment-footer-assets');
+}
+
+if (!defined('PAYMENT_FILTER_PAYMENT_DATA')) {
+    define('PAYMENT_FILTER_PAYMENT_DATA', 'payment-data');
+}

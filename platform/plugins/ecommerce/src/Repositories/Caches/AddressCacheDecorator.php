@@ -7,5 +7,4 @@ use Botble\Support\Repositories\Caches\CacheAbstractDecorator;
 
 class AddressCacheDecorator extends CacheAbstractDecorator implements AddressInterface
 {
-
 }

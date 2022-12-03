@@ -8,7 +8,6 @@ use Botble\SimpleSlider\Models\SimpleSliderItem;
 
 class SimpleSliderItemForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -16,7 +15,7 @@ class SimpleSliderItemForm extends FormAbstract
     {
         $this
             ->setFormOption('template', 'core/base::forms.form-modal')
-            ->setupModel(new SimpleSliderItem)
+            ->setupModel(new SimpleSliderItem())
             ->setValidatorClass(SimpleSliderItemRequest::class)
             ->withCustomFields()
             ->add('simple_slider_id', 'hidden', [

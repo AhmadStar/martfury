@@ -19,7 +19,7 @@ use Botble\Location\Tables\StateTable;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Throwable;
 
 class StateController extends BaseController
@@ -45,7 +45,6 @@ class StateController extends BaseController
      */
     public function index(StateTable $table)
     {
-
         page_title()->setTitle(trans('plugins/location::state.name'));
 
         return $table->renderTable();

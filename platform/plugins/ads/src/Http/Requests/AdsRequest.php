@@ -9,7 +9,6 @@ use AdsManager;
 
 class AdsRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

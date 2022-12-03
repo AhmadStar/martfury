@@ -36,8 +36,8 @@
 
                 @if (setting('enable_math_captcha_for_contact_form', 0))
                     <div class="form-group">
-                        <label for="math-group" class="d-none sr-only">{{ app('math-captcha')->label() }}</label>
-                        {!! app('math-captcha')->input(['class' => 'form-control', 'id' => 'math-group', 'placeholder' => app('math-captcha')->label()]) !!}
+                        <label for="math-group">{{ app('math-captcha')->label() }}</label>
+                        {!! app('math-captcha')->input(['class' => 'form-control', 'id' => 'math-group', 'placeholder' => app('math-captcha')->getMathLabelOnly() . ' = ?']) !!}
                     </div>
                 @endif
             @endif

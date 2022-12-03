@@ -12,9 +12,9 @@ use Exception;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\View\View;
 use Language;
 use Theme;
 use Throwable;
@@ -43,7 +43,7 @@ class WidgetController extends BaseController
     }
 
     /**
-     * @return Factory|View
+     * @return Application|Factory|View
      * @since 24/09/2016 2:10 PM
      */
     public function index()
@@ -169,7 +169,7 @@ class WidgetController extends BaseController
     /**
      * @return null|string
      */
-    protected function getCurrentLocaleCode()
+    protected function getCurrentLocaleCode(): ?string
     {
         $languageCode = null;
         if (is_plugin_active('language')) {

@@ -8,7 +8,6 @@ use Illuminate\Auth\Events\Login;
 
 class LoginListener
 {
-
     /**
      * Handle the event.
      *

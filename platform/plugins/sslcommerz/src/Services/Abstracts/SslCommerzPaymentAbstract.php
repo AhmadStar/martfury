@@ -56,7 +56,7 @@ abstract class SslCommerzPaymentAbstract implements ProduceServiceInterface
      */
     public function setClient()
     {
-        $this->client = new SslCommerz;
+        $this->client = new SslCommerz();
 
         return $this;
     }
@@ -116,8 +116,7 @@ abstract class SslCommerzPaymentAbstract implements ProduceServiceInterface
      */
     public function refundOrder($paymentId, $amount, array $options = [])
     {
-        try
-        {
+        try {
             $detail = $this->client->getPaymentDetails($paymentId);
             $bankTranId = Arr::get($detail, 'element.0.bank_tran_id');
             if ($bankTranId) {
@@ -139,7 +138,7 @@ abstract class SslCommerzPaymentAbstract implements ProduceServiceInterface
 
             return [
                 'error'   => true,
-                'message' => "Payment {$paymentId} can not found bank_tran_id",
+                'message' => 'Payment ' . $paymentId . ' can not found bank_tran_id',
             ];
         } catch (Exception $exception) {
             $this->setErrorMessageAndLogging($exception, 1);
@@ -155,8 +154,7 @@ abstract class SslCommerzPaymentAbstract implements ProduceServiceInterface
      */
     public function refundDetail($refundRefId)
     {
-        try
-        {
+        try {
             $response = (array) $this->client->refundDetail($refundRefId);
             $status = Arr::get($response, 'status');
             return [

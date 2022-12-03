@@ -10,7 +10,6 @@ use Log;
 
 class SendMailListener
 {
-
     /**
      * @var Mailer
      */
@@ -40,6 +39,7 @@ class SendMailListener
             if ($event->debug) {
                 throw $exception;
             }
+
             Log::error($exception->getMessage());
         }
     }

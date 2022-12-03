@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Menu extends BaseModel
 {
-
     use EnumCastable;
 
     /**

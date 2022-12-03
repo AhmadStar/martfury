@@ -33,5 +33,3 @@ class OrderAddressResource extends JsonResource
         ];
     }
 }
-
-

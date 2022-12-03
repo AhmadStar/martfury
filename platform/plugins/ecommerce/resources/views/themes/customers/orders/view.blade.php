@@ -1,4 +1,4 @@
-@extends('plugins/ecommerce::themes.customers.master')
+@extends(EcommerceHelper::viewPath('customers.master'))
 @section('content')
     <h2 class="customer-page-title">{{ __('Order information') }}</h2>
     <div class="clearfix"></div>
@@ -18,7 +18,7 @@
             <div class="col-md-6">
                 <div class="order-meta">
                     <p><span>{{ __('Order number') }}:</span> <span
-                            class="order-detail-value">{{ get_order_code($order->id) }}</span></p>
+                            class="order-detail-value">{{ $order->code }}</span></p>
                     <span>{{ __('Time') }}:</span> <span
                         class="order-detail-value">{{ $order->created_at->format('h:m d/m/Y') }}</span>
                 </div>
@@ -108,7 +108,6 @@
                             @php
                                 $product = get_products([
                                     'condition' => [
-                                        'ec_products.status' => \Botble\Base\Enums\BaseStatusEnum::PUBLISHED,
                                         'ec_products.id' => $orderProduct->product_id,
                                     ],
                                     'take' => 1,
@@ -133,7 +132,7 @@
                             <tr>
                                 <td class="text-center">{{ $key + 1 }}</td>
                                 <td class="text-center">
-                                    <img src="{{ RvMedia::getImageUrl($product ? $product->image : null, 'thumb', false, RvMedia::getDefaultImage()) }}" alt="{{ $orderProduct->product_name }}" width="50">
+                                    <img src="{{ RvMedia::getImageUrl($orderProduct->product_image, 'thumb', false, RvMedia::getDefaultImage()) }}" alt="{{ $orderProduct->product_name }}" width="50">
                                 </td>
                                 <td>
                                     {{ $orderProduct->product_name }} @if ($product && $product->sku) ({{ $product->sku }}) @endif
@@ -201,6 +200,11 @@
                     <a href="{{ route('customer.orders.cancel', $order->id) }}"
                        class="btn-print">{{ __('Cancel order') }}</a>
                 @endif
+                @if ($order->canBeReturned())
+                    <a href="{{ route('customer.orders.return', $order->id) }}"
+                       class="btn-print">{{ __('Return Product(s)') }}</a>
+                @endif
             </div>
         </div>
+
 @endsection

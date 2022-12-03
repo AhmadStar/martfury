@@ -49,7 +49,7 @@ class CreateProductVariationsService
      * @param Product $product
      * @return array
      */
-    public function execute(Product $product)
+    public function execute(Product $product): array
     {
         $attributeSets = $product->productAttributeSets()->allRelatedIds()->toArray();
 

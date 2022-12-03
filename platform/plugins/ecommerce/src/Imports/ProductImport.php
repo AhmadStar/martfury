@@ -2,8 +2,10 @@
 
 namespace Botble\Ecommerce\Imports;
 
+use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Events\CreatedContentEvent;
+use Botble\Ecommerce\Enums\ProductTypeEnum;
 use Botble\Ecommerce\Enums\StockStatusEnum;
 use Botble\Ecommerce\Models\Product;
 use Botble\Ecommerce\Models\ProductVariation;
@@ -22,6 +24,7 @@ use Botble\Ecommerce\Services\StoreProductTagService;
 use Botble\Marketplace\Repositories\Interfaces\StoreInterface;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -42,16 +45,21 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Validators\Failure;
 use Mimey\MimeTypes;
 use RvMedia;
+use SlugHelper;
 
-class ProductImport implements ToModel,
-                               WithHeadingRow,
-                               WithMapping,
-                               WithValidation,
-                               SkipsOnFailure,
-                               SkipsOnError,
-                               WithChunkReading
+class ProductImport implements
+    ToModel,
+    WithHeadingRow,
+    WithMapping,
+    WithValidation,
+    SkipsOnFailure,
+    SkipsOnError,
+    WithChunkReading
 {
-    use Importable, SkipsFailures, SkipsErrors, ImportTrait;
+    use Importable;
+    use SkipsFailures;
+    use SkipsErrors;
+    use ImportTrait;
 
     /**
      * @var ProductInterface
@@ -200,8 +208,7 @@ class ProductImport implements ToModel,
         BrandInterface               $brandRepository,
         StoreProductTagService       $storeProductTagService,
         Request                      $request
-    )
-    {
+    ) {
         $this->productRepository = $productRepository;
         $this->productCategoryRepository = $productCategoryRepository;
         $this->productTagRepository = $productTagRepository;
@@ -257,45 +264,68 @@ class ProductImport implements ToModel,
         $importType = $this->getImportType();
 
         $name = $this->request->input('name');
+        $slug = $this->request->input('slug');
 
         if ($importType == 'products' && $row['import_type'] == 'product') {
-            return $this->storeProduction();
+            return $this->storeProduct();
         }
 
         if ($importType == 'variations' && $row['import_type'] == 'variation') {
-            $product = $this->getProductByName($name);
+            $product = $this->getProduct($name, $slug);
 
             return $this->storeVariant($product);
         }
 
         if ($row['import_type'] == 'variation') {
-            $collection = $this->successes()
-                ->where('import_type', 'product')
-                ->where('name', $name)
-                ->last();
+            if ($slug) {
+                $collection = $this->successes()
+                    ->where('import_type', 'product')
+                    ->where('slug', $slug)
+                    ->last();
+            } else {
+                $collection = $this->successes()
+                    ->where('import_type', 'product')
+                    ->where('name', $name)
+                    ->last();
+            }
 
             if ($collection) {
                 $product = $collection['model'];
             } else {
-                $product = $this->getProductByName($name);
+                $product = $this->getProduct($name, $slug);
             }
 
             return $this->storeVariant($product);
         }
 
-        return $this->storeProduction();
+        return $this->storeProduct();
     }
 
     /**
      * @param string $name
-     * @return \Eloquent|\Illuminate\Database\Eloquent\Builder|Model|object|null
+     * @param string|null $slug
+     * @return \Eloquent|Builder|Model|object|null
      */
-    protected function getProductByName(string $name)
+    protected function getProduct(string $name, ?string $slug)
     {
+        if ($slug) {
+            $slug = SlugHelper::getSlug($slug, SlugHelper::getPrefix(Product::class), Product::class);
+
+            if ($slug) {
+                return $this->productRepository->getFirstBy([
+                    'id'           => $slug->reference_id,
+                    'is_variation' => 0,
+                ]);
+            }
+        }
+
         return $this->productRepository
             ->getModel()
-            ->where('name', $name)
-            ->orWhere('id', $name)
+            ->where(function ($query) use ($name) {
+                $query
+                    ->where('name', $name)
+                    ->orWhere('id', $name);
+            })
             ->where('is_variation', 0)
             ->first();
     }
@@ -304,11 +334,19 @@ class ProductImport implements ToModel,
      * @return Product|null
      * @throws Exception
      */
-    public function storeProduction()
+    public function storeProduct(): ?Product
     {
         $product = $this->productRepository->getModel();
 
         $this->request->merge(['images' => $this->getImageURLs((array)$this->request->input('images', []))]);
+
+        if ($description = $this->request->input('description')) {
+            $this->request->merge(['description' => BaseHelper::clean($description)]);
+        }
+
+        if ($content = $this->request->input('content')) {
+            $this->request->merge(['content' => BaseHelper::clean($content)]);
+        }
 
         $product = (new StoreProductService($this->productRepository))->execute($this->request, $product);
 
@@ -328,6 +366,7 @@ class ProductImport implements ToModel,
 
         $collect = collect([
             'name'           => $product->name,
+            'slug'           => $this->request->input('slug'),
             'import_type'    => 'product',
             'attribute_sets' => $attributeSets,
             'model'          => $product,
@@ -389,7 +428,7 @@ class ProductImport implements ToModel,
 
         file_put_contents($path, $contents);
 
-        $mimeType = (new MimeTypes)->getMimeType(File::extension($url));
+        $mimeType = (new MimeTypes())->getMimeType(File::extension($url));
 
         $fileUpload = new UploadedFile($path, $info['basename'], $mimeType, null, true);
 
@@ -446,6 +485,14 @@ class ProductImport implements ToModel,
         $version['variation_default_id'] = Arr::get($version, 'is_variation_default') ? $version['id'] : null;
         $version['attribute_sets'] = $addedAttributes;
 
+        if ($version['description']) {
+            $version['description'] = BaseHelper::clean($version['description']);
+        }
+
+        if ($version['content']) {
+            $version['content'] = BaseHelper::clean($version['content']);
+        }
+
         $productRelatedToVariation = $this->productRepository->getModel();
         $productRelatedToVariation->fill($version);
 
@@ -470,20 +517,36 @@ class ProductImport implements ToModel,
 
         $productRelatedToVariation->price = Arr::get($version, 'price', $product->price);
         $productRelatedToVariation->sale_price = Arr::get($version, 'sale_price', $product->sale_price);
-        $productRelatedToVariation->description = Arr::get($version, 'description');
+
+        if (Arr::get($version, 'description')) {
+            $productRelatedToVariation->description = BaseHelper::clean($version['description']);
+        }
+
+        if (Arr::get($version, 'content')) {
+            $productRelatedToVariation->content = BaseHelper::clean($version['content']);
+        }
 
         $productRelatedToVariation->length = Arr::get($version, 'length', $product->length);
         $productRelatedToVariation->wide = Arr::get($version, 'wide', $product->wide);
         $productRelatedToVariation->height = Arr::get($version, 'height', $product->height);
         $productRelatedToVariation->weight = Arr::get($version, 'weight', $product->weight);
 
-        $productRelatedToVariation->with_storehouse_management = Arr::get($version,
-            'with_storehouse_management', $product->with_storehouse_management);
-        $productRelatedToVariation->stock_status = Arr::get($version,
-            'stock_status', StockStatusEnum::IN_STOCK);
+        $productRelatedToVariation->with_storehouse_management = Arr::get(
+            $version,
+            'with_storehouse_management',
+            $product->with_storehouse_management
+        );
+        $productRelatedToVariation->stock_status = Arr::get(
+            $version,
+            'stock_status',
+            StockStatusEnum::IN_STOCK
+        );
         $productRelatedToVariation->quantity = Arr::get($version, 'quantity', $product->quantity);
-        $productRelatedToVariation->allow_checkout_when_out_of_stock = Arr::get($version,
-            'allow_checkout_when_out_of_stock', $product->allow_checkout_when_out_of_stock);
+        $productRelatedToVariation->allow_checkout_when_out_of_stock = Arr::get(
+            $version,
+            'allow_checkout_when_out_of_stock',
+            $product->allow_checkout_when_out_of_stock
+        );
 
         $productRelatedToVariation->sale_type = (int)Arr::get($version, 'sale_type', $product->sale_type);
 
@@ -499,6 +562,8 @@ class ProductImport implements ToModel,
 
         $productRelatedToVariation->status = Arr::get($version, 'status', $product->status);
 
+        $productRelatedToVariation->product_type = $product->product_type;
+
         $productRelatedToVariation = $this->productRepository->createOrUpdate($productRelatedToVariation);
 
         event(new CreatedContentEvent(PRODUCT_MODULE_SCREEN_NAME, $this->request, $productRelatedToVariation));
@@ -512,8 +577,6 @@ class ProductImport implements ToModel,
         if ($version['attribute_sets']) {
             $variation->productAttributes()->sync($version['attribute_sets']);
         }
-
-        $this->onSuccess($variation);
 
         return $variation;
     }
@@ -773,6 +836,11 @@ class ProductImport implements ToModel,
             $row['status'] = BaseStatusEnum::PENDING;
         }
 
+        $row['product_type'] = Arr::get($row, 'product_type');
+        if (!in_array($row['product_type'], ProductTypeEnum::values())) {
+            $row['product_type'] = ProductTypeEnum::PHYSICAL;
+        }
+
         $row['import_type'] = Arr::get($row, 'import_type');
         if ($row['import_type'] != 'variation') {
             $row['import_type'] = 'product';
@@ -828,19 +896,18 @@ class ProductImport implements ToModel,
         $row['product_attributes'] = [];
 
         if ($row['import_type'] == 'variation') {
-
             foreach ($attributeSets as $attrSet) {
                 $attrSet = explode(':', $attrSet);
                 $title = Arr::get($attrSet, 0);
                 $valueX = Arr::get($attrSet, 1);
 
                 $attribute = $this->productAttributeSets->filter(function ($value) use ($title) {
-                    return $value['title'] == $title || $value['id'] == $title;
+                    return $value['title'] == $title;
                 })->first();
 
                 if ($attribute) {
                     $attr = $attribute->attributes->filter(function ($value) use ($valueX) {
-                        return $value['title'] == $valueX || $value['id'] == $valueX;
+                        return $value['title'] == $valueX;
                     })->first();
 
                     if ($attr) {
@@ -853,7 +920,7 @@ class ProductImport implements ToModel,
         if ($row['import_type'] == 'product') {
             foreach ($attributeSets as $attrSet) {
                 $attribute = $this->productAttributeSets->filter(function ($value) use ($attrSet) {
-                    return $value['title'] == $attrSet || $value['id'] == $attrSet;
+                    return $value['title'] == $attrSet;
                 })->first();
 
                 if ($attribute) {
@@ -873,11 +940,13 @@ class ProductImport implements ToModel,
     protected function setValues(array &$row, array $attributes = []): ProductImport
     {
         foreach ($attributes as $attribute) {
-            $this->setValue($row,
+            $this->setValue(
+                $row,
                 Arr::get($attribute, 'key'),
                 Arr::get($attribute, 'type', 'array'),
                 Arr::get($attribute, 'default'),
-                Arr::get($attribute, 'from'));
+                Arr::get($attribute, 'from')
+            );
         }
 
         return $this;

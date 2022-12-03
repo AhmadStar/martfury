@@ -29,6 +29,10 @@
                                 <li @if (Route::currentRouteName() == 'customer.overview') class="active" @endif><a href="{{ route('customer.overview') }}"><i class="icon-user"></i> {{ __('Account Information') }}</a></li>
                                 <li @if (Route::currentRouteName() == 'customer.edit-account') class="active" @endif><a href="{{ route('customer.edit-account') }}"><i class="icon-pencil"></i> {{ __('Update profile') }}</a></li>
                                 <li @if (Route::currentRouteName() == 'customer.orders' || Route::currentRouteName() == 'customer.orders.view') class="active" @endif><a href="{{ route('customer.orders') }}"><i class="icon-papers"></i> {{ __('Orders') }}</a></li>
+                                @if (EcommerceHelper::isEnabledSupportDigitalProducts())
+                                    <li @if (Route::currentRouteName() == 'customer.downloads') class="active" @endif><a href="{{ route('customer.downloads') }}"><i class="icon-papers"></i> {{ __('Downloads') }}</a></li>
+                                @endif
+                                <li @if (Route::currentRouteName() == 'customer.order_returns' || Route::currentRouteName() == 'customer.order_returns.view') class="active" @endif><a href="{{ route('customer.order_returns') }}"><i class="icon-cart-remove"></i> {{ __('Order return requests') }}</a></li>
                                 <li @if (Route::currentRouteName() == 'customer.address' || Route::currentRouteName() == 'customer.address.create' || Route::currentRouteName() == 'customer.address.edit') class="active" @endif><a href="{{ route('customer.address') }}"><i class="icon-map-marker"></i> {{ __('Address') }}</a></li>
                                 <li @if (Route::currentRouteName() == 'customer.change-password') class="active" @endif><a href="{{ route('customer.change-password') }}"><i class="icon-lock"></i> {{ __('Change password') }}</a></li>
                                 @if (is_plugin_active('marketplace'))

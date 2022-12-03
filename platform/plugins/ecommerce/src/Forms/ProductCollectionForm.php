@@ -9,14 +9,13 @@ use Botble\Ecommerce\Models\ProductCollection;
 
 class ProductCollectionForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new ProductCollection)
+            ->setupModel(new ProductCollection())
             ->setValidatorClass(ProductCollectionRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [
@@ -27,8 +26,10 @@ class ProductCollectionForm extends FormAbstract
                     'data-counter' => 120,
                 ],
                 'help_block' => [
-                    'text' => $this->getModel() ? trans('plugins/ecommerce::product-collections.slug_help_block',
-                        ['slug' => $this->getModel()->slug]) : null,
+                    'text' => $this->getModel() ? trans(
+                        'plugins/ecommerce::product-collections.slug_help_block',
+                        ['slug' => $this->getModel()->slug]
+                    ) : null,
                 ],
             ])
             ->add('slug', 'text', [

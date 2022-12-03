@@ -13,7 +13,7 @@ use Botble\Setting\Supports\SettingStore;
 use EmailHandler;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Foundation\AliasLoader;
-use Illuminate\Foundation\Application;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\ServiceProvider;
 
@@ -45,7 +45,7 @@ class SettingServiceProvider extends ServiceProvider
 
         $this->app->bind(SettingInterface::class, function () {
             return new SettingCacheDecorator(
-                new SettingRepository(new SettingModel)
+                new SettingRepository(new SettingModel())
             );
         });
 

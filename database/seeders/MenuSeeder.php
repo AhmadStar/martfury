@@ -405,6 +405,10 @@ class MenuSeeder extends BaseSeeder
         $menuNode['menu_id'] = $menuId;
         $menuNode['parent_id'] = $parentId;
 
+        if (isset($menuNode['url'])) {
+            $menuNode['url'] = str_replace(url(''), '', $menuNode['url']);
+        }
+
         if (Arr::has($menuNode, 'children')) {
             $children = $menuNode['children'];
             $menuNode['has_child'] = true;

@@ -4,6 +4,7 @@ namespace Botble\Base\Http\Controllers;
 
 use Arr;
 use Assets;
+use BaseHelper;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Supports\Core;
 use Botble\Base\Supports\Helper;
@@ -13,22 +14,22 @@ use Botble\Base\Supports\SystemManagement;
 use Botble\Base\Tables\InfoTable;
 use Botble\Table\TableBuilder;
 use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Foundation\Application;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 use Menu;
 use Throwable;
 
 class SystemController extends Controller
 {
-
     /**
      * @param Request $request
      * @param TableBuilder $tableBuilder
@@ -56,11 +57,11 @@ class SystemController extends Controller
         $systemEnv = SystemManagement::getSystemEnv();
         $serverEnv = SystemManagement::getServerEnv();
 
-        $requiredPhpVersion = Arr::get($composerArray, 'require.php', '^7.3');
+        $requiredPhpVersion = Arr::get($composerArray, 'require.php', '^8.0.2');
         $requiredPhpVersion = str_replace('^', '', $requiredPhpVersion);
         $requiredPhpVersion = str_replace('~', '', $requiredPhpVersion);
 
-        $matchPHPRequirement = version_compare(phpversion(), $requiredPhpVersion) > 0;
+        $matchPHPRequirement = version_compare(phpversion(), $requiredPhpVersion, '>=') > 0;
 
         return view('core/base::system.info', compact(
             'packages',
@@ -73,7 +74,7 @@ class SystemController extends Controller
     }
 
     /**
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function getCacheManagement()
     {
@@ -125,6 +126,7 @@ class SystemController extends Controller
      * @param MembershipAuthorization $authorization
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse
+     * @throws GuzzleException
      */
     public function authorize(MembershipAuthorization $authorization, BaseHttpResponse $response)
     {
@@ -141,7 +143,7 @@ class SystemController extends Controller
      */
     public function getLanguage($lang, Request $request)
     {
-        if ($lang != false && array_key_exists($lang, Language::getAvailableLocales())) {
+        if ($lang && array_key_exists($lang, Language::getAvailableLocales())) {
             if (Auth::check()) {
                 cache()->forget(md5('cache-dashboard-menu-' . $request->user()->getKey()));
             }
@@ -173,7 +175,7 @@ class SystemController extends Controller
 
         $response->setData(['has_new_version' => false]);
 
-        $api = new Core;
+        $api = new Core();
 
         $updateData = $api->checkUpdate();
 
@@ -187,22 +189,27 @@ class SystemController extends Controller
     }
 
     /**
-     * @return \Illuminate\Contracts\Foundation\Application|Factory|\Illuminate\Contracts\View\View
+     * @return BaseHttpResponse|Application|Factory|View
      */
-    public function getUpdater()
+    public function getUpdater(Request $request, BaseHttpResponse $response)
     {
         if (!config('core.base.general.enable_system_updater')) {
             abort(404);
         }
 
+        if ($request->isMethod('POST') && !version_compare(phpversion(), '8.0.2', '>=') > 0 && !config('core.base.general.upgrade_php_require_disabled')) {
+            return $response
+                ->setError()
+                ->setMessage(trans('core/base::system.upgrade_php_version_required', ['version' => phpversion()]));
+        }
+
         header('Cache-Control: no-cache');
 
-        @ini_set('max_execution_time', -1);
-        @ini_set('memory_limit', -1);
+        BaseHelper::maximumExecutionTimeAndMemoryLimit();
 
         page_title()->setTitle(trans('core/base::system.updater'));
 
-        $api = new Core;
+        $api = new Core();
 
         $updateData = $api->checkUpdate();
 

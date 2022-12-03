@@ -46,8 +46,11 @@ class ForgotPasswordController extends Controller
             ->add(__('Home'), route('public.index'))
             ->add(__('Login'), route('customer.password.reset'));
 
-        return Theme::scope('ecommerce.customers.passwords.email', [],
-            'plugins/ecommerce::themes.customers.passwords.email')
+        return Theme::scope(
+            'ecommerce.customers.passwords.email',
+            [],
+            'plugins/ecommerce::themes.customers.passwords.email'
+        )
             ->render();
     }
 

@@ -9,14 +9,13 @@ use Botble\Ecommerce\Models\Brand;
 
 class BrandForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new Brand)
+            ->setupModel(new Brand())
             ->setValidatorClass(BrandRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

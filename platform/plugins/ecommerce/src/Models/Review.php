@@ -68,11 +68,11 @@ class Review extends BaseModel
         return $this->user->name;
     }
 
-   /**
-     * Register any events for your application.
-     *
-     * @return void
-     */
+    /**
+      * Register any events for your application.
+      *
+      * @return void
+      */
     protected static function boot()
     {
         parent::boot();

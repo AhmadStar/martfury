@@ -3,7 +3,7 @@
 namespace Botble\Theme;
 
 use Throwable;
-use URL;
+use Illuminate\Support\Facades\URL;
 
 class Breadcrumb
 {
@@ -35,7 +35,7 @@ class Breadcrumb
                 }
             }
         } else {
-            $label = trim(strip_tags($label, '<i><b><strong>'));
+            $label = trim(strip_tags((string)$label, '<i><b><strong>'));
             if (!preg_match('|^http(s)?|', $url)) {
                 $url = URL::to($url);
             }

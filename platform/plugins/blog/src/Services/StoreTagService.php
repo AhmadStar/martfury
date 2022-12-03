@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Auth;
 
 class StoreTagService extends StoreTagServiceAbstract
 {
-
     /**
      * @param Request $request
      * @param Post $post
@@ -26,7 +25,6 @@ class StoreTagService extends StoreTagServiceAbstract
         if (count($tags) != count($tagsInput) || count(array_diff($tags, $tagsInput)) > 0) {
             $post->tags()->detach();
             foreach ($tagsInput as $tagName) {
-
                 if (!trim($tagName)) {
                     continue;
                 }

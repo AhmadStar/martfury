@@ -11,8 +11,8 @@ use Botble\Shortcode\View\View;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View as ViewFacade;
 use Illuminate\Support\ServiceProvider;
-use Theme;
 
 /**
  * @since 02/07/2016 09:50 AM
@@ -30,7 +30,7 @@ class PageServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->app->bind(PageInterface::class, function () {
-            return new PageCacheDecorator(new PageRepository(new Page));
+            return new PageCacheDecorator(new PageRepository(new Page()));
         });
 
         $this
@@ -51,7 +51,7 @@ class PageServiceProvider extends ServiceProvider
             ]);
 
             if (function_exists('admin_bar')) {
-                Theme::composer('*', function () {
+                ViewFacade::composer('*', function () {
                     if (Auth::check() && Auth::user()->hasPermission('pages.create')) {
                         admin_bar()->registerLink(trans('packages/page::pages.menu_name'), route('pages.create'), 'add-new');
                     }

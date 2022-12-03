@@ -17,7 +17,7 @@ if (!function_exists('render_product_swatches')) {
      * @return string
      * @throws Throwable
      */
-    function render_product_swatches($product, array $params = [])
+    function render_product_swatches(Product $product, array $params = []): string
     {
         Theme::asset()->container('footer')
             ->add('change-product-swatches', 'vendor/core/plugins/ecommerce/js/change-product-swatches.js', [
@@ -55,7 +55,7 @@ if (!function_exists('get_ecommerce_attribute_set')) {
      */
     function get_ecommerce_attribute_set()
     {
-        $attributeSets = app(ProductAttributeSetInterface::class)
+        return app(ProductAttributeSetInterface::class)
             ->advancedGet([
                 'condition' => [
                     'status'        => BaseStatusEnum::PUBLISHED,
@@ -68,8 +68,6 @@ if (!function_exists('get_ecommerce_attribute_set')) {
                     'attributes',
                 ],
             ]);
-
-        return $attributeSets;
     }
 }
 
@@ -78,9 +76,9 @@ if (!function_exists('get_parent_product')) {
      * Helper get parent of product variation
      * @param int $variationId
      * @param array $with
-     * @return Product
+     * @return Product|null
      */
-    function get_parent_product($variationId, array $with = ['slugable'])
+    function get_parent_product(int $variationId, array $with = ['slugable']): ?Product
     {
         return app(ProductVariationInterface::class)->getParentOfVariation($variationId, $with);
     }
@@ -92,7 +90,7 @@ if (!function_exists('get_parent_product_id')) {
      * @param int $variationId
      * @return int
      */
-    function get_parent_product_id($variationId)
+    function get_parent_product_id(int $variationId): ?int
     {
         $parent = get_parent_product($variationId);
 
@@ -105,7 +103,7 @@ if (!function_exists('get_product_info')) {
      * @param int $variationId
      * @return Collection
      */
-    function get_product_info($variationId)
+    function get_product_info(int $variationId): Collection
     {
         return app(ProductVariationItemInterface::class)->getVariationsInfo([$variationId]);
     }
@@ -116,7 +114,7 @@ if (!function_exists('get_product_attributes')) {
      * @param int $productId
      * @return Collection
      */
-    function get_product_attributes($productId)
+    function get_product_attributes(int $productId): Collection
     {
         return app(ProductVariationItemInterface::class)->getProductAttributes($productId);
     }

@@ -79,7 +79,7 @@ class StoreAttributeSetService
      * @param array $attributeIds
      * @throws Exception
      */
-    protected function deleteAttributes($productAttributeSetId, array $attributeIds)
+    protected function deleteAttributes(int $productAttributeSetId, array $attributeIds)
     {
         foreach ($attributeIds as $id) {
             $attribute = $this->productAttributeRepository
@@ -99,7 +99,7 @@ class StoreAttributeSetService
      * @param int $productAttributeSetId
      * @param array $attributes
      */
-    protected function storeAttributes($productAttributeSetId, array $attributes)
+    protected function storeAttributes(int $productAttributeSetId, array $attributes)
     {
         foreach ($attributes as $item) {
             if (isset($item['id'])) {

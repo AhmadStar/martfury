@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 
-return new class extends Migration {
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
@@ -212,7 +212,7 @@ return new class extends Migration {
             $table->decimal('sub_total', 15);
             $table->boolean('is_confirmed')->default(false);
             $table->string('discount_description', 255)->nullable();
-            $table->boolean('is_finished')->default(1)->nullable();
+            $table->boolean('is_finished')->default(0)->nullable();
             $table->string('token', 120)->nullable();
             $table->integer('payment_id')->unsigned()->nullable();
             $table->timestamps();
@@ -439,7 +439,6 @@ return new class extends Migration {
     public function down()
     {
         Schema::disableForeignKeyConstraints();
-        Schema::dropIfExists('ec_product_tag_product');
         Schema::dropIfExists('ec_product_collection_products');
         Schema::dropIfExists('ec_product_category_product');
         Schema::dropIfExists('ec_prices');

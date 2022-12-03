@@ -5,6 +5,7 @@ namespace Botble\Payment\Supports;
 use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Repositories\Interfaces\PaymentInterface;
+use Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,9 +41,18 @@ class PaymentHelper
             'user_id' => Auth::check() ? Auth::id() : 0,
         ], $args);
 
-        $paymentChannel = Arr::get($data, 'payment_channel', PaymentMethodEnum::COD);
+        $orderIds = (array)$data['order_id'];
 
-        $orderIds = (array) $data['order_id'];
+        $payment = app(PaymentInterface::class)->getFirstBy([
+            'charge_id' => $data['charge_id'],
+            ['order_id', 'IN', $orderIds],
+        ]);
+
+        if ($payment) {
+            return false;
+        }
+
+        $paymentChannel = Arr::get($data, 'payment_channel', PaymentMethodEnum::COD);
 
         return app(PaymentInterface::class)->create([
             'account_id'      => Arr::get($data, 'account_id'),
@@ -54,6 +64,27 @@ class PaymentHelper
             'customer_type'   => Arr::get($data, 'customer_type'),
             'payment_channel' => $paymentChannel,
             'status'          => Arr::get($data, 'status', PaymentStatusEnum::PENDING),
+        ]);
+    }
+
+    /**
+     * Format Log data
+     *
+     * @param array $input
+     * @param string $line
+     * @param string $function
+     * @param string $class
+     * @return array
+     */
+    public static function formatLog(array $input, string $line = '', string $function = '', string $class = ''): array
+    {
+        return array_merge($input, [
+            'user_id'   => Auth::check() ? Auth::id() : 0,
+            'ip'        => Request::ip(),
+            'line'      => $line,
+            'function'  => $function,
+            'class'     => $class,
+            'userAgent' => Request::header('User-Agent'),
         ]);
     }
 }

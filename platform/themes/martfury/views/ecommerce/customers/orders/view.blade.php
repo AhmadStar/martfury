@@ -83,11 +83,15 @@
 
                 <div class="col-12">
                     <span>{{ __('City') }}:</span> <span
-                        class="order-detail-value">{{ $order->address->city }} </span>
+                        class="order-detail-value">{{ $order->address->city_name }} </span>
                 </div>
                 <div class="col-12">
                     <span>{{ __('State') }}:</span> <span
-                        class="order-detail-value"> {{ $order->address->state }} </span>
+                        class="order-detail-value"> {{ $order->address->state_name }} </span>
+                </div>
+                <div class="col-12">
+                    <span>{{ __('Country') }}:</span> <span
+                        class="order-detail-value"> {{ $order->address->country_name }} </span>
                 </div>
                 <br>
                 <h5>{{ __('Order detail') }}</h5>
@@ -108,24 +112,26 @@
                             @foreach($order->products as $key => $orderProduct)
                                 @php
                                     $product = get_products([
-                                        'condition' => [
-                                            'ec_products.status' => \Botble\Base\Enums\BaseStatusEnum::PUBLISHED,
-                                            'ec_products.id' => $orderProduct->product_id,
-                                        ],
-                                        'take' => 1,
-                                        'select' => [
-                                            'ec_products.id',
-                                            'ec_products.images',
-                                            'ec_products.name',
-                                            'ec_products.price',
-                                            'ec_products.sale_price',
-                                            'ec_products.sale_type',
-                                            'ec_products.start_date',
-                                            'ec_products.end_date',
-                                            'ec_products.sku',
-                                            'ec_products.is_variation',
-                                        ],
-                                    ]);
+                                    'condition' => [
+                                        'ec_products.id' => $orderProduct->product_id,
+                                    ],
+                                    'take'   => 1,
+                                    'select' => [
+                                        'ec_products.id',
+                                        'ec_products.images',
+                                        'ec_products.name',
+                                        'ec_products.price',
+                                        'ec_products.sale_price',
+                                        'ec_products.sale_type',
+                                        'ec_products.start_date',
+                                        'ec_products.end_date',
+                                        'ec_products.sku',
+                                        'ec_products.is_variation',
+                                        'ec_products.status',
+                                        'ec_products.order',
+                                        'ec_products.created_at',
+                                    ],
+                                ]);
 
                                 @endphp
                                 <tr>
@@ -170,7 +176,7 @@
                     </div>
                 </div>
 
-                @if ($order->shipment)
+                @if ($order->shipment->id)
                     <br>
                     <h5>{{ __('Shipping Information:') }}</h5>
                     <p><span class="d-inline-block">{{ __('Shipping Status') }}</span>: <strong class="d-inline-block text-info">{!! BaseHelper::clean($order->shipment->status->toHtml()) !!}</strong></p>
@@ -202,6 +208,12 @@
                     @endif
                     @if ($order->canBeCanceled())
                         <a href="{{ route('customer.orders.cancel', $order->id) }}" onclick="return confirm('{{ __('Are you sure?') }}')" class="ps-btn ps-btn--sm ps-btn--danger">{{ __('Cancel order') }}</a>
+                    @endif
+                    @if ($order->canBeReturned())
+                        <a href="{{ route('customer.order_returns.request_view', $order->id) }}"
+                           class="ps-btn ps-btn--sm ps-btn--danger">
+                            {{ __('Return Product(s)') }}
+                        </a>
                     @endif
                 </div>
             </div>

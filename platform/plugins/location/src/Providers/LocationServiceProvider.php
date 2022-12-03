@@ -2,6 +2,7 @@
 
 namespace Botble\Location\Providers;
 
+use Botble\Base\Models\BaseModel;
 use Botble\LanguageAdvanced\Supports\LanguageAdvancedManager;
 use Botble\Location\Facades\LocationFacade;
 use Botble\Location\Models\City;
@@ -20,7 +21,12 @@ use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Event;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Routing\Events\RouteMatched;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Schema;
+use Location;
+use MacroableModels;
 
 class LocationServiceProvider extends ServiceProvider
 {
@@ -29,15 +35,15 @@ class LocationServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(CountryInterface::class, function () {
-            return new CountryCacheDecorator(new CountryRepository(new Country));
+            return new CountryCacheDecorator(new CountryRepository(new Country()));
         });
 
         $this->app->bind(StateInterface::class, function () {
-            return new StateCacheDecorator(new StateRepository(new State));
+            return new StateCacheDecorator(new StateRepository(new State()));
         });
 
         $this->app->bind(CityInterface::class, function () {
-            return new CityCacheDecorator(new CityRepository(new City));
+            return new CityCacheDecorator(new CityRepository(new City()));
         });
 
         AliasLoader::getInstance()->alias('Location', LocationFacade::class);
@@ -121,15 +127,134 @@ class LocationServiceProvider extends ServiceProvider
                 ]);
             }
 
-            dashboard_menu()->registerItem([
-                'id'          => 'cms-core-tools-location-bulk-import',
-                'priority'    => 1,
-                'parent_id'   => 'cms-core-tools',
-                'name'        => 'plugins/location::bulk-import.menu',
-                'icon'        => 'fas fa-file-import',
-                'url'         => route('location.bulk-import.index'),
-                'permissions' => ['location.bulk-import.index'],
-            ]);
+            dashboard_menu()
+                ->registerItem([
+                    'id'          => 'cms-core-tools-location-bulk-import',
+                    'priority'    => 1,
+                    'parent_id'   => 'cms-core-tools',
+                    'name'        => 'plugins/location::bulk-import.menu',
+                    'icon'        => 'fas fa-file-import',
+                    'url'         => route('location.bulk-import.index'),
+                    'permissions' => ['location.bulk-import.index'],
+                ])
+                ->registerItem([
+                    'id'          => 'cms-core-tools-location-export',
+                    'priority'    => 2,
+                    'parent_id'   => 'cms-core-tools',
+                    'name'        => 'plugins/location::location.export_location',
+                    'icon'        => 'fas fa-file-import',
+                    'url'         => route('location.export.index'),
+                    'permissions' => ['location.export.index'],
+                ]);
         });
+
+        $this->app->booted(function () {
+            Blueprint::macro('location', function ($item = null, $keys = []) {
+                if ($item) {
+                    if (class_exists($item) && Location::isSupported($item)) {
+                        $data = Location::getSupported($item);
+                        $model = new $item();
+                        $table = $model->getTable();
+                        $connection = $model->getConnectionName();
+                        $keys = [];
+                        foreach ($data as $key => $column) {
+                            if (!Schema::connection($connection)->hasColumn($table, $column)) {
+                                $keys[$key] = $column;
+                            }
+                        }
+                    }
+                } else {
+                    $keys = array_filter(array_merge([
+                        'country' => 'country_id',
+                        'state'   => 'state_id',
+                        'city'    => 'city_id',
+                    ], $keys));
+                }
+
+                /**
+                 * @var Blueprint $this
+                 */
+                if ($columnName = Arr::get($keys, 'country')) {
+                    $this->integer($columnName)->unsigned()->default(1)->nullable();
+                }
+
+                if ($columnName = Arr::get($keys, 'state')) {
+                    $this->integer($columnName)->unsigned()->nullable();
+                }
+
+                if ($columnName = Arr::get($keys, 'city')) {
+                    $this->integer($columnName)->unsigned()->nullable();
+                }
+
+                return true;
+            });
+
+            foreach (Location::getSupported() as $item => $keys) {
+                if (!class_exists($item)) {
+                    continue;
+                }
+
+                if ($foreignKey = Arr::get($keys, 'country')) {
+                    /**
+                     * @var BaseModel $item
+                     */
+                    $item::resolveRelationUsing('country', function ($model) use ($foreignKey) {
+                        return $model->belongsTo(Country::class, $foreignKey)->withDefault();
+                    });
+
+                    MacroableModels::addMacro($item, 'getCountryNameAttribute', function () {
+                        /**
+                         * @var BaseModel $this
+                         */
+                        return $this->country->name;
+                    });
+                }
+
+                if ($foreignKey = Arr::get($keys, 'state')) {
+                    /**
+                     * @var BaseModel $item
+                     */
+                    $item::resolveRelationUsing('state', function ($model) use ($foreignKey) {
+                        return $model->belongsTo(State::class, $foreignKey)->withDefault();
+                    });
+
+                    MacroableModels::addMacro($item, 'getStateNameAttribute', function () {
+                        /**
+                         * @var BaseModel $this
+                         */
+                        return $this->state->name;
+                    });
+                }
+
+                if ($foreignKey = Arr::get($keys, 'city')) {
+                    /**
+                     * @var BaseModel $item
+                     */
+                    $item::resolveRelationUsing('city', function ($model) use ($foreignKey) {
+                        return $model->belongsTo(City::class, $foreignKey)->withDefault();
+                    });
+
+                    MacroableModels::addMacro($item, 'getCityNameAttribute', function () {
+                        /**
+                         * @var BaseModel $this
+                         */
+                        return $this->city->name;
+                    });
+                }
+
+                MacroableModels::addMacro($item, 'getFullAddressAttribute', function () {
+                    /**
+                     * @var BaseModel $this
+                     */
+                    return ($this->address ? $this->address . ', ' : null) .
+                        ($this->city_name ? $this->city_name . ', ' : null) .
+                        ($this->state_name ? $this->state_name . ', ' : null) .
+                        $this->country_name;
+                });
+            }
+        });
+
+        $this->app->register(CommandServiceProvider::class);
+        $this->app->register(HookServiceProvider::class);
     }
 }

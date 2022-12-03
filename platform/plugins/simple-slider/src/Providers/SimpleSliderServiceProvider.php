@@ -23,11 +23,11 @@ class SimpleSliderServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(SimpleSliderInterface::class, function () {
-            return new SimpleSliderCacheDecorator(new SimpleSliderRepository(new SimpleSlider));
+            return new SimpleSliderCacheDecorator(new SimpleSliderRepository(new SimpleSlider()));
         });
 
         $this->app->bind(SimpleSliderItemInterface::class, function () {
-            return new SimpleSliderItemCacheDecorator(new SimpleSliderItemRepository(new SimpleSliderItem));
+            return new SimpleSliderItemCacheDecorator(new SimpleSliderItemRepository(new SimpleSliderItem()));
         });
     }
 

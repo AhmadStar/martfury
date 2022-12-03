@@ -6,6 +6,7 @@ use Botble\Base\Events\BeforeEditContentEvent;
 use Botble\Faq\Http\Requests\FaqCategoryRequest;
 use Botble\Faq\Repositories\Interfaces\FaqCategoryInterface;
 use Botble\Base\Http\Controllers\BaseController;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Exception;
 use Botble\Faq\Tables\FaqCategoryTable;
@@ -15,6 +16,8 @@ use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Faq\Forms\FaqCategoryForm;
 use Botble\Base\Forms\FormBuilder;
+use Illuminate\Contracts\View\View;
+use Throwable;
 
 class FaqCategoryController extends BaseController
 {
@@ -34,12 +37,11 @@ class FaqCategoryController extends BaseController
 
     /**
      * @param FaqCategoryTable $table
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
-     * @throws \Throwable
+     * @return JsonResponse|View
+     * @throws Throwable
      */
     public function index(FaqCategoryTable $table)
     {
-
         page_title()->setTitle(trans('plugins/faq::faq-category.name'));
 
         return $table->renderTable();

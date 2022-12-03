@@ -3,7 +3,6 @@
 namespace Botble\LanguageAdvanced\Supports;
 
 use Botble\Base\Models\BaseModel;
-use Botble\Gallery\Models\GalleryMeta;
 use Botble\LanguageAdvanced\Models\PageTranslation;
 use Botble\Page\Models\Page;
 use Illuminate\Http\Request;

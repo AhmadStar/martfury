@@ -92,6 +92,31 @@ class PublicCartController extends Controller
             }
         }
 
+        if ($product->original_product->options()->where('required', true)->exists()) {
+            if (!$request->input('options')) {
+                return $response
+                    ->setError()
+                    ->setData(['next_url' => $product->original_product->url])
+                    ->setMessage(__('Please select product options!'));
+            }
+
+            $requiredOptions = $product->original_product->options()->where('required', true)->get();
+
+            $message = null;
+
+            foreach ($requiredOptions as $requiredOption) {
+                if (!$request->input('options.' . $requiredOption->id . '.values')) {
+                    $message .= trans('plugins/ecommerce::product-option.add_to_cart_value_required', ['value' => $requiredOption->name]);
+                }
+            }
+
+            if ($message) {
+                return $response
+                    ->setError()
+                    ->setMessage(__('Please select product options!'));
+            }
+        }
+
         if ($outOfQuantity) {
             return $response
                 ->setError()
@@ -99,6 +124,12 @@ class PublicCartController extends Controller
         }
 
         $cartItems = OrderHelper::handleAddCart($product, $request);
+
+        $response
+            ->setMessage(__(
+                'Added product :product to cart successfully!',
+                ['product' => $product->original_product->name]
+            ));
 
         $token = OrderHelper::getOrderSessionToken();
 
@@ -108,13 +139,15 @@ class PublicCartController extends Controller
             $nextUrl = route('public.cart');
         }
 
-        if ($request->has('checkout')) {
+        if ($request->input('checkout')) {
+            $response->setData(['next_url' => $nextUrl]);
 
             if ($request->ajax() && $request->wantsJson()) {
-                return $response->setData(['next_url' => route('public.checkout.information', $token)]);
+                return $response;
             }
 
-            return $response->setNextUrl($nextUrl);
+            return $response
+                ->setNextUrl($nextUrl);
         }
 
         return $response
@@ -123,10 +156,7 @@ class PublicCartController extends Controller
                 'count'       => Cart::instance('cart')->count(),
                 'total_price' => format_price(Cart::instance('cart')->rawSubTotal()),
                 'content'     => $cartItems,
-                'next_url'    => $nextUrl,
-            ])
-            ->setMessage(__('Added product :product to cart successfully!',
-                ['product' => $product->original_product->name]));
+            ]);
     }
 
     /**
@@ -197,15 +227,18 @@ class PublicCartController extends Controller
         $outOfQuantity = false;
         foreach ($data as $item) {
             $cartItem = Cart::instance('cart')->get($item['rowId']);
+
+            if (!$cartItem) {
+                continue;
+            }
+
             $product = null;
 
-            if ($cartItem) {
-                $product = $this->productRepository->findById($cartItem->id);
-            }
+            $product = $this->productRepository->findById($cartItem->id);
 
             if ($product) {
                 $originalQuantity = $product->quantity;
-                $product->quantity = (int)$product->quantity - Arr::get($item, 'values.qty', 0) + 1;
+                $product->quantity = (int)$product->quantity - (int)Arr::get($item, 'values.qty', 0) + 1;
 
                 if ($product->quantity < 0) {
                     $product->quantity = 0;
@@ -244,7 +277,7 @@ class PublicCartController extends Controller
     /**
      * @param string $id
      * @param BaseHttpResponse $response
-     * @return array|BaseHttpResponse|RedirectResponse
+     * @return BaseHttpResponse
      */
     public function getRemove($id, BaseHttpResponse $response)
     {
@@ -269,7 +302,7 @@ class PublicCartController extends Controller
 
     /**
      * @param BaseHttpResponse $response
-     * @return array|BaseHttpResponse|RedirectResponse
+     * @return BaseHttpResponse
      */
     public function getDestroy(BaseHttpResponse $response)
     {

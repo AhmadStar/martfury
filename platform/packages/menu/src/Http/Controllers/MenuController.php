@@ -12,7 +12,7 @@ use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Menu\Forms\MenuForm;
 use Botble\Menu\Http\Requests\MenuNodeRequest;
 use Botble\Menu\Http\Requests\MenuRequest;
-use Botble\Menu\Models\MenuNode;
+use Botble\Menu\Models\Menu as MenuModel;
 use Botble\Menu\Repositories\Eloquent\MenuRepository;
 use Botble\Menu\Repositories\Interfaces\MenuInterface;
 use Botble\Menu\Repositories\Interfaces\MenuLocationInterface;
@@ -21,17 +21,15 @@ use Botble\Menu\Tables\MenuTable;
 use Botble\Support\Services\Cache\Cache;
 use Exception;
 use Illuminate\Cache\CacheManager;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Menu;
 use stdClass;
 use Throwable;
 
 class MenuController extends BaseController
 {
-
     /**
      * @var MenuInterface
      */
@@ -64,8 +62,7 @@ class MenuController extends BaseController
         MenuNodeInterface     $menuNodeRepository,
         MenuLocationInterface $menuLocationRepository,
         CacheManager          $cache
-    )
-    {
+    ) {
         $this->menuRepository = $menuRepository;
         $this->menuNodeRepository = $menuNodeRepository;
         $this->menuLocationRepository = $menuLocationRepository;
@@ -122,12 +119,12 @@ class MenuController extends BaseController
     }
 
     /**
-     * @param Model $menu
+     * @param MenuModel $menu
      * @param Request $request
      * @return bool
      * @throws Exception
      */
-    protected function saveMenuLocations($menu, Request $request)
+    protected function saveMenuLocations(MenuModel $menu, Request $request): bool
     {
         $locations = $request->input('locations', []);
 
@@ -160,7 +157,7 @@ class MenuController extends BaseController
 
         $oldInputs = old();
         if ($oldInputs && $id == 0) {
-            $oldObject = new stdClass;
+            $oldObject = new stdClass();
             foreach ($oldInputs as $key => $row) {
                 $oldObject->$key = $row;
             }

@@ -207,13 +207,11 @@ class JsValidatorFactory
 
         $delegated = new DelegatedValidator($validator, new ValidationRuleParserProxy($validator->getData()));
         $rules = new RuleParser($delegated, $this->getSessionToken());
-        $messages = new MessageParser($delegated, isset($this->options['escape']) ? $this->options['escape'] : false);
+        $messages = new MessageParser($delegated, $this->options['escape'] ?? false);
 
         $jsValidator = new ValidatorHandler($rules, $messages);
 
-        $manager = new JavascriptValidator($jsValidator, compact('view', 'selector', 'remote'));
-
-        return $manager;
+        return new JavascriptValidator($jsValidator, compact('view', 'selector', 'remote'));
     }
 
     /**
@@ -221,7 +219,7 @@ class JsValidatorFactory
      *
      * @return null|string
      */
-    protected function getSessionToken()
+    protected function getSessionToken(): ?string
     {
         $token = null;
         if ($session = $this->app->__get('session')) {

@@ -136,10 +136,12 @@ class LoginController extends Controller
             if (EcommerceHelper::isEnableEmailVerification() && empty($customer->confirmed_at)) {
                 throw ValidationException::withMessages([
                     'confirmation' => [
-                        __('The given email address has not been confirmed. <a href=":resend_link">Resend confirmation link.</a>',
+                        __(
+                            'The given email address has not been confirmed. <a href=":resend_link">Resend confirmation link.</a>',
                             [
                                 'resend_link' => route('customer.resend_confirmation', ['email' => $customer->email]),
-                            ]),
+                            ]
+                        ),
                     ],
                 ]);
             }

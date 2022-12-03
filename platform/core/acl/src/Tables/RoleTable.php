@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class RoleTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -85,7 +84,7 @@ class RoleTable extends TableAbstract
     }
 
     /**
-     * {@inheritDoc}
+     * @return mixed
      */
     public function query()
     {
@@ -105,7 +104,7 @@ class RoleTable extends TableAbstract
     /**
      * {@inheritDoc}
      */
-    public function columns()
+    public function columns(): array
     {
         return [
             'id'          => [
@@ -133,7 +132,7 @@ class RoleTable extends TableAbstract
     /**
      * {@inheritDoc}
      */
-    public function buttons()
+    public function buttons(): array
     {
         return $this->addCreateButton(route('roles.create'), 'roles.create');
     }

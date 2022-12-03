@@ -96,9 +96,9 @@ $(document).ready(function () {
 
     $(document).on('click', '.box-search-advance .page-link', event => {
         event.preventDefault();
-        let _self = $(event.currentTarget);
-        if (!_self.closest('.page-item').hasClass('disabled') && _self.prop('href')) {
-            let $formBody = _self.closest('.box-search-advance').find('.panel');
+        let $searchBox = $(event.currentTarget).closest('.box-search-advance').find('.textbox-advancesearch');
+        if (!$searchBox.closest('.page-item').hasClass('disabled') && $searchBox.data('target')) {
+            let $formBody = $searchBox.closest('.box-search-advance').find('.panel');
             Botble.blockUI({
                 target: $formBody,
                 iconOnly: true,
@@ -106,7 +106,7 @@ $(document).ready(function () {
             });
 
             $.ajax({
-                url: _self.prop('href') + '&keyword=' + _self.val(),
+                url: $(event.currentTarget).prop('href') + '&keyword=' + $searchBox.val(),
                 type: 'GET',
                 success: res => {
                     if (res.error) {

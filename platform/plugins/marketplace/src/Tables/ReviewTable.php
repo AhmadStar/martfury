@@ -13,7 +13,6 @@ use RvMedia;
 
 class ReviewTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -55,7 +54,8 @@ class ReviewTable extends TableAbstract
             ->eloquent($this->query())
             ->editColumn('product_id', function ($item) {
                 if (!empty($item->product)) {
-                    return Html::link($item->product->url,
+                    return Html::link(
+                        $item->product->url,
                         BaseHelper::clean($item->product_name),
                         ['target' => '_blank']
                     );
@@ -63,7 +63,7 @@ class ReviewTable extends TableAbstract
                 return null;
             })
             ->editColumn('customer_id', function ($item) {
-                return clean($item->user->name);
+                return BaseHelper::clean($item->user->name);
             })
             ->editColumn('star', function ($item) {
                 return view('plugins/ecommerce::reviews.partials.rating', ['star' => $item->star])->render();
@@ -81,30 +81,39 @@ class ReviewTable extends TableAbstract
 
                 $galleryID = 'images-group-' . $item->id;
 
-                $html = Html::image(RvMedia::getImageUrl($item->images[0], 'thumb'),
-                    RvMedia::getImageUrl($item->images[0]), [
+                $html = Html::image(
+                    RvMedia::getImageUrl($item->images[0], 'thumb'),
+                    RvMedia::getImageUrl($item->images[0]),
+                    [
                         'width'         => 60,
                         'class'         => 'fancybox m-1 rounded-top rounded-end rounded-bottom rounded-start border d-inline-block',
                         'href'          => RvMedia::getImageUrl($item->images[0]),
                         'data-fancybox' => $galleryID,
-                    ]);
+                    ]
+                );
 
                 if (isset($item->images[1])) {
                     if ($count == 2) {
-                        $html .= Html::image(RvMedia::getImageUrl($item->images[1], 'thumb'),
-                            RvMedia::getImageUrl($item->images[1]), [
+                        $html .= Html::image(
+                            RvMedia::getImageUrl($item->images[1], 'thumb'),
+                            RvMedia::getImageUrl($item->images[1]),
+                            [
                                 'width'         => 60,
                                 'class'         => 'fancybox m-1 rounded-top rounded-end rounded-bottom rounded-start border d-inline-block',
                                 'href'          => RvMedia::getImageUrl($item->images[1]),
                                 'data-fancybox' => $galleryID,
-                            ]);
+                            ]
+                        );
                     } elseif ($count > 2) {
-                        $html .= Html::tag('a', Html::image(RvMedia::getImageUrl($item->images[1], 'thumb'),
-                                RvMedia::getImageUrl($item->images[1]), [
+                        $html .= Html::tag('a', Html::image(
+                            RvMedia::getImageUrl($item->images[1], 'thumb'),
+                            RvMedia::getImageUrl($item->images[1]),
+                            [
                                     'width' => 60,
                                     'class' => 'm-1 rounded-top rounded-end rounded-bottom rounded-start border',
                                     'src'   => RvMedia::getImageUrl($item->images[1]),
-                                ])->toHtml() . Html::tag('span', '+' . ($count - 2))->toHtml(), [
+                                ]
+                        )->toHtml() . Html::tag('span', '+' . ($count - 2))->toHtml(), [
                             'class'         => 'fancybox more-review-images',
                             'href'          => RvMedia::getImageUrl($item->images[1]),
                             'data-fancybox' => $galleryID,
@@ -115,19 +124,21 @@ class ReviewTable extends TableAbstract
                 if ($count > 2) {
                     foreach ($item->images as $index => $image) {
                         if ($index > 1) {
-                            $html .= Html::image(RvMedia::getImageUrl($item->images[$index], 'thumb'),
-                                RvMedia::getImageUrl($item->images[$index]), [
+                            $html .= Html::image(
+                                RvMedia::getImageUrl($item->images[$index], 'thumb'),
+                                RvMedia::getImageUrl($item->images[$index]),
+                                [
                                     'width'         => 60,
                                     'class'         => 'fancybox d-none',
                                     'href'          => RvMedia::getImageUrl($item->images[$index]),
                                     'data-fancybox' => $galleryID,
-                                ]);
+                                ]
+                            );
                         }
                     }
                 }
 
                 return $html;
-
             })
             ->editColumn('created_at', function ($item) {
                 return BaseHelper::formatDate($item->created_at);

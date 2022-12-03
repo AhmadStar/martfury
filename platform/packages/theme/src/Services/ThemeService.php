@@ -2,6 +2,7 @@
 
 namespace Botble\Theme\Services;
 
+use BaseHelper;
 use Botble\Base\Supports\Helper;
 use Botble\PluginManagement\Services\PluginService;
 use Botble\Setting\Repositories\Interfaces\SettingInterface;
@@ -82,7 +83,7 @@ class ThemeService
         }
 
         try {
-            $content = get_file_data($this->getPath($theme, 'theme.json'));
+            $content = BaseHelper::getFileData($this->getPath($theme, 'theme.json'));
 
             if (!empty($content)) {
                 $requiredPlugins = Arr::get($content, 'required_plugins', []);
@@ -168,7 +169,7 @@ class ThemeService
         if ($theme) {
             $themes = [$theme];
         } else {
-            $themes = scan_folder(theme_path());
+            $themes = BaseHelper::scanFolder(theme_path());
         }
 
         foreach ($themes as $theme) {

@@ -15,7 +15,6 @@ use Yajra\DataTables\DataTables;
 
 class CityTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

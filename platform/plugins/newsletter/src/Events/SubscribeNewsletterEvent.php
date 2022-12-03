@@ -9,7 +9,9 @@ use Illuminate\Queue\SerializesModels;
 
 class SubscribeNewsletterEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     /**
      * @var Newsletter

@@ -61,8 +61,10 @@ class BunnyCDNStorage
      */
     protected function normalizePath($path, $isDirectory = null)
     {
-        if (!Util::startsWith($path, '/' . $this->storageZoneName . '/') && !Util::startsWith($path,
-                $this->storageZoneName . '/')) {
+        if (!Util::startsWith($path, '/' . $this->storageZoneName . '/') && !Util::startsWith(
+            $path,
+            $this->storageZoneName . '/'
+        )) {
             throw new BunnyCDNStorageException('Path validation failed. File path must begin with ' . '/' . $this->storageZoneName . '/');
         }
 
@@ -104,8 +106,8 @@ class BunnyCDNStorage
      * @throws BunnyCDNStorageException
      */
     public function sendHttpRequest(
-        $url,
-        $method = 'GET',
+        string $url,
+        string $method = 'GET',
         $uploadFile = null,
         $uploadFileSize = null,
         $downloadFileHandler = null
@@ -158,7 +160,7 @@ class BunnyCDNStorage
      *
      * @return string
      */
-    public function getBaseUrl()
+    public function getBaseUrl(): string
     {
         return $this->storageZoneRegion === 'de' || !$this->storageZoneRegion
             ? 'https://storage.bunnycdn.com/'

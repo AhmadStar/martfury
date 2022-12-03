@@ -7,5 +7,4 @@ use Botble\Marketplace\Repositories\Interfaces\RevenueInterface;
 
 class RevenueCacheDecorator extends CacheAbstractDecorator implements RevenueInterface
 {
-
 }

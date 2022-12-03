@@ -17,7 +17,6 @@ class RouteClearCommand extends BaseRouteClearCommand
         parent::handle();
 
         foreach (Language::getSupportedLanguagesKeys() as $locale) {
-
             $path = $this->laravel->getCachedRoutesPath();
 
             if (!$locale) {

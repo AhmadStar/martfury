@@ -6,6 +6,7 @@ use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Supports\Helper;
 use Botble\Ecommerce\Enums\OrderStatusEnum;
+use Botble\Ecommerce\Enums\ProductTypeEnum;
 use Botble\Ecommerce\Models\Customer;
 use Botble\Ecommerce\Models\Product;
 use Botble\Ecommerce\Repositories\Interfaces\ProductInterface;
@@ -14,13 +15,16 @@ use Botble\Ecommerce\Repositories\Interfaces\ReviewInterface;
 use Botble\Location\Repositories\Interfaces\CityInterface;
 use Botble\Location\Repositories\Interfaces\CountryInterface;
 use Botble\Location\Repositories\Interfaces\StateInterface;
+use Carbon\Carbon;
 use Cart;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Theme;
 
 class EcommerceHelper
 {
@@ -154,6 +158,14 @@ class EcommerceHelper
     public function isZipCodeEnabled(): bool
     {
         return get_ecommerce_setting('zip_code_enabled', '0') == 1;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBillingAddressEnabled(): bool
+    {
+        return get_ecommerce_setting('billing_address_enabled', '0') == 1;
     }
 
     /**
@@ -338,37 +350,37 @@ class EcommerceHelper
      */
     public function getDateRangeInReport(Request $request): array
     {
-        $startDate = now()->subDays(29);
-        $endDate = now();
+        $startDate = Carbon::now()->subDays(29);
+        $endDate = Carbon::now();
 
         if ($request->input('date_from')) {
             try {
-                $startDate = now()->createFromFormat('Y-m-d', $request->input('date_from'));
-            } catch (Exception $ex) {
+                $startDate = Carbon::now()->createFromFormat('Y-m-d', $request->input('date_from'));
+            } catch (Exception $exception) {
             }
 
             if (!$startDate) {
-                $startDate = now()->subDays(29);
+                $startDate = Carbon::now()->subDays(29);
             }
         }
 
         if ($request->input('date_to')) {
             try {
-                $endDate = now()->createFromFormat('Y-m-d', $request->input('date_to'));
+                $endDate = Carbon::now()->createFromFormat('Y-m-d', $request->input('date_to'));
             } catch (Exception $ex) {
             }
 
             if (!$endDate) {
-                $endDate = now();
+                $endDate = Carbon::now();
             }
         }
 
-        if ($endDate->gt(now())) {
-            $endDate = now();
+        if ($endDate->gt(Carbon::now())) {
+            $endDate = Carbon::now();
         }
 
         if ($startDate->gt($endDate)) {
-            $startDate = now()->subDays(29);
+            $startDate = Carbon::now()->subDays(29);
         }
 
         $predefinedRange = $request->input('predefined_range', trans('plugins/ecommerce::reports.ranges.last_30_days'));
@@ -721,7 +733,11 @@ class EcommerceHelper
         return $this;
     }
 
-    public function getProductVariationInfo(Product $product)
+    /**
+     * @param Product $product
+     * @return array
+     */
+    public function getProductVariationInfo(Product $product): array
     {
         $productImages = $product->images;
 
@@ -790,5 +806,117 @@ class EcommerceHelper
         }
 
         return json_decode($setting, true);
+    }
+
+    /**
+     * @param int|float $weight
+     * @return int|float
+     */
+    public function validateOrderWeight($weight)
+    {
+        return max($weight, config('plugins.ecommerce.order.default_order_weight'));
+    }
+
+    /**
+     * @return bool
+     */
+    public function isFacebookPixelEnabled(): bool
+    {
+        return get_ecommerce_setting('facebook_pixel_enabled', 0) == 1;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isGoogleTagManagerEnabled(): bool
+    {
+        return get_ecommerce_setting('google_tag_manager_enabled', 0) == 1;
+    }
+
+    /**
+     * @return int
+     */
+    public function getReturnableDays(): int
+    {
+        return (int)get_ecommerce_setting('returnable_days', 30);
+    }
+
+    /**
+     * @return int
+     */
+    public static function canCustomReturnProductQty(): int
+    {
+        return get_ecommerce_setting('can_custom_return_product_quantity', 0);
+    }
+
+    /**
+     * @param Collection $products
+     * @return bool
+     */
+    public function isAvailableShipping(Collection $products): bool
+    {
+        if (!$this->isEnabledSupportDigitalProducts()) {
+            return true;
+        }
+
+        $count = $this->countDigitalProducts($products);
+
+        return !$count || $products->count() != $count;
+    }
+
+    /**
+     * @param Collection $products
+     * @return int
+     */
+    public function countDigitalProducts(Collection $products): int
+    {
+        if (!$this->isEnabledSupportDigitalProducts()) {
+            return 0;
+        }
+
+        return $products->where('product_type', ProductTypeEnum::DIGITAL)->count();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isEnabledSupportDigitalProducts(): bool
+    {
+        return !!get_ecommerce_setting('is_enabled_support_digital_products', 0);
+    }
+
+    /**
+     * @param $request
+     * @return bool
+     */
+    public function productFilterParamsValidated($request): bool
+    {
+        $validator = Validator::make($request->input(), [
+            'q'          => 'nullable|string|max:255',
+            'max_price'  => 'nullable|numeric',
+            'min_price'  => 'nullable|numeric',
+            'attributes' => 'nullable|array',
+            'categories' => 'nullable|array',
+            'tags'       => 'nullable|array',
+            'brands'     => 'nullable|array',
+            'sort-by'    => 'nullable|string',
+        ]);
+
+        return !$validator->fails();
+    }
+
+    /**
+     * @param string $view
+     * @return string
+     */
+    public function viewPath(string $view): string
+    {
+        $themeView = Theme::getThemeNamespace() . '::views.ecommerce.' . $view;
+
+        if (view()->exists($themeView)) {
+            return $themeView;
+        }
+
+        return 'plugins/ecommerce::themes.' . $view;
     }
 }

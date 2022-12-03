@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\DB;
 
 class DeletedContentListener
 {
-
     /**
      * Handle the event.
      *
@@ -18,7 +17,6 @@ class DeletedContentListener
     public function handle(DeletedContentEvent $event)
     {
         if (LanguageAdvancedManager::isSupported($event->data)) {
-
             $table = $event->data->getTable() . '_translations';
 
             DB::table($table)->where([$event->data->getTable() . '_id' => $event->data->id])->delete();

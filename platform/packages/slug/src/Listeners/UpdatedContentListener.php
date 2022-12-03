@@ -12,7 +12,6 @@ use SlugHelper;
 
 class UpdatedContentListener
 {
-
     /**
      * @var SlugInterface
      */
@@ -39,15 +38,17 @@ class UpdatedContentListener
             try {
                 $slug = $event->request->input('slug');
 
+                $fieldNameToGenerateSlug = SlugHelper::getColumnNameToGenerateSlug($event->data);
+
                 if (!$slug) {
-                    $slug = $event->request->input('name');
+                    $slug = $event->request->input($fieldNameToGenerateSlug);
                 }
 
-                if (!$slug && $event->data->name) {
+                if (!$slug && $event->data->{$fieldNameToGenerateSlug}) {
                     if (!SlugHelper::turnOffAutomaticUrlTranslationIntoLatin()) {
-                        $slug = Str::slug($event->data->name);
+                        $slug = Str::slug($event->data->{$fieldNameToGenerateSlug});
                     } else {
-                        $slug = $event->data->name;
+                        $slug = $event->data->{$fieldNameToGenerateSlug};
                     }
                 }
 

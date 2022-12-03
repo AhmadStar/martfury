@@ -69,6 +69,7 @@ return [
     'enter_promotion_name'                                     => 'Enter promotion name',
     'enter_coupon_name'                                        => 'Enter coupon name',
     'cancel'                                                   => 'Cancel',
-    'is' => 'Is',
-    'when_shipping_fee_less_than' => 'when shipping fee less than',
+    'is'                                                       => 'Is',
+    'when_shipping_fee_less_than'                              => 'when shipping fee less than',
+    'minimum_order_amount_error'                               => 'You are under :minimum_amount to apply the coupon, you must add :add_more more items to your cart',
 ];

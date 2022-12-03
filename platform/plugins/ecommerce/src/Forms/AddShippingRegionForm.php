@@ -28,7 +28,7 @@ class AddShippingRegionForm extends FormAbstract
         $countries = array_diff_key($countries, array_flip($existedCountries));
 
         $this
-            ->setupModel(new Shipping)
+            ->setupModel(new Shipping())
             ->setFormOptions([
                 'template' => 'core/base::forms.form-content-only',
                 'url'      => route('shipping_methods.region.create'),

@@ -46,21 +46,21 @@ class MediaServiceProvider extends ServiceProvider
     {
         $this->app->bind(MediaFileInterface::class, function () {
             return new MediaFileCacheDecorator(
-                new MediaFileRepository(new MediaFile),
+                new MediaFileRepository(new MediaFile()),
                 MEDIA_GROUP_CACHE_KEY
             );
         });
 
         $this->app->bind(MediaFolderInterface::class, function () {
             return new MediaFolderCacheDecorator(
-                new MediaFolderRepository(new MediaFolder),
+                new MediaFolderRepository(new MediaFolder()),
                 MEDIA_GROUP_CACHE_KEY
             );
         });
 
         $this->app->bind(MediaSettingInterface::class, function () {
             return new MediaSettingCacheDecorator(
-                new MediaSettingRepository(new MediaSetting),
+                new MediaSettingRepository(new MediaSetting()),
                 MEDIA_GROUP_CACHE_KEY
             );
         });
@@ -143,12 +143,18 @@ class MediaServiceProvider extends ServiceProvider
                 'key'      => $setting->get('media_bunnycdn_key'),
                 'region'   => $setting->get('media_bunnycdn_region'),
             ],
-            'core.media.media.chunk.enabled'       => (bool)$setting->get('media_chunk_enabled',
-                $config->get('core.media.media.chunk.enabled')),
-            'core.media.media.chunk.chunk_size'    => (int)$setting->get('media_chunk_size',
-                $config->get('core.media.media.chunk.chunk_size')),
-            'core.media.media.chunk.max_file_size' => (int)$setting->get('media_max_file_size',
-                $config->get('core.media.media.chunk.max_file_size')),
+            'core.media.media.chunk.enabled'       => (bool)$setting->get(
+                'media_chunk_enabled',
+                $config->get('core.media.media.chunk.enabled')
+            ),
+            'core.media.media.chunk.chunk_size'    => (int)$setting->get(
+                'media_chunk_size',
+                $config->get('core.media.media.chunk.chunk_size')
+            ),
+            'core.media.media.chunk.max_file_size' => (int)$setting->get(
+                'media_max_file_size',
+                $config->get('core.media.media.chunk.max_file_size')
+            ),
         ]);
 
         Event::listen(RouteMatched::class, function () {
@@ -166,7 +172,6 @@ class MediaServiceProvider extends ServiceProvider
         $this->commands([
             GenerateThumbnailCommand::class,
             DeleteThumbnailCommand::class,
-            ClearChunksCommand::class,
             InsertWatermarkCommand::class,
         ]);
 
@@ -178,8 +183,14 @@ class MediaServiceProvider extends ServiceProvider
             }
         });
 
-        $this->app->singleton(ChunkStorage::class, function () {
-            return new ChunkStorage;
-        });
+        if (RvMedia::getConfig('chunk.clear.schedule.enabled')) {
+            $this->commands([
+                ClearChunksCommand::class,
+            ]);
+
+            $this->app->singleton(ChunkStorage::class, function () {
+                return new ChunkStorage();
+            });
+        }
     }
 }

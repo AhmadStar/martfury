@@ -44,7 +44,7 @@ if (!function_exists('render_editor')) {
      */
     function render_editor(string $name, ?string $value = null, bool $withShortCode = false, array $attributes = []): string
     {
-        return (new Editor)->render($name, $value, $withShortCode, $attributes);
+        return (new Editor())->render($name, $value, $withShortCode, $attributes);
     }
 }
 
@@ -91,10 +91,10 @@ if (!function_exists('get_cms_version')) {
      */
     function get_cms_version(): string
     {
-        $version = '5.27.1';
+        $version = '...';
 
         try {
-            $core = get_file_data(core_path('core.json'));
+            $core = BaseHelper::getFileData(core_path('core.json'));
 
             return Arr::get($core, 'version', $version);
         } catch (Exception $exception) {

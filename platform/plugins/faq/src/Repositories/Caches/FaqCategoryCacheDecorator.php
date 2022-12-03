@@ -7,5 +7,4 @@ use Botble\Faq\Repositories\Interfaces\FaqCategoryInterface;
 
 class FaqCategoryCacheDecorator extends CacheAbstractDecorator implements FaqCategoryInterface
 {
-
 }

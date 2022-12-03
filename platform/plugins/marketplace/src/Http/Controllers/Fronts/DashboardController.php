@@ -152,7 +152,9 @@ class DashboardController
             ->selectRaw(
                 'SUM(CASE WHEN type IS NULL OR type = ? THEN sub_amount WHEN type = ? THEN sub_amount * -1 ELSE 0 END) as sub_amount,
                 SUM(CASE WHEN type IS NULL OR type = ? THEN amount WHEN type = ? THEN amount * -1 ELSE 0 END) as amount,
-                SUM(fee) as fee', [RevenueTypeEnum::ADD_AMOUNT, RevenueTypeEnum::SUBTRACT_AMOUNT, RevenueTypeEnum::ADD_AMOUNT, RevenueTypeEnum::SUBTRACT_AMOUNT])
+                SUM(fee) as fee',
+                [RevenueTypeEnum::ADD_AMOUNT, RevenueTypeEnum::SUBTRACT_AMOUNT, RevenueTypeEnum::ADD_AMOUNT, RevenueTypeEnum::SUBTRACT_AMOUNT]
+            )
             ->where('customer_id', $user->id)
             ->where(function ($query) use ($startDate, $endDate) {
                 $query->whereDate('created_at', '>=', $startDate)
@@ -282,7 +284,7 @@ class DashboardController
             $receiver = new FileReceiver('file', $request, DropZoneUploadHandler::class);
             // Check if the upload is success, throw exception or return response you need
             if ($receiver->isUploaded() === false) {
-                throw new UploadMissingFileException;
+                throw new UploadMissingFileException();
             }
             // Receive the file
             $save = $receiver->receive();

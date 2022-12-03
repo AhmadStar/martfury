@@ -5,7 +5,6 @@ namespace Botble\Ecommerce\Cart;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Ecommerce\Cart\Contracts\Buyable;
 use Botble\Ecommerce\Cart\Exceptions\CartAlreadyStoredException;
-use Botble\Ecommerce\Cart\Exceptions\InvalidRowIDException;
 use Botble\Ecommerce\Cart\Exceptions\UnknownModelException;
 use Botble\Ecommerce\Repositories\Interfaces\ProductInterface;
 use Carbon\Carbon;
@@ -19,7 +18,7 @@ use Illuminate\Support\Collection;
 
 class Cart
 {
-    const DEFAULT_INSTANCE = 'default';
+    public const DEFAULT_INSTANCE = 'default';
 
     /**
      * Instance of the session manager.
@@ -157,6 +156,24 @@ class Cart
      */
     protected function createCartItem($id, $name, $qty, $price, array $options)
     {
+        $basePrice = $price;
+        if(!empty($options['options'])) {
+            foreach($options['options']['optionCartValue'] as $value) {
+                if(is_array($value)) {
+                    foreach($value as $_value) {
+                        if ($_value['affect_type'] == 1) {
+                            $_value['affect_price'] = ($basePrice * $_value['affect_price']) / 100;
+                        }
+                        $price = $price + $_value['affect_price'];
+                    }
+                } else {
+                    if ($_value['affect_type'] == 1) {
+                        $_value['affect_price'] = ($basePrice * $_value['affect_price']) / 100;
+                    }
+                    $price = $price + $value['affect_price'];
+                }
+            }
+        }
         if ($id instanceof Buyable) {
             $cartItem = CartItem::fromBuyable($id, $qty ?: []);
             $cartItem->setQuantity($name ?: 1);
@@ -181,11 +198,9 @@ class Cart
      */
     protected function getContent()
     {
-        $content = $this->session->has($this->instance)
+        return $this->session->has($this->instance)
             ? $this->session->get($this->instance)
-            : new Collection;
-
-        return $content;
+            : new Collection();
     }
 
     /**
@@ -202,13 +217,11 @@ class Cart
     }
 
     /**
-     * Set last updated at
-     *
-     * @return $this
+     * @return mixed
      */
     public function setLastUpdatedAt()
     {
-        return $this->session->put($this->instance . '_updated_at', now());
+        return $this->session->put($this->instance . '_updated_at', Carbon::now());
     }
 
     /**
@@ -237,7 +250,7 @@ class Cart
 
             if ($content->has($cartItem->rowId)) {
                 $existingCartItem = $this->get($cartItem->rowId);
-                $cartItem->setQuantity($existingCartItem->qty + $cartItem->qty);
+                $cartItem->setQuantity((int)$existingCartItem->qty + (int)$cartItem->qty);
             }
         }
 
@@ -248,7 +261,7 @@ class Cart
 
         $content->put($cartItem->rowId, $cartItem);
 
-        $cartItem->updated_at = now();
+        $cartItem->updated_at = Carbon::now();
 
         $this->events->dispatch('cart.updated', $cartItem);
 
@@ -268,7 +281,7 @@ class Cart
         $content = $this->getContent();
 
         if (!$content->has($rowId)) {
-            throw new InvalidRowIDException('The cart does not contain rowId ' . $rowId);
+            return null;
         }
 
         return $content->get($rowId);
@@ -332,16 +345,13 @@ class Cart
     {
         $content = $this->getContent();
 
-        $total = $content->reduce(function ($total, CartItem $cartItem) {
-
+        return $content->reduce(function ($total, CartItem $cartItem) {
             if (!EcommerceHelper::isTaxEnabled()) {
                 return $total + $cartItem->qty * $cartItem->price;
             }
 
             return $total + ($cartItem->qty * ($cartItem->priceTax == 0 ? $cartItem->price : $cartItem->priceTax));
         }, 0);
-
-        return $total;
     }
 
     /**
@@ -349,16 +359,13 @@ class Cart
      */
     public function rawTotalByItems($content)
     {
-        $total = $content->reduce(function ($total, CartItem $cartItem) {
-
+        return $content->reduce(function ($total, CartItem $cartItem) {
             if (!EcommerceHelper::isTaxEnabled()) {
                 return $total + $cartItem->qty * $cartItem->price;
             }
 
             return $total + ($cartItem->qty * ($cartItem->priceTax == 0 ? $cartItem->price : $cartItem->priceTax));
         }, 0);
-
-        return $total;
     }
 
     /**
@@ -372,11 +379,9 @@ class Cart
             return 0;
         }
 
-        $tax = $content->reduce(function ($tax, CartItem $cartItem) {
+        return $content->reduce(function ($tax, CartItem $cartItem) {
             return $tax + ($cartItem->qty * $cartItem->tax);
         }, 0);
-
-        return $tax;
     }
 
     /**
@@ -386,11 +391,9 @@ class Cart
     {
         $content = $this->getContent();
 
-        $subTotal = $content->reduce(function ($subTotal, CartItem $cartItem) {
+        return $content->reduce(function ($subTotal, CartItem $cartItem) {
             return $subTotal + ($cartItem->qty * $cartItem->price);
         }, 0);
-
-        return $subTotal;
     }
 
     /**
@@ -398,11 +401,9 @@ class Cart
      */
     public function rawSubTotalByItems($content)
     {
-        $subTotal = $content->reduce(function ($subTotal, CartItem $cartItem) {
+        return $content->reduce(function ($subTotal, CartItem $cartItem) {
             return $subTotal + ($cartItem->qty * $cartItem->price);
         }, 0);
-
-        return $subTotal;
     }
 
     /**
@@ -455,7 +456,7 @@ class Cart
 
         $cartItem->setTaxRate($taxRate);
 
-        $cartItem->updated_at = now();
+        $cartItem->updated_at = Carbon::now();
 
         $content = $this->getContent();
 
@@ -643,11 +644,9 @@ class Cart
 
         $content = $this->getContent();
 
-        $tax = $content->reduce(function ($tax, CartItem $cartItem) {
+        return $content->reduce(function ($tax, CartItem $cartItem) {
             return $tax + ($cartItem->qty * $cartItem->tax);
         }, 0);
-
-        return $tax;
     }
 
     /**
@@ -716,7 +715,7 @@ class Cart
             }
         }
 
-        $weight = $weight ?: 0.1;
+        $weight = EcommerceHelper::validateOrderWeight($weight);
 
         $this->products = $products;
         $this->weight = $weight;
@@ -745,10 +744,10 @@ class Cart
     /**
      * Get weight
      *
-     * @return float
+     * @return int|float
      */
     public function weight()
     {
-        return $this->weight ?: 0.1;
+        return EcommerceHelper::validateOrderWeight($this->weight);
     }
 }

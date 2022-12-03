@@ -8,7 +8,6 @@ use Log;
 
 class ThumbnailService
 {
-
     /**
      * @var ImageManager
      */

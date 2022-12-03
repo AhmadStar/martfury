@@ -7,7 +7,6 @@ use Illuminate\Console\Command;
 
 class CleanCommand extends Command
 {
-
     /**
      * The console command name.
      *

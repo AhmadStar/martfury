@@ -2,6 +2,7 @@
 
 namespace Botble\PluginManagement\Providers;
 
+use BaseHelper;
 use Botble\Dashboard\Supports\DashboardWidgetInstance;
 use Illuminate\Support\Collection;
 use Illuminate\Support\ServiceProvider;
@@ -22,9 +23,9 @@ class HookServiceProvider extends ServiceProvider
      */
     public function addStatsWidgets($widgets, $widgetSettings)
     {
-        $plugins = count(scan_folder(plugin_path()));
+        $plugins = count(BaseHelper::scanFolder(plugin_path()));
 
-        return (new DashboardWidgetInstance)
+        return (new DashboardWidgetInstance())
             ->setType('stats')
             ->setPermission('plugins.index')
             ->setTitle(trans('packages/plugin-management::plugin.plugins'))

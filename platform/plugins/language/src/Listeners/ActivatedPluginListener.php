@@ -7,7 +7,6 @@ use Exception;
 
 class ActivatedPluginListener
 {
-
     /**
      * Handle the event.
      *

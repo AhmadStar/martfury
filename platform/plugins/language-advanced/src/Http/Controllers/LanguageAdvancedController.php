@@ -24,7 +24,7 @@ class LanguageAdvancedController extends BaseController
             abort(404);
         }
 
-        $data = (new $model)->findOrFail($id);
+        $data = (new $model())->findOrFail($id);
 
         LanguageAdvancedManager::save($data, $request);
 

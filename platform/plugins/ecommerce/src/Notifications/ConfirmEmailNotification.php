@@ -39,7 +39,7 @@ class ConfirmEmailNotification extends Notification implements ShouldQueue
         $template = 'confirm-email';
         $content = EmailHandler::prepareData(EmailHandler::getTemplateContent($template));
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->view(['html' => new HtmlString($content)])
             ->subject(EmailHandler::getTemplateSubject($template));
     }

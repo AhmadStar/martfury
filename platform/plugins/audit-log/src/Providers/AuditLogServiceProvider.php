@@ -24,7 +24,7 @@ class AuditLogServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(AuditLogInterface::class, function () {
-            return new AuditLogCacheDecorator(new AuditLogRepository(new AuditHistory));
+            return new AuditLogCacheDecorator(new AuditLogRepository(new AuditHistory()));
         });
 
         AliasLoader::getInstance()->alias('AuditLog', AuditLogFacade::class);

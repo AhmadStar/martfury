@@ -12,6 +12,7 @@ class ShortcodeController extends BaseController
 {
     /**
      * @param string $key
+     * @param Request $request
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse
      */

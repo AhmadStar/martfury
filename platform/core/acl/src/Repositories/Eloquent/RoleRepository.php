@@ -16,7 +16,7 @@ class RoleRepository extends RepositoriesAbstract implements RoleInterface
         $slug = Str::slug($name);
         $index = 1;
         $baseSlug = $slug;
-        while ($this->model->where('slug', $slug)->where('id', '!=', $id)->count() > 0) {
+        while ($this->model->where('slug', $slug)->where('id', '!=', $id)->exists()) {
             $slug = $baseSlug . '-' . $index++;
         }
 

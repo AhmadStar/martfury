@@ -99,17 +99,8 @@
                     <h4 class="text-info">{{ trans('plugins/location::bulk-import.import_available_data') }}</h4>
                 </div>
                 <div class="widget-body">
-                    <div class="table-responsive">
-                        <table class="table text-start table-striped table-bordered">
-                            <tbody>
-                                @foreach($availableCountries as $countryCode => $countryName)
-                                    <tr>
-                                        <td>{{ $countryName }}</td>
-                                        <td class="text-end"><button class="btn btn-info btn-import-location-data" data-url="{{ route('location.bulk-import.import-location-data', $countryCode) }}" type="button"><i class="fas fa-download"></i> {{ trans('plugins/location::bulk-import.import') }}</button></td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                    <div id="available-remote-locations" data-url="{{ route('location.bulk-import.available-remote-locations') }}">
+                        @include('core/base::elements.loading')
                     </div>
                 </div>
             </div>

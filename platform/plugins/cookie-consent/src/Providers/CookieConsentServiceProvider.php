@@ -37,13 +37,23 @@ class CookieConsentServiceProvider extends ServiceProvider
             if (!Cookie::has(config('plugins.cookie-consent.general.cookie_name'))) {
                 Theme::asset()
                     ->usePath(false)
-                    ->add('cookie-consent-css', asset('vendor/core/plugins/cookie-consent/css/cookie-consent.css'), [],
-                        [], '1.0.0');
+                    ->add(
+                        'cookie-consent-css',
+                        asset('vendor/core/plugins/cookie-consent/css/cookie-consent.css'),
+                        [],
+                        [],
+                        '1.0.0'
+                    );
                 Theme::asset()
                     ->container('footer')
                     ->usePath(false)
-                    ->add('cookie-consent-js', asset('vendor/core/plugins/cookie-consent/js/cookie-consent.js'),
-                        ['jquery'], [], '1.0.0');
+                    ->add(
+                        'cookie-consent-js',
+                        asset('vendor/core/plugins/cookie-consent/js/cookie-consent.js'),
+                        ['jquery'],
+                        [],
+                        '1.0.0'
+                    );
             }
 
             add_filter(THEME_FRONT_FOOTER, [$this, 'registerCookieConsent'], 1346);

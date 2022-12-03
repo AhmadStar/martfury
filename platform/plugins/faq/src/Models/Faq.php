@@ -5,6 +5,7 @@ namespace Botble\Faq\Models;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Traits\EnumCastable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Faq extends BaseModel
 {
@@ -35,9 +36,9 @@ class Faq extends BaseModel
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
-    public function category()
+    public function category(): BelongsTo
     {
         return $this->belongsTo(FaqCategory::class, 'category_id')->withDefault();
     }

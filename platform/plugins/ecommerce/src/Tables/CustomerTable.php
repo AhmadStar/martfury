@@ -80,8 +80,11 @@ class CustomerTable extends TableAbstract
         if (EcommerceHelper::isEnableEmailVerification()) {
             $data = $data
                 ->addColumn('confirmed_at', function ($item) {
-                    return $item->confirmed_at ? Html::tag('span', trans('core/base::base.yes'),
-                        ['class' => 'text-success']) : trans('core/base::base.no');
+                    return $item->confirmed_at ? Html::tag(
+                        'span',
+                        trans('core/base::base.yes'),
+                        ['class' => 'text-success']
+                    ) : trans('core/base::base.no');
                 });
         }
 

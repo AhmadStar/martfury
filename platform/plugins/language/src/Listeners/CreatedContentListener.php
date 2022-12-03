@@ -8,7 +8,6 @@ use Language;
 
 class CreatedContentListener
 {
-
     /**
      * Handle the event.
      *

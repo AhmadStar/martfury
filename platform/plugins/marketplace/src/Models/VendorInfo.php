@@ -46,7 +46,7 @@ class VendorInfo extends BaseModel
     protected static function booted()
     {
         static::creating(function (&$vendorInfo) {
-            $model = new VendorInfo;
+            $model = new VendorInfo();
             $vendorInfo->balance = $vendorInfo->balance ?: 0;
             $vendorInfo->total_fee = $vendorInfo->total_fee ?: 0;
             $vendorInfo->total_revenue = $vendorInfo->total_revenue ?: 0;
@@ -80,8 +80,10 @@ class VendorInfo extends BaseModel
      */
     public function isCheckSignature(): bool
     {
-        return MarketplaceHelper::getSetting('check_valid_signature',
-            config('plugins.marketplace.general.check_signature_vendor', true));
+        return MarketplaceHelper::getSetting(
+            'check_valid_signature',
+            config('plugins.marketplace.general.check_signature_vendor', true)
+        );
     }
 
     /**

@@ -42,8 +42,11 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter(BASE_FILTER_ENUM_HTML, function ($value, $class) {
             if ($class == PaymentMethodEnum::class && $value == MOLLIE_PAYMENT_METHOD_NAME) {
-                $value = Html::tag('span', PaymentMethodEnum::getLabel($value),
-                    ['class' => 'label-success status-label'])
+                $value = Html::tag(
+                    'span',
+                    PaymentMethodEnum::getLabel($value),
+                    ['class' => 'label-success status-label']
+                )
                     ->toHtml();
             }
 
@@ -61,7 +64,7 @@ class HookServiceProvider extends ServiceProvider
         add_filter(PAYMENT_FILTER_PAYMENT_INFO_DETAIL, function ($data, $payment) {
             if ($payment->payment_channel == MOLLIE_PAYMENT_METHOD_NAME) {
                 try {
-                    $paymentService = (new MolliePaymentService);
+                    $paymentService = (new MolliePaymentService());
                     $paymentDetail = $paymentService->getPaymentDetails($payment->charge_id);
                     if ($paymentDetail) {
                         $data = view('plugins/mollie::detail', ['payment' => $paymentDetail])->render();

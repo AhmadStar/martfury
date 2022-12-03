@@ -98,7 +98,7 @@ class Store extends BaseModel
         }
 
         try {
-            return (new Avatar)->create($this->name)->toBase64();
+            return (new Avatar())->create($this->name)->toBase64();
         } catch (Exception $exception) {
             return RvMedia::getDefaultImage();
         }

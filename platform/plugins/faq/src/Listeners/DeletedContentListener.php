@@ -8,7 +8,6 @@ use MetaBox;
 
 class DeletedContentListener
 {
-
     /**
      * Handle the event.
      *

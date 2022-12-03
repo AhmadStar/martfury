@@ -5,10 +5,10 @@ namespace Botble\Faq\Models;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Traits\EnumCastable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class FaqCategory extends BaseModel
 {
-
     use EnumCastable;
 
     /**
@@ -35,9 +35,9 @@ class FaqCategory extends BaseModel
     ];
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
-    public function faqs()
+    public function faqs(): HasMany
     {
         return $this->hasMany(Faq::class, 'category_id');
     }

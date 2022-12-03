@@ -10,6 +10,7 @@ use Botble\Ecommerce\Enums\OrderStatusEnum;
 use Botble\Ecommerce\Repositories\Interfaces\CustomerInterface;
 use Botble\Ecommerce\Repositories\Interfaces\OrderInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductInterface;
+use Carbon\Carbon;
 use EcommerceHelper;
 use Botble\Ecommerce\Tables\Reports\RecentOrdersTable;
 use Botble\Ecommerce\Tables\Reports\TopSellingProductsTable;
@@ -66,8 +67,8 @@ class ReportController extends BaseController
         Request $request,
         TopSellingProductsTable $topSellingProductsTable,
         RecentOrdersTable $recentOrdersTable,
-        BaseHttpResponse $response)
-    {
+        BaseHttpResponse $response
+    ) {
         page_title()->setTitle(trans('plugins/ecommerce::reports.name'));
 
         Assets::addScriptsDirectly([
@@ -226,8 +227,8 @@ class ReportController extends BaseController
      */
     public function getDashboardWidgetGeneral(BaseHttpResponse $response)
     {
-        $startOfMonth = now()->startOfMonth()->toDateString();
-        $today = now()->toDateString();
+        $startOfMonth = Carbon::now()->startOfMonth()->toDateString();
+        $today = Carbon::now()->toDateString();
 
         $processingOrders = $this->orderRepository
             ->getModel()
@@ -260,7 +261,8 @@ class ReportController extends BaseController
 
         return $response
             ->setData(
-                view('plugins/ecommerce::reports.widgets.general',
+                view(
+                    'plugins/ecommerce::reports.widgets.general',
                     compact(
                         'processingOrders',
                         'revenue',

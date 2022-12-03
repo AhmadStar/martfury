@@ -2,23 +2,25 @@
 
 namespace Botble\Ecommerce\Models;
 
-use Auth;
+use Illuminate\Support\Facades\Auth;
 use Botble\ACL\Models\User;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Traits\EnumCastable;
+use Botble\Ecommerce\Enums\ProductTypeEnum;
 use Botble\Ecommerce\Enums\StockStatusEnum;
 use Botble\Ecommerce\Facades\DiscountFacade;
 use Botble\Ecommerce\Facades\FlashSaleFacade;
 use Botble\Ecommerce\Services\Products\UpdateDefaultProductService;
+use Carbon\Carbon;
 use EcommerceHelper;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Arr;
 
 class Product extends BaseModel
@@ -77,6 +79,7 @@ class Product extends BaseModel
     protected $casts = [
         'status'       => BaseStatusEnum::class,
         'stock_status' => StockStatusEnum::class,
+        'product_type' => ProductTypeEnum::class,
     ];
 
     protected static function boot()
@@ -110,7 +113,7 @@ class Product extends BaseModel
 
             Review::where('product_id', $product->id)->delete();
 
-            if (is_plugin_active('language-advanced')) {
+            if (is_plugin_active('language') && is_plugin_active('language-advanced')) {
                 $product->translations()->delete();
             }
         });
@@ -131,7 +134,7 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function categories()
+    public function categories(): BelongsToMany
     {
         return $this->belongsToMany(
             ProductCategory::class,
@@ -170,7 +173,7 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function discounts()
+    public function discounts(): BelongsToMany
     {
         return $this->belongsToMany(Discount::class, 'ec_discount_products', 'product_id', 'id');
     }
@@ -178,16 +181,20 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function crossSales()
+    public function crossSales(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'ec_product_cross_sale_relations', 'from_product_id',
-            'to_product_id');
+        return $this->belongsToMany(
+            Product::class,
+            'ec_product_cross_sale_relations',
+            'from_product_id',
+            'to_product_id'
+        );
     }
 
     /**
      * @return BelongsToMany
      */
-    public function upSales()
+    public function upSales(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'ec_product_up_sale_relations', 'from_product_id', 'to_product_id');
     }
@@ -195,7 +202,7 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function groupedProduct()
+    public function groupedProduct(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'ec_grouped_products', 'parent_product_id', 'product_id');
     }
@@ -203,7 +210,7 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function productLabels()
+    public function productLabels(): BelongsToMany
     {
         return $this->belongsToMany(
             ProductLabel::class,
@@ -216,7 +223,7 @@ class Product extends BaseModel
     /**
      * @return BelongsTo
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -224,7 +231,7 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function tags()
+    public function tags(): BelongsToMany
     {
         return $this->belongsToMany(
             ProductTag::class,
@@ -237,7 +244,7 @@ class Product extends BaseModel
     /**
      * @return BelongsTo
      */
-    public function brand()
+    public function brand(): BelongsTo
     {
         return $this->belongsTo(Brand::class)->withDefault();
     }
@@ -245,7 +252,7 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function products()
+    public function products(): BelongsToMany
     {
         return $this
             ->belongsToMany(Product::class, 'ec_product_related_relations', 'from_product_id', 'to_product_id')
@@ -255,7 +262,7 @@ class Product extends BaseModel
     /**
      * @return HasMany
      */
-    public function variations()
+    public function variations(): HasMany
     {
         return $this->hasMany(ProductVariation::class, 'configurable_product_id');
     }
@@ -263,7 +270,7 @@ class Product extends BaseModel
     /**
      * @return BelongsToMany
      */
-    public function parentProduct()
+    public function parentProduct(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'ec_product_variations', 'product_id', 'configurable_product_id');
     }
@@ -271,15 +278,23 @@ class Product extends BaseModel
     /**
      * @return HasMany
      */
-    public function variationAttributeSwatchesForProductList()
+    public function variationAttributeSwatchesForProductList(): HasMany
     {
         return $this
             ->hasMany(ProductVariation::class, 'configurable_product_id')
-            ->join('ec_product_variation_items', 'ec_product_variation_items.variation_id', '=',
-                'ec_product_variations.id')
+            ->join(
+                'ec_product_variation_items',
+                'ec_product_variation_items.variation_id',
+                '=',
+                'ec_product_variations.id'
+            )
             ->join('ec_product_attributes', 'ec_product_attributes.id', '=', 'ec_product_variation_items.attribute_id')
-            ->join('ec_product_attribute_sets', 'ec_product_attribute_sets.id', '=',
-                'ec_product_attributes.attribute_set_id')
+            ->join(
+                'ec_product_attribute_sets',
+                'ec_product_attribute_sets.id',
+                '=',
+                'ec_product_attributes.attribute_set_id'
+            )
             ->where('ec_product_attribute_sets.status', BaseStatusEnum::PUBLISHED)
             ->where('ec_product_attribute_sets.is_use_in_product_listing', 1)
             ->select([
@@ -294,7 +309,7 @@ class Product extends BaseModel
     /**
      * @return HasOne
      */
-    public function variationInfo()
+    public function variationInfo(): HasOne
     {
         return $this->hasOne(ProductVariation::class, 'product_id')->withDefault();
     }
@@ -302,7 +317,7 @@ class Product extends BaseModel
     /**
      * @return HasOne
      */
-    public function defaultVariation()
+    public function defaultVariation(): HasOne
     {
         return $this
             ->hasOne(ProductVariation::class, 'configurable_product_id')
@@ -313,16 +328,16 @@ class Product extends BaseModel
     /**
      * @return HasMany
      */
-    public function groupedItems()
+    public function groupedItems(): HasMany
     {
         return $this->hasMany(GroupedProduct::class, 'parent_product_id');
     }
 
     /**
-     * @param string $value
+     * @param string|null $value
      * @return array
      */
-    public function getImagesAttribute($value)
+    public function getImagesAttribute($value): array
     {
         try {
             if ($value === '[null]') {
@@ -345,7 +360,7 @@ class Product extends BaseModel
      * @param string $value
      * @return array
      */
-    public function getOptionsAttribute($value)
+    public function getOptionsAttribute($value): array
     {
         try {
             return json_decode($value, true) ?: [];
@@ -447,7 +462,7 @@ class Product extends BaseModel
     /**
      * @param float $price
      * @param float $salePrice
-     * @return mixed
+     * @return float
      */
     protected function getComparePrice($price, $salePrice)
     {
@@ -456,8 +471,8 @@ class Product extends BaseModel
                 return $salePrice;
             }
 
-            if ((!empty($this->start_date) && $this->start_date > now()) ||
-                (!empty($this->end_date && $this->end_date < now()))) {
+            if ((!empty($this->start_date) && $this->start_date > Carbon::now()) ||
+                (!empty($this->end_date && $this->end_date < Carbon::now()))) {
                 return $price;
             }
 
@@ -533,12 +548,12 @@ class Product extends BaseModel
         return $this
             ->belongsToMany(Discount::class, 'ec_discount_products', 'product_id')
             ->where('type', 'promotion')
-            ->where('start_date', '<=', now())
+            ->where('start_date', '<=', Carbon::now())
             ->whereIn('target', ['specific-product', 'product-variant'])
             ->where(function ($query) {
                 return $query
                     ->whereNull('end_date')
-                    ->orWhere('end_date', '>=', now());
+                    ->orWhere('end_date', '>=', Carbon::now());
             })
             ->where('product_quantity', 1);
     }
@@ -570,13 +585,13 @@ class Product extends BaseModel
     /**
      * @return HasMany
      */
-    public function reviews()
+    public function reviews(): HasMany
     {
         return $this->hasMany(Review::class, 'product_id')->where('status', BaseStatusEnum::PUBLISHED);
     }
 
     /**
-     * @return $this
+     * @return mixed
      */
     public function latestFlashSales()
     {
@@ -617,15 +632,23 @@ class Product extends BaseModel
     /**
      * @return HasMany
      */
-    public function variationProductAttributes()
+    public function variationProductAttributes(): HasMany
     {
         return $this
             ->hasMany(ProductVariation::class, 'product_id')
-            ->join('ec_product_variation_items', 'ec_product_variation_items.variation_id', '=',
-                'ec_product_variations.id')
+            ->join(
+                'ec_product_variation_items',
+                'ec_product_variation_items.variation_id',
+                '=',
+                'ec_product_variations.id'
+            )
             ->join('ec_product_attributes', 'ec_product_attributes.id', '=', 'ec_product_variation_items.attribute_id')
-            ->join('ec_product_attribute_sets', 'ec_product_attribute_sets.id', '=',
-                'ec_product_attributes.attribute_set_id')
+            ->join(
+                'ec_product_attribute_sets',
+                'ec_product_attribute_sets.id',
+                '=',
+                'ec_product_attributes.attribute_set_id'
+            )
             ->distinct()
             ->select([
                 'ec_product_variations.product_id',
@@ -640,7 +663,7 @@ class Product extends BaseModel
     /**
      * @return string
      */
-    public function getVariationAttributesAttribute()
+    public function getVariationAttributesAttribute(): string
     {
         if (!$this->variationProductAttributes->count()) {
             return '';
@@ -654,7 +677,7 @@ class Product extends BaseModel
     /**
      * @return string
      */
-    public function getPriceInTableAttribute()
+    public function getPriceInTableAttribute(): string
     {
         $price = format_price($this->front_sale_price);
 
@@ -700,5 +723,65 @@ class Product extends BaseModel
         return $this->reviews->sortByDesc('created_at')->reduce(function ($carry, $item) {
             return array_merge($carry, (array)$item->images);
         }, []);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTypePhysical(): bool
+    {
+        return !isset($this->attributes['product_type']) || $this->attributes['product_type'] == ProductTypeEnum::PHYSICAL;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isTypeDigital(): bool
+    {
+        return isset($this->attributes['product_type']) && $this->attributes['product_type'] == ProductTypeEnum::DIGITAL;
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function productFiles(): HasMany
+    {
+        return $this->hasMany(ProductFile::class, 'product_id');
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeNotOutOfStock($query)
+    {
+        if (EcommerceHelper::showOutOfStockProducts() || is_in_admin()) {
+            return $query;
+        }
+
+        return $query
+            ->where(function ($query) {
+                $query
+                    ->where(function ($subQuery) {
+                        $subQuery
+                            ->where('with_storehouse_management', 0)
+                            ->where('stock_status', '!=', StockStatusEnum::OUT_OF_STOCK);
+                    })
+                    ->orWhere(function ($subQuery) {
+                        $subQuery
+                            ->where('with_storehouse_management', 1)
+                            ->where('quantity', '>', 0);
+                    })
+                    ->orWhere(function ($subQuery) {
+                        $subQuery
+                            ->where('with_storehouse_management', 1)
+                            ->where('allow_checkout_when_out_of_stock', 1);
+                    });
+            });
+    }
+
+    public function options(): HasMany
+    {
+       return $this->hasMany(Option::class)->orderBy('order');
     }
 }

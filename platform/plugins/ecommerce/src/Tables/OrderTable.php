@@ -15,7 +15,6 @@ use Yajra\DataTables\DataTables;
 
 class OrderTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -91,6 +90,9 @@ class OrderTable extends TableAbstract
                 if ($keyword) {
                     return $query
                         ->whereHas('address', function ($subQuery) use ($keyword) {
+                            return $subQuery->where('name', 'LIKE', '%' . $keyword . '%');
+                        })
+                        ->orWhereHas('user', function ($subQuery) use ($keyword) {
                             return $subQuery->where('name', 'LIKE', '%' . $keyword . '%');
                         });
                 }
@@ -247,7 +249,6 @@ class OrderTable extends TableAbstract
     public function saveBulkChangeItem($item, string $inputKey, ?string $inputValue)
     {
         if ($inputKey === 'status' && $inputValue == OrderStatusEnum::CANCELED) {
-
             if (!$item->canBeCanceledByAdmin()) {
                 return $item;
             }

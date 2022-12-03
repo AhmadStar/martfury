@@ -91,6 +91,6 @@ class ValidateLocationImport extends LocationImport
      */
     protected function getStateByName($name, $countryId)
     {
-        return new State;
+        return new State();
     }
 }

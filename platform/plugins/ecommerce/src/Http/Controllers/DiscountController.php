@@ -22,7 +22,6 @@ use Illuminate\View\View;
 
 class DiscountController extends BaseController
 {
-
     /**
      * @var DiscountInterface
      */

@@ -13,14 +13,15 @@ use Botble\Ecommerce\Repositories\Interfaces\StoreLocatorInterface;
 use Botble\Ecommerce\Services\StoreCurrenciesService;
 use Botble\Setting\Supports\SettingStore;
 use EcommerceHelper;
+use Exception;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Throwable;
 
 class EcommerceController extends BaseController
 {
-
     /**
      * @var StoreLocatorInterface
      */
@@ -74,7 +75,7 @@ class EcommerceController extends BaseController
     }
 
     /**
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function getAdvancedSettings()
     {
@@ -97,17 +98,44 @@ class EcommerceController extends BaseController
     }
 
     /**
+     * @return Factory|Application|View
+     */
+    public function getTrackingSettings()
+    {
+        page_title()->setTitle(trans('plugins/ecommerce::ecommerce.setting.tracking_settings'));
+
+        Assets::addStylesDirectly([
+            'vendor/core/plugins/ecommerce/css/ecommerce.css',
+            'vendor/core/core/base/libraries/codemirror/lib/codemirror.css',
+            'vendor/core/core/base/libraries/codemirror/addon/hint/show-hint.css',
+            'vendor/core/packages/theme/css/custom-css.css',
+        ])
+            ->addScriptsDirectly([
+                'vendor/core/plugins/ecommerce/js/setting.js',
+                'vendor/core/core/base/libraries/codemirror/lib/codemirror.js',
+                'vendor/core/core/base/libraries/codemirror/lib/javascript.js',
+                'vendor/core/core/base/libraries/codemirror/addon/hint/show-hint.js',
+                'vendor/core/core/base/libraries/codemirror/addon/hint/anyword-hint.js',
+                'vendor/core/core/base/libraries/codemirror/addon/hint/javascript-hint.js',
+                'vendor/core/packages/theme/js/custom-js.js',
+            ]);
+
+        return view('plugins/ecommerce::settings.tracking-settings');
+    }
+
+    /**
      * @param UpdateSettingsRequest $request
      * @param BaseHttpResponse $response
      * @param StoreCurrenciesService $service
      * @param SettingStore $settingStore
      * @return BaseHttpResponse
+     * @throws Exception
      */
     public function postSettings(
-        UpdateSettingsRequest $request,
-        BaseHttpResponse $response,
+        UpdateSettingsRequest  $request,
+        BaseHttpResponse       $response,
         StoreCurrenciesService $service,
-        SettingStore $settingStore
+        SettingStore           $settingStore
     ) {
         foreach ($request->except([
             '_token',
@@ -127,8 +155,10 @@ class EcommerceController extends BaseController
             $primaryStore->is_shipping_location = true;
         }
 
-        $primaryStore->name = $primaryStore->name ?? $request->input('store_name',
-                trans('plugins/ecommerce::store-locator.default_store'));
+        $primaryStore->name = $primaryStore->name ?? $request->input(
+            'store_name',
+            trans('plugins/ecommerce::store-locator.default_store')
+        );
         $primaryStore->phone = $request->input('store_phone');
         $primaryStore->email = $primaryStore->email ?? get_admin_email()->first();
         $primaryStore->address = $request->input('store_address');
@@ -148,10 +178,18 @@ class EcommerceController extends BaseController
 
         $deletedCurrencies = json_decode($request->input('deleted_currencies', []), true) ?: [];
 
-        $service->execute($currencies, $deletedCurrencies);
+        $response
+            ->setNextUrl(route('ecommerce.settings'));
+
+        $storedCurrencies = $service->execute($currencies, $deletedCurrencies);
+
+        if ($storedCurrencies['error']) {
+            return $response
+                ->setError()
+                ->setMessage($storedCurrencies['message']);
+        }
 
         return $response
-            ->setNextUrl(route('ecommerce.settings'))
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
@@ -162,9 +200,9 @@ class EcommerceController extends BaseController
      * @return BaseHttpResponse
      */
     public function postAdvancedSettings(
-        Request $request,
+        Request          $request,
         BaseHttpResponse $response,
-        SettingStore $settingStore
+        SettingStore     $settingStore
     ) {
         foreach ($request->except([
             '_token',
@@ -173,13 +211,39 @@ class EcommerceController extends BaseController
             $settingStore->set(EcommerceHelper::getSettingPrefix() . $settingKey, $settingValue);
         }
 
-        $settingStore->set(EcommerceHelper::getSettingPrefix() . 'available_countries',
-            json_encode($request->input('available_countries')));
+        $settingStore->set(
+            EcommerceHelper::getSettingPrefix() . 'available_countries',
+            json_encode($request->input('available_countries'))
+        );
 
         $settingStore->save();
 
         return $response
             ->setNextUrl(route('ecommerce.advanced-settings'))
+            ->setMessage(trans('core/base::notices.update_success_message'));
+    }
+
+    /**
+     * @param Request $request
+     * @param BaseHttpResponse $response
+     * @param SettingStore $settingStore
+     * @return BaseHttpResponse
+     */
+    public function postTrackingSettings(
+        Request          $request,
+        BaseHttpResponse $response,
+        SettingStore     $settingStore
+    ) {
+        foreach ($request->except([
+            '_token',
+        ]) as $settingKey => $settingValue) {
+            $settingStore->set(EcommerceHelper::getSettingPrefix() . $settingKey, $settingValue);
+        }
+
+        $settingStore->save();
+
+        return $response
+            ->setNextUrl(route('ecommerce.tracking-settings'))
             ->setMessage(trans('core/base::notices.update_success_message'));
     }
 
@@ -256,6 +320,7 @@ class EcommerceController extends BaseController
      * @param int $id
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse
+     * @throws Exception
      */
     public function postDeleteStoreLocator($id, BaseHttpResponse $response)
     {

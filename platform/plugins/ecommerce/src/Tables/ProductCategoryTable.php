@@ -15,7 +15,6 @@ use Yajra\DataTables\DataTables;
 
 class ProductCategoryTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -62,12 +61,17 @@ class ProductCategoryTable extends TableAbstract
                     return BaseHelper::clean($item->name);
                 }
 
-                return str_repeat('&nbsp;', $item->depth) . Html::link(route('product-categories.edit', $item->id),
-                        $item->indent_text . ' ' . BaseHelper::clean($item->name));
+                return str_repeat('&nbsp;', $item->depth) . Html::link(
+                    route('product-categories.edit', $item->id),
+                    $item->indent_text . ' ' . BaseHelper::clean($item->name)
+                );
             })
             ->editColumn('image', function ($item) {
-                return Html::image(RvMedia::getImageUrl($item->image, 'thumb', false, RvMedia::getDefaultImage()),
-                    BaseHelper::clean($item->name), ['width' => 50]);
+                return Html::image(
+                    RvMedia::getImageUrl($item->image, 'thumb', false, RvMedia::getDefaultImage()),
+                    BaseHelper::clean($item->name),
+                    ['width' => 50]
+                );
             })
             ->editColumn('checkbox', function ($item) {
                 return $this->getCheckbox($item->id);
@@ -141,8 +145,11 @@ class ProductCategoryTable extends TableAbstract
      */
     public function bulkActions(): array
     {
-        return $this->addDeleteAction(route('product-categories.deletes'), 'product-categories.destroy',
-            parent::bulkActions());
+        return $this->addDeleteAction(
+            route('product-categories.deletes'),
+            'product-categories.destroy',
+            parent::bulkActions()
+        );
     }
 
     /**

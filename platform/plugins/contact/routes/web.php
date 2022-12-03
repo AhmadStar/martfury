@@ -1,11 +1,8 @@
 <?php
 
 Route::group(['namespace' => 'Botble\Contact\Http\Controllers', 'middleware' => ['web', 'core']], function () {
-
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
-
         Route::group(['prefix' => 'contacts', 'as' => 'contacts.'], function () {
-
             Route::resource('', 'ContactController')->except(['create', 'store'])->parameters(['' => 'contact']);
 
             Route::delete('items/destroy', [

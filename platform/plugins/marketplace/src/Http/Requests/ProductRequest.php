@@ -6,7 +6,6 @@ use Botble\Ecommerce\Http\Requests\ProductRequest as BaseProductRequest;
 
 class ProductRequest extends BaseProductRequest
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

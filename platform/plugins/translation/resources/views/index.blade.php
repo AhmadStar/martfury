@@ -26,7 +26,7 @@
                     <button type="submit" class="btn btn-info button-publish-groups">{{ trans('plugins/translation::translation.publish_translations') }}</button>
                     <a href="{{ route('translations.index') }}" class="btn btn-secondary translation-back">{{ trans('plugins/translation::translation.back') }}</a>
                 </form>
-                <p class="text-info">{{ trans('plugins/translation::translation.export_warning') }}</p>
+                <p class="text-info">{{ trans('plugins/translation::translation.export_warning', ['lang_path' => lang_path()]) }}</p>
             @endif
             {!! Form::open(['role' => 'form']) !!}
                 <div class="ui-select-wrapper">

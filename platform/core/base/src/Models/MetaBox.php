@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MetaBox extends BaseModel
 {
-
     /**
      * The database table used by the model.
      *

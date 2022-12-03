@@ -3,6 +3,7 @@
 namespace Botble\Backup\Http\Controllers;
 
 use Assets;
+use BaseHelper;
 use Botble\Backup\Http\Requests\BackupRequest;
 use Botble\Backup\Supports\Backup;
 use Botble\Base\Http\Controllers\BaseController;
@@ -11,10 +12,10 @@ use Botble\Base\Supports\Helper;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Throwable;
 
 class BackupController extends BaseController
 {
-
     /**
      * @var Backup
      */
@@ -50,13 +51,12 @@ class BackupController extends BaseController
      * @param BackupRequest $request
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function store(BackupRequest $request, BaseHttpResponse $response)
     {
         try {
-            @ini_set('max_execution_time', -1);
-            @ini_set('memory_limit', -1);
+            BaseHelper::maximumExecutionTimeAndMemoryLimit();
 
             $data = $this->backup->createBackupFolder($request->input('name'), $request->input('description'));
             $this->backup->backupDb();
@@ -107,7 +107,7 @@ class BackupController extends BaseController
 
             $hasSQL = false;
 
-            foreach (scan_folder($path) as $file) {
+            foreach (BaseHelper::scanFolder($path) as $file) {
                 if (Str::contains(basename($file), 'database')) {
                     $hasSQL = true;
                     $this->backup->restoreDatabase($path . DIRECTORY_SEPARATOR . $file, $path);
@@ -120,7 +120,7 @@ class BackupController extends BaseController
                     ->setMessage(trans('plugins/backup::backup.cannot_restore_database'));
             }
 
-            foreach (scan_folder($path) as $file) {
+            foreach (BaseHelper::scanFolder($path) as $file) {
                 if (Str::contains(basename($file), 'storage')) {
                     $pathTo = config('filesystems.disks.public.root');
                     $this->backup->cleanDirectory($pathTo);
@@ -150,7 +150,7 @@ class BackupController extends BaseController
     {
         $path = $this->backup->getBackupPath($folder);
 
-        foreach (scan_folder($path) as $file) {
+        foreach (BaseHelper::scanFolder($path) as $file) {
             if (Str::contains(basename($file), 'database')) {
                 return response()->download($path . DIRECTORY_SEPARATOR . $file);
             }
@@ -169,7 +169,7 @@ class BackupController extends BaseController
     {
         $path = $this->backup->getBackupPath($folder);
 
-        foreach (scan_folder($path) as $file) {
+        foreach (BaseHelper::scanFolder($path) as $file) {
             if (Str::contains(basename($file), 'storage')) {
                 return response()->download($path . DIRECTORY_SEPARATOR . $file);
             }

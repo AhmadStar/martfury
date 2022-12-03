@@ -3,6 +3,7 @@
 namespace Botble\Ecommerce\Cart;
 
 use Botble\Ecommerce\Cart\Contracts\Buyable;
+use Carbon\Carbon;
 use EcommerceHelper;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Contracts\Support\Jsonable;
@@ -92,8 +93,8 @@ class CartItem implements Arrayable, Jsonable
         $this->price = floatval($price);
         $this->options = new CartItemOptions($options);
         $this->rowId = $this->generateRowId($id, $options);
-        $this->created_at = now();
-        $this->updated_at = now();
+        $this->created_at = Carbon::now();
+        $this->updated_at = Carbon::now();
     }
 
     /**
@@ -281,7 +282,7 @@ class CartItem implements Arrayable, Jsonable
         }
 
         if ($attribute === 'model') {
-            return with(new $this->associatedModel)->find($this->id);
+            return with(new $this->associatedModel())->find($this->id);
         }
 
         return null;
@@ -296,8 +297,12 @@ class CartItem implements Arrayable, Jsonable
      */
     public static function fromBuyable(Buyable $item, array $options = [])
     {
-        return new self($item->getBuyableIdentifier($options), $item->getBuyableDescription($options),
-            $item->getBuyablePrice($options), $options);
+        return new self(
+            $item->getBuyableIdentifier($options),
+            $item->getBuyableDescription($options),
+            $item->getBuyablePrice($options),
+            $options
+        );
     }
 
     /**

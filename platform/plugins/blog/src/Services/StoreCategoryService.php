@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 
 class StoreCategoryService extends StoreCategoryServiceAbstract
 {
-
     /**
      * @param Request $request
      * @param Post $post

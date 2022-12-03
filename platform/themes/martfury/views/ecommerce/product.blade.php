@@ -97,42 +97,48 @@
                                     </div>
                                 @endif
 
-                                @if ($product->variations()->count() > 0)
-                                    <div class="pr_switch_wrap">
-                                        {!! render_product_swatches($product, [
-                                            'selected' => $selectedAttrs,
-                                            'view'     => Theme::getThemeNamespace() . '::views.ecommerce.attributes.swatches-renderer'
-                                        ]) !!}
-                                    </div>
-                                @endif
-
-                                <div class="number-items-available mb-3">
-                                    @if ($product->isOutOfStock())
-                                        <span class="text-danger">({{ __('Out of stock') }})</span>
-                                    @else
-                                        @if (!$productVariation)
-                                            <span class="text-danger">({{ __('Not available') }})</span>
-                                        @else
-                                            @if ($productVariation->isOutOfStock())
-                                                <span class="text-danger">({{ __('Out of stock') }})</span>
-                                            @elseif  (!$productVariation->with_storehouse_management || $productVariation->quantity < 1)
-                                                <span class="text-success">({{ __('Available') }})</span>
-                                            @elseif ($productVariation->quantity)
-                                                <span class="text-success">
-                                                    @if ($productVariation->quantity != 1)
-                                                        ({{ __(':number products available', ['number' => $productVariation->quantity]) }})
-                                                    @else
-                                                        ({{ __(':number product available', ['number' => $productVariation->quantity]) }})
-                                                    @endif
-                                                </span>
-                                            @endif
-                                        @endif
-                                    @endif
-                                </div>
-
                                 <form class="add-to-cart-form" method="POST" action="{{ route('public.cart.add-to-cart') }}">
                                     @csrf
-                                    {!! apply_filters(ECOMMERCE_PRODUCT_DETAIL_EXTRA_HTML, null) !!}
+                                    @if ($product->variations()->count() > 0)
+                                        <div class="pr_switch_wrap">
+                                            {!! render_product_swatches($product, [
+                                                'selected' => $selectedAttrs,
+                                                'view'     => Theme::getThemeNamespace() . '::views.ecommerce.attributes.swatches-renderer'
+                                            ]) !!}
+                                        </div>
+                                    @endif
+
+                                    @if ($product->options()->count() > 0 && isset($product->toArray()['options']))
+                                        <div class="pr_switch_wrap" id="product-option">
+                                            {!! render_product_options($product, $product->toArray()['options']) !!}
+                                        </div>
+                                    @endif
+
+                                    <div class="number-items-available mb-3">
+                                        @if ($product->isOutOfStock())
+                                            <span class="text-danger">({{ __('Out of stock') }})</span>
+                                        @else
+                                            @if (!$productVariation)
+                                                <span class="text-danger">({{ __('Not available') }})</span>
+                                            @else
+                                                @if ($productVariation->isOutOfStock())
+                                                    <span class="text-danger">({{ __('Out of stock') }})</span>
+                                                @elseif  (!$productVariation->with_storehouse_management || $productVariation->quantity < 1)
+                                                    <span class="text-success">({{ __('Available') }})</span>
+                                                @elseif ($productVariation->quantity)
+                                                    <span class="text-success">
+                                                    @if ($productVariation->quantity != 1)
+                                                            ({{ __(':number products available', ['number' => $productVariation->quantity]) }})
+                                                        @else
+                                                            ({{ __(':number product available', ['number' => $productVariation->quantity]) }})
+                                                        @endif
+                                                </span>
+                                                @endif
+                                            @endif
+                                        @endif
+                                    </div>
+
+                                    {!! apply_filters(ECOMMERCE_PRODUCT_DETAIL_EXTRA_HTML, null, $product) !!}
                                     <div class="ps-product__shopping">
                                         <figure>
                                             <figcaption>{{ __('Quantity') }}</figcaption>
@@ -145,9 +151,9 @@
                                         <input type="hidden" name="id" class="hidden-product-id" value="{{ ($product->is_variation || !$product->defaultVariation->product_id) ? $product->id : $product->defaultVariation->product_id }}"/>
 
                                         @if (EcommerceHelper::isCartEnabled())
-                                            <button class="ps-btn ps-btn--black @if ($product->isOutOfStock()) btn-disabled @endif" type="submit" @if ($product->isOutOfStock()) disabled @endif>{{ __('Add to cart') }}</button>
+                                            <button class="ps-btn ps-btn--black add-to-cart-button @if ($product->isOutOfStock()) btn-disabled @endif" type="submit" name="add_to_cart" value="1" @if ($product->isOutOfStock()) disabled @endif>{{ __('Add to cart') }}</button>
                                             @if (EcommerceHelper::isQuickBuyButtonEnabled())
-                                                <button class="ps-btn @if ($product->isOutOfStock()) btn-disabled @endif" type="submit" name="checkout" @if ($product->isOutOfStock()) disabled @endif>{{ __('Buy Now') }}</button>
+                                                <button class="ps-btn add-to-cart-button @if ($product->isOutOfStock()) btn-disabled @endif" type="submit" name="checkout" value="1" @if ($product->isOutOfStock()) disabled @endif>{{ __('Buy Now') }}</button>
                                             @endif
                                         @endif
                                         <div class="ps-product__actions">
@@ -180,9 +186,10 @@
                                     @endif
                                 </div>
                                 <div class="ps-product__sharing">
-                                    <a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($product->url) }}" target="_blank"><i class="fa fa-facebook"></i></a>
-                                    <a class="linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url={{ urlencode($product->url) }}&summary={{ rawurldecode(strip_tags($product->description)) }}" target="_blank"><i class="fa fa-linkedin"></i></a>
-                                    <a class="twitter" href="https://twitter.com/intent/tweet?url={{ urlencode($product->url) }}&text={{ strip_tags($product->description) }}" target="_blank"><i class="fa fa-twitter"></i></a>
+                                    <a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(url()->current()) }}" target="_blank"><i class="fa fa-facebook"></i></a>
+                                    <a class="linkedin" href="https://www.linkedin.com/shareArticle?mini=true&url={{ urlencode(url()->current()) }}&summary={{ rawurldecode(strip_tags(SeoHelper::getDescription())) }}" target="_blank"><i class="fa fa-linkedin"></i></a>
+                                    <a class="twitter" href="https://twitter.com/intent/tweet?url={{ urlencode(url()->current()) }}&text={{ strip_tags(SeoHelper::getDescription()) }}" target="_blank"><i class="fa fa-twitter"></i></a>
+                                    <a class="whatsapp" href="https://wa.me/?text={{ urlencode(url()->current()) }}" title="{{ __('Share on WhatsApp') }}" target="_blank"><i class="fa fa-whatsapp"></i></a>
                                 </div>
                             </div>
                         </div>

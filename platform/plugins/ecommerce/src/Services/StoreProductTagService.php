@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 
 class StoreProductTagService
 {
-
     /**
      * @var ProductTagInterface
      */
@@ -27,7 +26,7 @@ class StoreProductTagService
     /**
      * @param Request $request
      * @param Product $product
-     * @return mixed|void
+     * @return void
      */
     public function execute(Request $request, Product $product)
     {
@@ -38,7 +37,6 @@ class StoreProductTagService
         if (count($tags) != count($tagsInput) || count(array_diff($tags, $tagsInput)) > 0) {
             $product->tags()->detach();
             foreach ($tagsInput as $tagName) {
-
                 if (!trim($tagName)) {
                     continue;
                 }

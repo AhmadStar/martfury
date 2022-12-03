@@ -9,7 +9,6 @@ use Illuminate\Contracts\Filesystem\FileNotFoundException;
 
 class ThemeActivateCommand extends Command
 {
-
     use ThemeTrait;
 
     /**

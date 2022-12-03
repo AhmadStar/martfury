@@ -95,8 +95,7 @@ if (!function_exists('get_all_posts')) {
         bool  $active = true,
         int   $perPage = 12,
         array $with = ['slugable', 'categories', 'categories.slugable', 'author']
-    )
-    {
+    ) {
         return app(PostInterface::class)->getAllPosts($perPage, $active, $with);
     }
 }
@@ -188,9 +187,9 @@ if (!function_exists('get_popular_categories')) {
 if (!function_exists('get_category_by_id')) {
     /**
      * @param integer $id
-     * @return BaseModel
+     * @return BaseModel|null
      */
-    function get_category_by_id(int $id): BaseModel
+    function get_category_by_id(int $id): ?BaseModel
     {
         return app(CategoryInterface::class)->getCategoryById($id);
     }

@@ -41,6 +41,7 @@ class DatabaseSeeder extends BaseSeeder
         $this->call(MenuSeeder::class);
         $this->call(ThemeOptionSeeder::class);
         $this->call(WidgetSeeder::class);
+        $this->call(ProductOptionSeeder::class);
 
         if (is_plugin_active('marketplace')) {
             $this->call(MarketplaceSeeder::class);

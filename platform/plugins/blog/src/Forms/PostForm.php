@@ -13,7 +13,6 @@ use Exception;
 
 class PostForm extends FormAbstract
 {
-
     /**
      * @var string
      */
@@ -50,7 +49,7 @@ class PostForm extends FormAbstract
         }
 
         $this
-            ->setupModel(new Post)
+            ->setupModel(new Post())
             ->setValidatorClass(PostRequest::class)
             ->withCustomFields()
             ->addCustomField('tags', TagField::class)
@@ -59,7 +58,7 @@ class PostForm extends FormAbstract
                 'label_attr' => ['class' => 'control-label required'],
                 'attr'       => [
                     'placeholder'  => trans('core/base::forms.name_placeholder'),
-                    'data-counter' => 120,
+                    'data-counter' => 150,
                 ],
             ])
             ->add('description', 'textarea', [

@@ -62,8 +62,7 @@ class StoreRevenueTable extends TableAbstract
         DataTables       $table,
         UrlGenerator     $urlGenerator,
         RevenueInterface $revenueRepository
-    )
-    {
+    ) {
         parent::__construct($table, $urlGenerator);
 
         $this->repository = $revenueRepository;
@@ -90,9 +89,9 @@ class StoreRevenueTable extends TableAbstract
                     return $item->description;
                 }
 
-                $url = Route::currentRouteName() ==  'marketplace.vendor.statements.index' ? route('marketplace.vendor.orders.edit', $item->order->id): route('orders.edit', $item->order->id);
+                $url = Route::currentRouteName() ==  'marketplace.vendor.statements.index' ? route('marketplace.vendor.orders.edit', $item->order->id) : route('orders.edit', $item->order->id);
 
-                return Html::link($url, get_order_code($item->order->id), ['target' => '_blank']);
+                return Html::link($url, $item->order->code, ['target' => '_blank']);
             })
             ->editColumn('created_at', function ($item) {
                 return BaseHelper::formatDate($item->created_at);

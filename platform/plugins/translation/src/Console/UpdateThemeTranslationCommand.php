@@ -2,6 +2,7 @@
 
 namespace Botble\Translation\Console;
 
+use BaseHelper;
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
 use Symfony\Component\Finder\Finder;
@@ -9,7 +10,6 @@ use Theme;
 
 class UpdateThemeTranslationCommand extends Command
 {
-
     /**
      * The console command name.
      *
@@ -38,7 +38,7 @@ class UpdateThemeTranslationCommand extends Command
 
         $data = json_encode($keys, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        save_file_data(theme_path(Theme::getThemeName() . '/lang/en.json'), $data, false);
+        BaseHelper::saveFileData(theme_path(Theme::getThemeName() . '/lang/en.json'), $data, false);
 
         $this->info('Found ' . count($keys) . ' keys');
     }
@@ -61,7 +61,7 @@ class UpdateThemeTranslationCommand extends Command
             '\s*[\),]';                                    // Close parentheses or new parameter
 
         // Find all PHP + Twig files in the app folder, except for storage
-        $finder = new Finder;
+        $finder = new Finder();
         $finder->in($path)->name('*.php')->files();
 
         /**

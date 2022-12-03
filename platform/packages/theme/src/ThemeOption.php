@@ -376,8 +376,11 @@ class ThemeOption
 
         if (!empty($this->optName) && !empty($id) && isset($this->fields[$this->optName][$id])) {
             if (!$hide) {
-                $this->fields[$this->optName][$id]['class'] = str_replace('hidden', '',
-                    $this->fields[$this->optName][$id]['class']);
+                $this->fields[$this->optName][$id]['class'] = str_replace(
+                    'hidden',
+                    '',
+                    $this->fields[$this->optName][$id]['class']
+                );
             } else {
                 $this->fields[$this->optName][$id]['class'] .= 'hidden';
             }
@@ -494,7 +497,7 @@ class ThemeOption
     {
         $theme = setting('theme');
         if (!$theme) {
-            $theme = Arr::first(scan_folder(theme_path()));
+            $theme = Arr::first(BaseHelper::scanFolder(theme_path()));
         }
 
         return $this->optName . '-' . $theme . $locale . '-' . $key;
@@ -571,5 +574,13 @@ class ThemeOption
     public function saveOptions(): bool
     {
         return setting()->save();
+    }
+
+    /**
+     * @return array
+     */
+    public function getFields(): array
+    {
+        return $this->fields;
     }
 }

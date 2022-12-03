@@ -8,7 +8,6 @@ use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
 
 class TagRepository extends RepositoriesAbstract implements TagInterface
 {
-
     /**
      * {@inheritDoc}
      */

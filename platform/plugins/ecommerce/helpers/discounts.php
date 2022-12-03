@@ -10,7 +10,7 @@ if (!function_exists('get_discount_description')) {
      * @param Discount $discount
      * @return string
      */
-    function get_discount_description($discount)
+    function get_discount_description(Discount $discount)
     {
         switch ($discount->type_option) {
             case 'shipping':
@@ -27,8 +27,12 @@ if (!function_exists('get_discount_description')) {
                 switch ($discount->target) {
                     case 'group-products':
                         $collections = DiscountProductCollection::where('discount_id', $discount->id)
-                            ->join('ec_product_collections', 'ec_product_collections.id', '=',
-                                'ec_discount_product_collections.product_collection_id')
+                            ->join(
+                                'ec_product_collections',
+                                'ec_product_collections.id',
+                                '=',
+                                'ec_discount_product_collections.product_collection_id'
+                            )
                             ->pluck('ec_product_collections.name')
                             ->all();
 
@@ -69,8 +73,12 @@ if (!function_exists('get_discount_description')) {
                         break;
                     case 'group-products':
                         $collections = DiscountProductCollection::where('discount_id', $discount->id)
-                            ->join('ec_product_collections', 'ec_product_collections.id', '=',
-                                'ec_discount_product_collections.product_collection_id')
+                            ->join(
+                                'ec_product_collections',
+                                'ec_product_collections.id',
+                                '=',
+                                'ec_discount_product_collections.product_collection_id'
+                            )
                             ->pluck('ec_product_collections.name')
                             ->all();
 

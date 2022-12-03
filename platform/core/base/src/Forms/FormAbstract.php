@@ -112,7 +112,7 @@ abstract class FormAbstract extends Form
      * @param string $title
      * @return $this
      */
-    public function setTitle($title): self
+    public function setTitle(string $title): self
     {
         $this->title = $title;
         return $this;
@@ -142,7 +142,7 @@ abstract class FormAbstract extends Form
      * @return string
      * @throws Throwable
      */
-    public function getMetaBox($name): string
+    public function getMetaBox(string $name): string
     {
         if (!Arr::get($this->metaBoxes, $name)) {
             return '';
@@ -154,7 +154,7 @@ abstract class FormAbstract extends Form
     }
 
     /**
-     * @param array $boxes
+     * @param array|string $boxes
      * @return $this
      */
     public function addMetaBoxes($boxes): self
@@ -171,7 +171,7 @@ abstract class FormAbstract extends Form
      * @param string $name
      * @return FormAbstract
      */
-    public function removeMetaBox($name): self
+    public function removeMetaBox(string $name): self
     {
         Arr::forget($this->metaBoxes, $name);
         return $this;
@@ -194,7 +194,7 @@ abstract class FormAbstract extends Form
      * @param string $actionButtons
      * @return $this
      */
-    public function setActionButtons($actionButtons): self
+    public function setActionButtons(string $actionButtons): self
     {
         $this->actionButtons = $actionButtons;
 
@@ -320,7 +320,7 @@ abstract class FormAbstract extends Form
     /**
      * @return int
      */
-    public function hasMainFields()
+    public function hasMainFields(): int
     {
         if (!$this->breakFieldPoint) {
             return count($this->fields);
@@ -396,7 +396,7 @@ abstract class FormAbstract extends Form
      * @param string $validatorClass
      * @return $this
      */
-    public function setValidatorClass($validatorClass): self
+    public function setValidatorClass(string $validatorClass): self
     {
         $this->validatorClass = $validatorClass;
 

@@ -13,10 +13,12 @@ class HookServiceProvider extends ServiceProvider
     public function boot()
     {
         if (function_exists('shortcode')) {
-            add_shortcode('simple-slider',
+            add_shortcode(
+                'simple-slider',
                 trans('plugins/simple-slider::simple-slider.simple_slider_shortcode_name'),
                 trans('plugins/simple-slider::simple-slider.simple_slider_shortcode_description'),
-                [$this, 'render']);
+                [$this, 'render']
+            );
 
             shortcode()->setAdminConfig('simple-slider', function ($attributes) {
                 $sliders = $this->app->make(SimpleSliderInterface::class)

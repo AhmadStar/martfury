@@ -1,6 +1,5 @@
 <?php
 
-use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Theme\Theme;
 
 return [
@@ -38,40 +37,16 @@ return [
         'beforeRenderTheme' => function (Theme $theme) {
             // Partial composer.
             if (is_plugin_active('ecommerce')) {
-                $categoriesWith = [
-                    'slugable',
-                    'activeChildren',
-                    'activeChildren.slugable',
-                    'activeChildren.activeChildren',
-                    'activeChildren.activeChildren.slugable',
-                    'activeChildren.activeChildren.activeChildren',
-                    'activeChildren.activeChildren.activeChildren.slugable',
-                    'metadata',
-                ];
+                $categories = ProductCategoryHelper::getActiveTreeCategories();
 
-                if (is_plugin_active('language-advanced')) {
-                    if (Language::getCurrentLocale() != Language::getDefaultLocale()) {
-                        $categoriesWith[] = 'translations';
-                        $categoriesWith[] = 'activeChildren.translations';
-                        $categoriesWith[] = 'activeChildren.activeChildren.translations';
-                        $categoriesWith[] = 'activeChildren.activeChildren.activeChildren.translations';
-                    }
-                }
+                $categoriesDropdown = $theme->partial('product-categories-dropdown', compact('categories'));
 
-                $categories = ProductCategoryHelper::getAllProductCategories()
-                    ->where('status', BaseStatusEnum::PUBLISHED)
-                    ->loadMissing($categoriesWith);
-
-                $parentCategories = $categories->whereIn('parent_id', [0, null]);
-                $categoriesDropdown = $theme->partial('product-categories-dropdown', ['categories' => $parentCategories]);
-                $categoriesWithIndent = ProductCategoryHelper::getProductCategoriesWithIndentName($parentCategories);
-
-                $theme->partialComposer('header', function ($view) use ($categories, $categoriesDropdown, $categoriesWithIndent) {
-                    $view->with(compact('categories', 'categoriesDropdown', 'categoriesWithIndent'));
+                $theme->partialComposer('header', function ($view) use ($categories, $categoriesDropdown) {
+                    $view->with(compact('categories', 'categoriesDropdown'));
                 });
 
-                $theme->composer('ecommerce.includes.filters', function ($view) use ($parentCategories) {
-                    $view->with(['categories' => $parentCategories]);
+                $theme->composer('ecommerce.includes.filters', function ($view) use ($categories) {
+                    $view->with(['categories' => $categories]);
                 });
             }
 
@@ -123,10 +98,6 @@ return [
             $theme->asset()->container('footer')->usePath()->add('main', 'js/main.js', ['jquery'], [], $version);
             $theme->asset()->container('footer')->usePath()
                 ->add('backend', 'js/backend.js', ['jquery'], [], $version);
-
-            $theme->asset()->container('footer')
-                ->add('change-product-swatches', 'vendor/core/plugins/ecommerce/js/change-product-swatches.js',
-                    ['jquery']);
 
             $theme->asset()->container('footer')->usePath()
                 ->add('app-js', 'js/app.js', ['jquery', 'owl-carousel-js'], [], $version);

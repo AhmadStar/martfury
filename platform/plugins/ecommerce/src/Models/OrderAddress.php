@@ -4,6 +4,8 @@ namespace Botble\Ecommerce\Models;
 
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Supports\Avatar;
+use Botble\Base\Traits\EnumCastable;
+use Botble\Ecommerce\Enums\OrderAddressTypeEnum;
 use Botble\Ecommerce\Traits\LocationTrait;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,6 +13,8 @@ use RvMedia;
 
 class OrderAddress extends BaseModel
 {
+    use LocationTrait;
+    use EnumCastable;
 
     /**
      * @var string
@@ -30,6 +34,7 @@ class OrderAddress extends BaseModel
         'address',
         'zip_code',
         'order_id',
+        'type',
     ];
 
     /**
@@ -37,7 +42,12 @@ class OrderAddress extends BaseModel
      */
     public $timestamps = false;
 
-    use LocationTrait;
+    /**
+     * @var array
+     */
+    protected $casts = [
+        'type' => OrderAddressTypeEnum::class,
+    ];
 
     /**
      * @return string
@@ -45,7 +55,7 @@ class OrderAddress extends BaseModel
     public function getAvatarUrlAttribute()
     {
         try {
-            return (new Avatar)->create($this->name)->toBase64();
+            return (new Avatar())->create($this->name)->toBase64();
         } catch (Exception $exception) {
             return RvMedia::getDefaultImage();
         }

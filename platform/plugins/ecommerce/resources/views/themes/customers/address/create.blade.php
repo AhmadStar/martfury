@@ -1,4 +1,4 @@
-@extends('plugins/ecommerce::themes.customers.master')
+@extends(EcommerceHelper::viewPath('customers.master'))
 
 @section('content')
      <h2 class="customer-page-title">{{ __('Add a new address') }}</h2>
@@ -20,8 +20,7 @@
 
             <div class="input-group">
                  <span class="input-group-prepend">{{ __('Phone') }}:</span>
-                <input id="phone" type="text" class="form-control" name="phone" value="{{ old('phone') }}">
-
+                {!! Form::phoneNumber('phone', old('phone'), ['id' => 'phone']) !!}
             </div>
              {!! Form::error('phone', $errors) !!}
 

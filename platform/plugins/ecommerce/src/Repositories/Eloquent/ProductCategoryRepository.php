@@ -8,7 +8,6 @@ use Botble\Support\Repositories\Eloquent\RepositoriesAbstract;
 
 class ProductCategoryRepository extends RepositoriesAbstract implements ProductCategoryInterface
 {
-
     /**
      * {@inheritDoc}
      */

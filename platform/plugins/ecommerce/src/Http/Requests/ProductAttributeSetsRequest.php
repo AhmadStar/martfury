@@ -8,7 +8,6 @@ use Illuminate\Validation\Rule;
 
 class ProductAttributeSetsRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

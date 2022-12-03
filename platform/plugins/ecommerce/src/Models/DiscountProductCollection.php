@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DiscountProductCollection extends BaseModel
 {
-
     /**
      * @var string
      */

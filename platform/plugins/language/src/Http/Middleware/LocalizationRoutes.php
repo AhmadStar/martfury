@@ -8,7 +8,6 @@ use Language;
 
 class LocalizationRoutes extends LaravelLocalizationMiddlewareBase
 {
-
     /**
      * Handle an incoming request.
      *

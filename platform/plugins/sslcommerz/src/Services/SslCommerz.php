@@ -79,7 +79,7 @@ class SslCommerz extends SslCommerzNotification
      */
     public function callApi()
     {
-        $client = new Client;
+        $client = new Client();
         $response = $client->request('GET', $this->getApiUrl(), [
             'query' => $this->data
         ]);

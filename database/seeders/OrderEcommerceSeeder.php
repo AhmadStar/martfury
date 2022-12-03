@@ -23,6 +23,7 @@ use Botble\Marketplace\Models\Withdrawal;
 use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Models\Payment;
+use Carbon\Carbon;
 use DB;
 use EcommerceHelper;
 use Illuminate\Support\Arr;
@@ -72,6 +73,10 @@ class OrderEcommerceSeeder extends BaseSeeder
         for ($i = 0; $i < $total; $i++) {
             $customer = $customers->random();
             $address = $customer->addresses->first();
+
+            if (!$address) {
+                continue;
+            }
 
             $orderProducts = $products->random(rand(2, 4));
 
@@ -261,8 +266,8 @@ class OrderEcommerceSeeder extends BaseSeeder
                 ]);
 
                 if ($shipmentStatus == ShippingStatusEnum::DELIVERED) {
-
                     $order->status = OrderStatusEnum::COMPLETED;
+                    $order->completed_at = Carbon::now();
                     $order->save();
 
                     OrderHistory::create([
@@ -310,6 +315,7 @@ class OrderEcommerceSeeder extends BaseSeeder
         foreach ($orders as $order) {
             if ($order->payment->status == PaymentStatusEnum::COMPLETED && $order->shipment->status == ShippingStatusEnum::DELIVERED) {
                 $order->status = OrderStatusEnum::COMPLETED;
+                $order->completed_at = Carbon::now();
                 $order->save();
 
                 OrderHistory::create([
@@ -375,7 +381,7 @@ class OrderEcommerceSeeder extends BaseSeeder
             $vendorInfo = $vendor->vendorInfo;
             $rand = rand(1, 3);
             for ($i = 0; $i <= $rand; $i++) {
-                $amount = rand(1, ($vendorInfo->balance / 3) - 10);
+                $amount = rand(1, (int) ($vendorInfo->balance / 3) - 10);
 
                 if ($amount - $fee > 0) {
                     Withdrawal::create([
@@ -430,7 +436,7 @@ class OrderEcommerceSeeder extends BaseSeeder
      * @param Product $product
      * @return int
      */
-    public function getTax($product)
+    public function getTax(Product $product)
     {
         if (!EcommerceHelper::isTaxEnabled()) {
             return 0;

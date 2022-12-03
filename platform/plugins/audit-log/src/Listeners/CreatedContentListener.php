@@ -9,7 +9,6 @@ use AuditLog;
 
 class CreatedContentListener
 {
-
     /**
      * Handle the event.
      *

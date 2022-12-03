@@ -26,13 +26,13 @@ class DashboardServiceProvider extends ServiceProvider
     {
         $this->app->bind(DashboardWidgetInterface::class, function () {
             return new DashboardWidgetCacheDecorator(
-                new DashboardWidgetRepository(new DashboardWidget)
+                new DashboardWidgetRepository(new DashboardWidget())
             );
         });
 
         $this->app->bind(DashboardWidgetSettingInterface::class, function () {
             return new DashboardWidgetSettingCacheDecorator(
-                new DashboardWidgetSettingRepository(new DashboardWidgetSetting)
+                new DashboardWidgetSettingRepository(new DashboardWidgetSetting())
             );
         });
     }

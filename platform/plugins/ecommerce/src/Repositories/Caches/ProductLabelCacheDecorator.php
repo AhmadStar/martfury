@@ -7,5 +7,4 @@ use Botble\Support\Repositories\Caches\CacheAbstractDecorator;
 
 class ProductLabelCacheDecorator extends CacheAbstractDecorator implements ProductLabelInterface
 {
-
 }

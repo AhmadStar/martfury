@@ -42,6 +42,11 @@
                                                                 @endif
 
                                                                 <p class="mb-0"><small>{{ $cartItem->options['attributes'] ?? '' }}</small></p>
+
+                                                                @if (!empty($cartItem->options['options']))
+                                                                    {!! render_product_options_info($cartItem->options['options'], $product, true) !!}
+                                                                @endif
+
                                                                 @if (!empty($cartItem->options['extras']) && is_array($cartItem->options['extras']))
                                                                     @foreach($cartItem->options['extras'] as $option)
                                                                         @if (!empty($option['key']) && !empty($option['value']))

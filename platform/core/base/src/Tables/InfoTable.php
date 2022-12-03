@@ -4,7 +4,6 @@ namespace Botble\Base\Tables;
 
 use Botble\Base\Supports\SystemManagement;
 use Botble\Table\Abstracts\TableAbstract;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Collection;
 
 class InfoTable extends TableAbstract
@@ -41,7 +40,6 @@ class InfoTable extends TableAbstract
 
     /**
      * @return Collection
-     * @throws FileNotFoundException
      */
     public function query()
     {

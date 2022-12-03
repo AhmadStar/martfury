@@ -7,7 +7,6 @@ use Kris\LaravelFormBuilder\Fields\FormField;
 
 class TagField extends FormField
 {
-
     /**
      * {@inheritDoc}
      */

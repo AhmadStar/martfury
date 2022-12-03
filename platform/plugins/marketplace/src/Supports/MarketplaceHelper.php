@@ -5,6 +5,7 @@ namespace Botble\Marketplace\Supports;
 use Botble\Ecommerce\Enums\DiscountTypeOptionEnum;
 use Botble\Ecommerce\Models\Order as OrderModel;
 use EmailHandler;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Theme;
@@ -15,7 +16,7 @@ class MarketplaceHelper
     /**
      * @param string $view
      * @param array $data
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Response
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View
      */
     public function view(string $view, array $data = [])
     {
@@ -23,9 +24,10 @@ class MarketplaceHelper
     }
 
     /**
+     * @param string $view
      * @return string
      */
-    public function viewPath(string $view)
+    public function viewPath(string $view): string
     {
         $themeView = Theme::getThemeNamespace() . '::views.marketplace.' . $view;
 
@@ -41,7 +43,7 @@ class MarketplaceHelper
      * @param null $default
      * @return string
      */
-    function getSetting($key, $default = '')
+    public function getSetting($key, $default = '')
     {
         return setting($this->getSettingKey($key), $default);
     }
@@ -58,7 +60,7 @@ class MarketplaceHelper
     /**
      * @return array
      */
-    public function discountTypes()
+    public function discountTypes(): array
     {
         return Arr::except(DiscountTypeOptionEnum::labels(), [DiscountTypeOptionEnum::SAME_PRICE]);
     }
@@ -68,7 +70,7 @@ class MarketplaceHelper
      */
     public function getAssetVersion(): string
     {
-        return '1.0.0';
+        return '1.0.1';
     }
 
     /**
@@ -80,8 +82,18 @@ class MarketplaceHelper
     }
 
     /**
+     * @return bool
+     */
+    public function allowVendorManageShipping(): bool
+    {
+        return $this->getSetting('allow_vendor_manage_shipping', 0) == 1;
+    }
+
+    /**
      * @param Collection $orders
      * @return Collection
+     * @throws FileNotFoundException
+     * @throws Throwable
      */
     public function sendMailToVendorAfterProcessingOrder($orders)
     {
@@ -110,7 +122,7 @@ class MarketplaceHelper
      * @return \Botble\Base\Supports\EmailHandler
      * @throws Throwable
      */
-    public function setEmailVendorVariables(OrderModel $order)
+    public function setEmailVendorVariables(OrderModel $order): \Botble\Base\Supports\EmailHandler
     {
         return EmailHandler::setModule(MARKETPLACE_MODULE_SCREEN_NAME)
             ->setVariableValues([
@@ -124,5 +136,10 @@ class MarketplaceHelper
                 'payment_method'   => $order->payment->payment_channel->label(),
                 'store_name'       => $order->store->name,
             ]);
+    }
+
+    public function isCommissionCategoryFeeBasedEnabled(): bool
+    {
+        return MarketplaceHelper::getSetting('enable_commission_fee_for_each_category') == 1;
     }
 }

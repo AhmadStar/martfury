@@ -7,11 +7,10 @@ use Breadcrumbs;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Route;
-use URL;
+use Illuminate\Support\Facades\URL;
 
 class BreadcrumbsServiceProvider extends ServiceProvider
 {
-
     public function boot()
     {
         Breadcrumbs::register('dashboard.index', function (BreadcrumbsGenerator $breadcrumbs) {
@@ -33,8 +32,10 @@ class BreadcrumbsServiceProvider extends ServiceProvider
 
             $found = false;
             foreach ($arMenu as $menuCategory) {
-                if (($url == $menuCategory['url'] || (Str::contains($menuCategory['url'],
-                                $prefix) && $prefix != '//')) && !empty($menuCategory['name'])) {
+                if (($url == $menuCategory['url'] || (Str::contains(
+                    (string) $menuCategory['url'],
+                    $prefix
+                ) && $prefix != '//')) && !empty($menuCategory['name'])) {
                     $found = true;
                     $breadcrumbs->push(trans($menuCategory['name']), $menuCategory['url']);
                     if ($defaultTitle != trans($menuCategory['name']) && $defaultTitle != $siteTitle) {
@@ -51,8 +52,10 @@ class BreadcrumbsServiceProvider extends ServiceProvider
                     }
 
                     foreach ($menuCategory['children'] as $menuItem) {
-                        if (($url == $menuItem['url'] || (Str::contains($menuItem['url'],
-                                        $prefix) && $prefix != '//')) && !empty($menuItem['name'])) {
+                        if (($url == $menuItem['url'] || (Str::contains(
+                            (string) $menuItem['url'],
+                            $prefix
+                        ) && $prefix != '//')) && !empty($menuItem['name'])) {
                             $found = true;
                             $breadcrumbs->push(trans($menuCategory['name']), $menuCategory['url']);
                             $breadcrumbs->push(trans($menuItem['name']), $menuItem['url']);

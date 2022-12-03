@@ -19,6 +19,7 @@ use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Menu;
@@ -44,7 +45,7 @@ class HookServiceProvider extends ServiceProvider
 
         Event::listen(RouteMatched::class, function () {
             if (function_exists('admin_bar')) {
-                Theme::composer('*', function () {
+                View::composer('*', function () {
                     if (Auth::check() && Auth::user()->hasPermission('posts.create')) {
                         admin_bar()->registerLink(trans('plugins/blog::posts.post'), route('posts.create'), 'add-new');
                     }
@@ -53,8 +54,12 @@ class HookServiceProvider extends ServiceProvider
         });
 
         if (function_exists('add_shortcode')) {
-            add_shortcode('blog-posts', trans('plugins/blog::base.short_code_name'),
-                trans('plugins/blog::base.short_code_description'), [$this, 'renderBlogPosts']);
+            add_shortcode(
+                'blog-posts',
+                trans('plugins/blog::base.short_code_name'),
+                trans('plugins/blog::base.short_code_description'),
+                [$this, 'renderBlogPosts']
+            );
             shortcode()->setAdminConfig('blog-posts', function ($attributes, $content) {
                 return view('plugins/blog::partials.posts-short-code-admin-config', compact('attributes', 'content'))
                     ->render();
@@ -69,16 +74,22 @@ class HookServiceProvider extends ServiceProvider
             add_action(BASE_ACTION_META_BOXES, [$this, 'addLanguageChooser'], 55, 2);
         }
 
-        if (defined('THEME_FRONT_HEADER')) {
+        if (defined('THEME_FRONT_HEADER') && setting('blog_post_schema_enabled', 1)) {
             add_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, function ($screen, $post) {
                 add_filter(THEME_FRONT_HEADER, function ($html) use ($post) {
                     if (get_class($post) != Post::class) {
                         return $html;
                     }
 
+                    $schemaType = setting('blog_post_schema_type', 'NewsArticle');
+
+                    if (!in_array($schemaType, ['NewsArticle', 'News', 'Article', 'BlogPosting'])) {
+                        $schemaType = 'NewsArticle';
+                    }
+
                     $schema = [
                         '@context'         => 'https://schema.org',
-                        '@type'            => 'NewsArticle',
+                        '@type'            => $schemaType,
                         'mainEntityOfPage' => [
                             '@type' => 'WebPage',
                             '@id'   => $post->url,
@@ -111,6 +122,8 @@ class HookServiceProvider extends ServiceProvider
                 }, 35);
             }, 35, 2);
         }
+
+        add_filter(BASE_FILTER_AFTER_SETTING_CONTENT, [$this, 'addSettings'], 193);
     }
 
     public function addThemeOptions()
@@ -193,7 +206,7 @@ class HookServiceProvider extends ServiceProvider
 
         Assets::addScriptsDirectly(['/vendor/core/plugins/blog/js/blog.js']);
 
-        return (new DashboardWidgetInstance)
+        return (new DashboardWidgetInstance())
             ->setPermission('posts.index')
             ->setKey('widget_posts_recent')
             ->setTitle(trans('plugins/blog::posts.widget_posts_recent'))
@@ -211,7 +224,7 @@ class HookServiceProvider extends ServiceProvider
      */
     public function handleSingleView($slug)
     {
-        return (new BlogService)->handleFrontRoutes($slug);
+        return (new BlogService())->handleFrontRoutes($slug);
     }
 
     /**
@@ -220,7 +233,7 @@ class HookServiceProvider extends ServiceProvider
      */
     public function renderBlogPosts($shortcode)
     {
-        $posts = get_all_posts(true, $shortcode->paginate, ['slugable', 'categories', 'categories.slugable', 'author']);
+        $posts = get_all_posts(true, (int)$shortcode->paginate, ['slugable', 'categories', 'categories.slugable', 'author']);
 
         $view = 'plugins/blog::themes.templates.posts';
         $themeView = Theme::getThemeNamespace() . '::views.templates.posts';
@@ -248,7 +261,7 @@ class HookServiceProvider extends ServiceProvider
             return view($view, [
                 'posts' => get_all_posts(
                     true,
-                    theme_option('number_of_posts_in_a_category', 12),
+                    (int)theme_option('number_of_posts_in_a_category', 12),
                     ['slugable', 'categories', 'categories.slugable', 'author']
                 ),
             ])
@@ -287,12 +300,21 @@ class HookServiceProvider extends ServiceProvider
     public function addLanguageChooser($priority, $model)
     {
         if ($priority == 'head' && $model instanceof Category) {
-
             $route = 'categories.index';
 
             if ($route) {
                 echo view('plugins/language::partials.admin-list-language-chooser', compact('route'))->render();
             }
         }
+    }
+
+    /**
+     * @param string|null $data
+     * @return string
+     * @throws Throwable
+     */
+    public function addSettings(?string $data = null): string
+    {
+        return $data . view('plugins/blog::settings')->render();
     }
 }

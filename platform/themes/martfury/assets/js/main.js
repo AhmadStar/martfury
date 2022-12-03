@@ -806,4 +806,26 @@
     $(window).on('load', function() {
         $('body').addClass('loaded');
     });
+
+    let collapseBreadcrumb = function () {
+        $('ul.breadcrumb li').each(function () {
+            let $this = $(this);
+            if (!$this.is(':first-child') && !$this.is(':nth-child(2)') && !$this.is(':last-child')) {
+                if (!$this.is(':nth-child(3)')) {
+                    $this.find('a').closest('li').hide();
+                } else {
+                    $this.find('a span').hide();
+                    $this.find('a .extra-breadcrumb-name').text('...').show();
+                }
+            }
+        });
+    }
+
+    if ($(window).width() < 768) {
+        collapseBreadcrumb();
+    }
+
+    $(window).on('resize', function() {
+        collapseBreadcrumb();
+    });
 })(jQuery);

@@ -7,6 +7,7 @@ use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Paystack\Services\Gateways\PaystackPaymentService;
 use Exception;
 use Html;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\ServiceProvider;
 use Paystack;
@@ -42,8 +43,11 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter(BASE_FILTER_ENUM_HTML, function ($value, $class) {
             if ($class == PaymentMethodEnum::class && $value == PAYSTACK_PAYMENT_METHOD_NAME) {
-                $value = Html::tag('span', PaymentMethodEnum::getLabel($value),
-                    ['class' => 'label-success status-label'])
+                $value = Html::tag(
+                    'span',
+                    PaymentMethodEnum::getLabel($value),
+                    ['class' => 'label-success status-label']
+                )
                     ->toHtml();
             }
 
@@ -60,7 +64,7 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter(PAYMENT_FILTER_PAYMENT_INFO_DETAIL, function ($data, $payment) {
             if ($payment->payment_channel == PAYSTACK_PAYMENT_METHOD_NAME) {
-                $paymentService = (new PaystackPaymentService);
+                $paymentService = (new PaystackPaymentService());
                 $paymentDetail = $paymentService->getPaymentDetails($payment);
                 if ($paymentDetail) {
                     $data = view('plugins/paystack::detail', ['payment' => $paymentDetail, 'paymentModel' => $payment])->render();
@@ -72,7 +76,7 @@ class HookServiceProvider extends ServiceProvider
 
         add_filter(PAYMENT_FILTER_GET_REFUND_DETAIL, function ($data, $payment, $refundId) {
             if ($payment->payment_channel == PAYSTACK_PAYMENT_METHOD_NAME) {
-                $refundDetail = (new PaystackPaymentService)->getRefundDetails($refundId);
+                $refundDetail = (new PaystackPaymentService())->getRefundDetails($refundId);
                 if (!Arr::get($refundDetail, 'error')) {
                     $refunds = Arr::get($payment->metadata, 'refunds');
                     $refund = collect($refunds)->firstWhere('data.id', $refundId);
@@ -111,11 +115,12 @@ class HookServiceProvider extends ServiceProvider
     /**
      * @param Request $request
      * @param array $data
+     * @throws BindingResolutionException
      */
     public function checkoutWithPaystack(array $data, Request $request)
     {
         if ($request->input('payment_method') == PAYSTACK_PAYMENT_METHOD_NAME) {
-            $supportedCurrencies = (new PaystackPaymentService)->supportedCurrencyCodes();
+            $supportedCurrencies = (new PaystackPaymentService())->supportedCurrencyCodes();
 
             if (!in_array($data['currency'], $supportedCurrencies)) {
                 $data['error'] = true;

@@ -26,6 +26,15 @@
             'order' => 3,
         ],
         [
+            'key'    => 'marketplace.vendor.order-returns.index',
+            'icon'   => 'icon-bag2',
+            'name'   => __('Order Returns'),
+            'routes' => [
+                'marketplace.vendor.order-returns.edit',
+            ],
+            'order' => 3,
+        ],
+        [
             'key'    => 'marketplace.vendor.discounts.index',
             'icon'   => 'icon-gift',
             'name'   => __('Coupons'),
@@ -46,23 +55,16 @@
             'order' => 5,
         ],
         [
-            'key'    => 'marketplace.vendor.statements.index',
-            'icon'   => 'icon-list3',
-            'name'   => __('Statements'),
-            'routes' => [],
-            'order' => 6,
-        ],
-        [
             'key'   => 'marketplace.vendor.settings',
             'icon'  => 'icon-cog',
             'name'  => __('Settings'),
-            'order' => 7,
+            'order' => 6,
         ],
         [
             'key'   => 'customer.overview',
             'icon'  => 'icon-user',
             'name'  => __('Customer dashboard'),
-            'order' => 8,
+            'order' => 7,
         ],
     ]);
 
@@ -71,7 +73,7 @@
             'key'   => 'marketplace.vendor.reviews.index',
             'icon'  => 'icon-star',
             'name'  => __('Reviews'),
-            'order' => 6,
+            'order' => 5,
         ]);
     }
 

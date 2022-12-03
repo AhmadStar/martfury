@@ -1,11 +1,8 @@
 <?php
 
 Route::group(['namespace' => 'Botble\SimpleSlider\Http\Controllers', 'middleware' => ['web', 'core']], function () {
-
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
-
         Route::group(['prefix' => 'simple-sliders', 'as' => 'simple-slider.'], function () {
-
             Route::resource('', 'SimpleSliderController')->parameters(['' => 'simple-slider']);
 
             Route::delete('items/destroy', [
@@ -22,7 +19,6 @@ Route::group(['namespace' => 'Botble\SimpleSlider\Http\Controllers', 'middleware
         });
 
         Route::group(['prefix' => 'simple-slider-items', 'as' => 'simple-slider-item.'], function () {
-
             Route::resource('', 'SimpleSliderItemController')->except([
                 'index',
                 'destroy',
@@ -45,5 +41,4 @@ Route::group(['namespace' => 'Botble\SimpleSlider\Http\Controllers', 'middleware
             ]);
         });
     });
-
 });

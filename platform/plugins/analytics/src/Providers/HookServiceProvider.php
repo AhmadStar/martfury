@@ -55,7 +55,7 @@ class HookServiceProvider extends ServiceProvider
      */
     public function addGeneralWidget($widgets, $widgetSettings)
     {
-        return (new DashboardWidgetInstance)
+        return (new DashboardWidgetInstance())
             ->setPermission('analytics.general')
             ->setKey('widget_analytics_general')
             ->setTitle(trans('plugins/analytics::analytics.widget_analytics_general'))
@@ -77,7 +77,7 @@ class HookServiceProvider extends ServiceProvider
      */
     public function addPageWidget($widgets, $widgetSettings)
     {
-        return (new DashboardWidgetInstance)
+        return (new DashboardWidgetInstance())
             ->setPermission('analytics.page')
             ->setKey('widget_analytics_page')
             ->setTitle(trans('plugins/analytics::analytics.widget_analytics_page'))
@@ -98,7 +98,7 @@ class HookServiceProvider extends ServiceProvider
      */
     public function addBrowserWidget($widgets, $widgetSettings)
     {
-        return (new DashboardWidgetInstance)
+        return (new DashboardWidgetInstance())
             ->setPermission('analytics.browser')
             ->setKey('widget_analytics_browser')
             ->setTitle(trans('plugins/analytics::analytics.widget_analytics_browser'))
@@ -119,7 +119,7 @@ class HookServiceProvider extends ServiceProvider
      */
     public function addReferrerWidget($widgets, $widgetSettings)
     {
-        return (new DashboardWidgetInstance)
+        return (new DashboardWidgetInstance())
             ->setPermission('analytics.referrer')
             ->setKey('widget_analytics_referrer')
             ->setTitle(trans('plugins/analytics::analytics.widget_analytics_referrer'))

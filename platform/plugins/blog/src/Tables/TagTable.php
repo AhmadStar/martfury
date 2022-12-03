@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class TagTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

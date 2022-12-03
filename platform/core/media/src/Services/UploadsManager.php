@@ -4,7 +4,7 @@ namespace Botble\Media\Services;
 
 use Carbon\Carbon;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Contracts\Translation\Translator;
 use Illuminate\Http\UploadedFile;
 use Mimey\MimeTypes;
@@ -135,12 +135,17 @@ class UploadsManager
      * @param string $path
      * @param string $content
      * @param UploadedFile|null $file
+     * @param array $visibility
      * @return bool
      */
-    public function saveFile(string $path, string $content, UploadedFile $file = null): bool
-    {
+    public function saveFile(
+        string       $path,
+        string       $content,
+        UploadedFile $file = null,
+        array        $visibility = ['visibility' => 'public']
+    ): bool {
         if (!RvMedia::isChunkUploadEnabled() || !$file) {
-            return Storage::put($this->cleanFolder($path), $content);
+            return Storage::put($this->cleanFolder($path), $content, $visibility);
         }
 
         $currentChunksPath = RvMedia::getConfig('chunk.storage.chunks') . '/' . $file->getFilename();
@@ -149,11 +154,11 @@ class UploadsManager
         try {
             $stream = $disk->getDriver()->readStream($currentChunksPath);
 
-            if ($result = Storage::writeStream($path, $stream, ['visibility' => 'public'])) {
+            if ($result = Storage::writeStream($path, $stream, $visibility)) {
                 $disk->delete($currentChunksPath);
             }
         } catch (Exception $exception) {
-            return Storage::put($this->cleanFolder($path), $content, ['visibility' => 'public']);
+            return Storage::put($this->cleanFolder($path), $content, $visibility);
         }
 
         return $result;

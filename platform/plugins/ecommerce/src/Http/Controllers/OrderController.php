@@ -36,16 +36,19 @@ use Botble\Ecommerce\Tables\OrderTable;
 use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Payment\Enums\PaymentStatusEnum;
 use Botble\Payment\Repositories\Interfaces\PaymentInterface;
+use Carbon\Carbon;
 use EcommerceHelper;
 use EmailHandler;
 use Exception;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
+use InvoiceHelper;
 use MarketplaceHelper;
 use OrderHelper;
 use RvMedia;
@@ -116,16 +119,16 @@ class OrderController extends BaseController
      * @param AddressInterface $addressRepository
      */
     public function __construct(
-        OrderInterface $orderRepository,
-        CustomerInterface $customerRepository,
+        OrderInterface        $orderRepository,
+        CustomerInterface     $customerRepository,
         OrderHistoryInterface $orderHistoryRepository,
-        ProductInterface $productRepository,
-        ShipmentInterface $shipmentRepository,
+        ProductInterface      $productRepository,
+        ShipmentInterface     $shipmentRepository,
         OrderAddressInterface $orderAddressRepository,
-        PaymentInterface $paymentRepository,
+        PaymentInterface      $paymentRepository,
         StoreLocatorInterface $storeLocatorRepository,
         OrderProductInterface $orderProductRepository,
-        AddressInterface $addressRepository
+        AddressInterface      $addressRepository
     ) {
         $this->orderRepository = $orderRepository;
         $this->customerRepository = $customerRepository;
@@ -152,7 +155,7 @@ class OrderController extends BaseController
     }
 
     /**
-     * @return Factory|View
+     * @return Application|Factory|View
      */
     public function create()
     {
@@ -192,6 +195,7 @@ class OrderController extends BaseController
             'discount_description' => $request->input('discount_description'),
             'description'          => $request->input('note'),
             'is_confirmed'         => 1,
+            'is_finished'          => 1,
             'status'               => OrderStatusEnum::PROCESSING,
         ]);
 
@@ -231,8 +235,10 @@ class OrderController extends BaseController
 
             $this->orderHistoryRepository->createOrUpdate([
                 'action'      => 'create_order',
-                'description' => trans('plugins/ecommerce::order.new_order',
-                    ['order_id' => get_order_code($order->id)]),
+                'description' => trans(
+                    'plugins/ecommerce::order.new_order',
+                    ['order_id' => $order->code]
+                ),
                 'order_id'    => $order->id,
             ]);
 
@@ -305,6 +311,7 @@ class OrderController extends BaseController
                     'price'        => $product->front_sale_price,
                     'tax_amount'   => 0,
                     'options'      => [],
+                    'product_type' => $product->product_type,
                 ];
 
                 $this->orderProductRepository->create($data);
@@ -366,7 +373,7 @@ class OrderController extends BaseController
 
         $order = $this->orderRepository->findOrFail($id, ['products', 'user']);
 
-        page_title()->setTitle(trans('plugins/ecommerce::order.edit_order', ['code' => get_order_code($id)]));
+        page_title()->setTitle(trans('plugins/ecommerce::order.edit_order', ['code' => $order->code]));
 
         $weight = $order->products_weight;
 
@@ -453,10 +460,10 @@ class OrderController extends BaseController
         }
 
         if ($request->input('type') == 'print') {
-            return OrderHelper::streamInvoice($order);
+            return InvoiceHelper::streamInvoice($order->invoice);
         }
 
-        return OrderHelper::downloadInvoice($order);
+        return InvoiceHelper::downloadInvoice($order->invoice);
     }
 
     /**
@@ -562,12 +569,16 @@ class OrderController extends BaseController
         $url = route('orders.create-shipment', $order->id);
 
         if ($request->has('view')) {
-            return view('plugins/ecommerce::orders.shipment-form',
-                compact('order', 'weight', 'shipping', 'storeLocators', 'url'));
+            return view(
+                'plugins/ecommerce::orders.shipment-form',
+                compact('order', 'weight', 'shipping', 'storeLocators', 'url')
+            );
         }
 
-        return $response->setData(view('plugins/ecommerce::orders.shipment-form',
-            compact('order', 'weight', 'shipping', 'storeLocators', 'url'))->render());
+        return $response->setData(view(
+            'plugins/ecommerce::orders.shipment-form',
+            compact('order', 'weight', 'shipping', 'storeLocators', 'url')
+        )->render());
     }
 
     /**
@@ -605,7 +616,7 @@ class OrderController extends BaseController
 
         if (!$store) {
             $defaultStore = $this->storeLocatorRepository->getFirstBy(['is_primary' => true]);
-            $shipment['store_id'] = $defaultStore ?? ($defaultStore ? $defaultStore->id : null);
+            $shipment['store_id'] = $defaultStore ? $defaultStore->id : null;
         }
 
         switch ($request->input('method')) {
@@ -658,8 +669,10 @@ class OrderController extends BaseController
      */
     public function postCancelShipment($id, BaseHttpResponse $response)
     {
-        $shipment = $this->shipmentRepository->createOrUpdate(['status' => ShippingStatusEnum::CANCELED],
-            compact('id'));
+        $shipment = $this->shipmentRepository->createOrUpdate(
+            ['status' => ShippingStatusEnum::CANCELED],
+            compact('id')
+        );
 
         $this->orderHistoryRepository->createOrUpdate([
             'action'      => 'cancel_shipment',
@@ -764,8 +777,10 @@ class OrderController extends BaseController
             return $response
                 ->setError()
                 ->setMessage(trans('plugins/ecommerce::order.refund_amount_invalid', [
-                    'price' => format_price($order->payment->amount - $order->payment->refunded_amount,
-                        get_application_currency()),
+                    'price' => format_price(
+                        $order->payment->amount - $order->payment->refunded_amount,
+                        get_application_currency()
+                    ),
                 ]));
         }
 
@@ -774,6 +789,7 @@ class OrderController extends BaseController
                 'product_id' => $productId,
                 'order_id'   => $id,
             ]);
+
             if ($quantity > ($orderProduct->qty - $orderProduct->restock_quantity)) {
                 $response
                     ->setError()
@@ -796,25 +812,40 @@ class OrderController extends BaseController
         }
 
         $refundAmount = $request->input('refund_amount');
+
         if ($paymentService = get_payment_is_support_refund_online($payment)) {
-            $paymentResponse = (new $paymentService);
+            $paymentResponse = (new $paymentService());
             if (method_exists($paymentService, 'setCurrency')) {
                 $paymentResponse = $paymentResponse->setCurrency($payment->currency);
             }
+
             $optionRefunds = [
                 'refund_note' => $request->input('refund_note'),
                 'order_id'    => $order->id,
             ];
+
             $paymentResponse = $paymentResponse->refundOrder($payment->charge_id, $refundAmount, $optionRefunds);
+
             if (Arr::get($paymentResponse, 'error', true)) {
                 return $response
                     ->setError()
                     ->setMessage(Arr::get($paymentResponse, 'message', ''));
             }
+
+            if (Arr::get($paymentResponse, 'data.refund_redirect_url')) {
+                return $response
+                    ->setNextUrl($paymentResponse['data']['refund_redirect_url'])
+                    ->setData($paymentResponse['data'])
+                    ->setMessage(Arr::get($paymentResponse, 'message', ''));
+            }
+
             $refundData = (array)Arr::get($paymentResponse, 'data', []);
+
+            $response->setData($refundData);
+
             $refundData['_data_request'] = $request->except(['_token']) + [
                     'currency'   => $payment->currency,
-                    'created_at' => now(),
+                    'created_at' => Carbon::now(),
                 ];
             $metadata = $payment->metadata;
             $refunds = Arr::get($metadata, 'refunds', []);
@@ -824,15 +855,18 @@ class OrderController extends BaseController
             $payment->metadata = $metadata;
         }
 
-        $payment->refunded_amount += $request->input('refund_amount');
+        $payment->refunded_amount += $refundAmount;
+
         if ($payment->refunded_amount == $payment->amount) {
             $payment->status = PaymentStatusEnum::REFUNDED;
         }
+
         $payment->refund_note = $request->input('refund_note');
         $this->paymentRepository->createOrUpdate($payment);
 
         foreach ($request->input('products', []) as $productId => $quantity) {
             $product = $this->productRepository->findById($productId);
+
             if ($product && $product->with_storehouse_management) {
                 $product->quantity += $quantity;
                 $this->productRepository->createOrUpdate($product);
@@ -849,16 +883,16 @@ class OrderController extends BaseController
             }
         }
 
-        if ($request->input('refund_amount', 0) > 0) {
+        if ($refundAmount > 0) {
             $this->orderHistoryRepository->createOrUpdate([
                 'action'      => 'refund',
                 'description' => trans('plugins/ecommerce::order.refund_success_with_price', [
-                    'price' => format_price($request->input('refund_amount')),
+                    'price' => format_price($refundAmount),
                 ]),
                 'order_id'    => $order->id,
                 'user_id'     => Auth::id(),
                 'extras'      => json_encode([
-                    'amount' => $request->input('refund_amount'),
+                    'amount' => $refundAmount,
                     'method' => $payment->payment_channel ?? PaymentMethodEnum::COD,
                 ]),
             ]);
@@ -866,9 +900,7 @@ class OrderController extends BaseController
 
         $response->setMessage(trans('plugins/ecommerce::order.refund_success'));
 
-        $response = apply_filters(ACTION_AFTER_POST_ORDER_REFUNDED_ECOMMERCE, $response, $order, $request);
-
-        return $response;
+        return apply_filters(ACTION_AFTER_POST_ORDER_REFUNDED_ECOMMERCE, $response, $order, $request);
     }
 
     /**
@@ -878,8 +910,8 @@ class OrderController extends BaseController
      * @return BaseHttpResponse
      */
     public function getAvailableShippingMethods(
-        Request $request,
-        BaseHttpResponse $response,
+        Request                  $request,
+        BaseHttpResponse         $response,
         HandleShippingFeeService $shippingFeeService
     ) {
         $weight = 0;
@@ -893,7 +925,7 @@ class OrderController extends BaseController
             }
         }
 
-        $weight = $weight > 0.1 ? $weight : 0.1;
+        $weight = EcommerceHelper::validateOrderWeight($weight);
 
         $shippingData = [
             'address'     => $request->input('address'),
@@ -927,9 +959,9 @@ class OrderController extends BaseController
      * @throws Throwable
      */
     public function postApplyCoupon(
-        ApplyCouponRequest $request,
+        ApplyCouponRequest       $request,
         HandleApplyCouponService $handleApplyCouponService,
-        BaseHttpResponse $response
+        BaseHttpResponse         $response
     ) {
         $result = $handleApplyCouponService->applyCouponWhenCreatingOrderFromAdmin($request);
 
@@ -942,14 +974,16 @@ class OrderController extends BaseController
 
         return $response
             ->setData(Arr::get($result, 'data', []))
-            ->setMessage(trans('plugins/ecommerce::order.applied_coupon_success',
-                ['code' => $request->input('coupon_code')]));
+            ->setMessage(trans(
+                'plugins/ecommerce::order.applied_coupon_success',
+                ['code' => $request->input('coupon_code')]
+            ));
     }
 
     /**
      * @param Request $request
      * @param BaseHttpResponse $response
-     * @return BaseHttpResponse|Factory|View
+     * @return Application|BaseHttpResponse|Factory|View
      */
     public function getReorder(Request $request, BaseHttpResponse $response)
     {
@@ -979,15 +1013,20 @@ class OrderController extends BaseController
             ->get();
 
         foreach ($products as &$availableProduct) {
-            $availableProduct->image_url = RvMedia::getImageUrl(Arr::first($availableProduct->images) ?? null, 'thumb',
-                false, RvMedia::getDefaultImage());
+            $availableProduct->product_name = $availableProduct->original_product->name;
+            $availableProduct->image_url = RvMedia::getImageUrl(
+                Arr::first($availableProduct->images ?: $availableProduct->original_product->images) ?? null,
+                'thumb',
+                false,
+                RvMedia::getDefaultImage()
+            );
             $availableProduct->price = $availableProduct->front_sale_price;
             $availableProduct->product_link = route('products.edit', $availableProduct->original_product->id);
             $availableProduct->select_qty = 1;
             $availableProduct->product_id = $availableProduct->id;
 
             if (is_plugin_active('marketplace') && $availableProduct->original_product->store_id && $availableProduct->original_product->store->name) {
-                $availableProduct->product_name = $availableProduct->name . ' (' . $availableProduct->original_product->store->name . ')';
+                $availableProduct->product_name = $availableProduct->product_name . ' (' . $availableProduct->original_product->store->name . ')';
             }
 
             $orderProduct = $order->products->where('product_id', $availableProduct->id)->first();
@@ -1058,7 +1097,7 @@ class OrderController extends BaseController
 
     /**
      * @param int $id
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function getViewIncompleteOrder($id)
     {

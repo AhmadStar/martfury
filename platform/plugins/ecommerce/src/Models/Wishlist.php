@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Wishlist extends BaseModel
 {
-
     /**
      * @var string
      */

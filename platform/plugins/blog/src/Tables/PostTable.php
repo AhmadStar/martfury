@@ -10,6 +10,7 @@ use Botble\Blog\Repositories\Interfaces\PostInterface;
 use Botble\Table\Abstracts\TableAbstract;
 use Html;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Yajra\DataTables\DataTables;
 
@@ -48,9 +49,9 @@ class PostTable extends TableAbstract
      * @param CategoryInterface $categoryRepository
      */
     public function __construct(
-        DataTables $table,
-        UrlGenerator $urlGenerator,
-        PostInterface $postRepository,
+        DataTables        $table,
+        UrlGenerator      $urlGenerator,
+        PostInterface     $postRepository,
         CategoryInterface $categoryRepository
     ) {
         parent::__construct($table, $urlGenerator);
@@ -214,7 +215,7 @@ class PostTable extends TableAbstract
                 'choices'  => BaseStatusEnum::labels(),
                 'validate' => 'required|in:' . implode(',', BaseStatusEnum::values()),
             ],
-            'category'         => [
+            'category'   => [
                 'title'    => trans('plugins/blog::posts.category'),
                 'type'     => 'select-search',
                 'validate' => 'required',
@@ -241,28 +242,13 @@ class PostTable extends TableAbstract
      */
     public function applyFilterCondition($query, string $key, string $operator, ?string $value)
     {
-        switch ($key) {
-            case 'created_at':
-                if (!$value) {
-                    break;
-                }
+        if ($key === 'category' && $value && !BaseHelper::isJoined($query, 'post_categories')) {
+            $query = $query
+                ->join('post_categories', 'post_categories.post_id', '=', 'posts.id')
+                ->join('categories', 'post_categories.category_id', '=', 'categories.id')
+                ->select($query->getModel()->getTable() . '.*');
 
-                $value = BaseHelper::formatDate($value);
-
-                return $query->whereDate($key, $operator, $value);
-            case 'category':
-                if (!$value) {
-                    break;
-                }
-
-                if (!BaseHelper::isJoined($query, 'post_categories')) {
-                    $query = $query
-                        ->join('post_categories', 'post_categories.post_id', '=', 'posts.id')
-                        ->join('categories', 'post_categories.category_id', '=', 'categories.id')
-                        ->select($query->getModel()->getTable() . '.*');
-                }
-
-                return $query->where('post_categories.category_id', $value);
+            return $query->where('post_categories.category_id', $value);
         }
 
         return parent::applyFilterCondition($query, $key, $operator, $value);
@@ -271,7 +257,7 @@ class PostTable extends TableAbstract
     /**
      * {@inheritDoc}
      */
-    public function saveBulkChangeItem($item, string $inputKey, ?string $inputValue)
+    public function saveBulkChangeItem(Model $item, string $inputKey, ?string $inputValue)
     {
         if ($inputKey === 'category') {
             $item->categories()->sync([$inputValue]);

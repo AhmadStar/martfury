@@ -25,6 +25,13 @@ class MailConfigServiceProvider extends ServiceProvider
                         'address' => $setting->get('email_from_address', $config->get('mail.from.address')),
                         'name'    => $setting->get('email_from_name', $config->get('mail.from.name')),
                     ],
+                    'stream' => [
+                        'ssl' => [
+                            'allow_self_signed' => true,
+                            'verify_peer'       => false,
+                            'verify_peer_name'  => false,
+                        ],
+                    ],
                 ]),
             ]);
 
@@ -35,8 +42,10 @@ class MailConfigServiceProvider extends ServiceProvider
                             'transport'  => 'smtp',
                             'host'       => $setting->get('email_host', $config->get('mail.mailers.smtp.host')),
                             'port'       => (int)$setting->get('email_port', $config->get('mail.mailers.smtp.port')),
-                            'encryption' => $setting->get('email_encryption',
-                                $config->get('mail.mailers.smtp.encryption')),
+                            'encryption' => $setting->get(
+                                'email_encryption',
+                                $config->get('mail.mailers.smtp.encryption')
+                            ),
                             'username'   => $setting->get('email_username', $config->get('mail.mailers.smtp.username')),
                             'password'   => $setting->get('email_password', $config->get('mail.mailers.smtp.password')),
                         ]),
@@ -45,19 +54,27 @@ class MailConfigServiceProvider extends ServiceProvider
                 case 'mailgun':
                     $config->set([
                         'services.mailgun' => [
-                            'domain'   => $setting->get('email_mail_gun_domain',
-                                $config->get('services.mailgun.domain')),
-                            'secret'   => $setting->get('email_mail_gun_secret',
-                                $config->get('services.mailgun.secret')),
-                            'endpoint' => $setting->get('email_mail_gun_endpoint',
-                                $config->get('services.mailgun.endpoint')),
+                            'domain'   => $setting->get(
+                                'email_mail_gun_domain',
+                                $config->get('services.mailgun.domain')
+                            ),
+                            'secret'   => $setting->get(
+                                'email_mail_gun_secret',
+                                $config->get('services.mailgun.secret')
+                            ),
+                            'endpoint' => $setting->get(
+                                'email_mail_gun_endpoint',
+                                $config->get('services.mailgun.endpoint')
+                            ),
                         ],
                     ]);
                     break;
                 case 'sendmail':
                     $config->set([
-                        'mail.mailers.sendmail.path' => $setting->get('email_sendmail_path',
-                            $config->get('mail.mailers.sendmail.path')),
+                        'mail.mailers.sendmail.path' => $setting->get(
+                            'email_sendmail_path',
+                            $config->get('mail.mailers.sendmail.path')
+                        ),
                     ]);
                     break;
                 case 'postmark':
@@ -78,8 +95,10 @@ class MailConfigServiceProvider extends ServiceProvider
                     break;
                 case 'log':
                     $config->set([
-                        'mail.mailers.log.channel' => $setting->get('email_log_channel',
-                            $config->get('mail.mailers.log.channel')),
+                        'mail.mailers.log.channel' => $setting->get(
+                            'email_log_channel',
+                            $config->get('mail.mailers.log.channel')
+                        ),
                     ]);
                     break;
             }

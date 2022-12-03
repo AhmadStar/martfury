@@ -14,8 +14,12 @@ class ProductVariationItemRepository extends RepositoriesAbstract implements Pro
     {
         $data = $this->model
             ->join('ec_product_attributes', 'ec_product_attributes.id', '=', 'ec_product_variation_items.attribute_id')
-            ->join('ec_product_attribute_sets', 'ec_product_attribute_sets.id', '=',
-                'ec_product_attributes.attribute_set_id')
+            ->join(
+                'ec_product_attribute_sets',
+                'ec_product_attribute_sets.id',
+                '=',
+                'ec_product_attributes.attribute_set_id'
+            )
             ->distinct()
             ->whereIn('ec_product_variation_items.variation_id', $versionIds)
             ->select([
@@ -35,8 +39,12 @@ class ProductVariationItemRepository extends RepositoriesAbstract implements Pro
     {
         $data = $this->model
             ->join('ec_product_attributes', 'ec_product_attributes.id', '=', 'ec_product_variation_items.attribute_id')
-            ->join('ec_product_attribute_sets', 'ec_product_attribute_sets.id', '=',
-                'ec_product_attributes.attribute_set_id')
+            ->join(
+                'ec_product_attribute_sets',
+                'ec_product_attribute_sets.id',
+                '=',
+                'ec_product_attributes.attribute_set_id'
+            )
             ->join('ec_product_variations', 'ec_product_variations.id', '=', 'ec_product_variation_items.variation_id')
             ->distinct()
             ->where('ec_product_variations.product_id', $productId)

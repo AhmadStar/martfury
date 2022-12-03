@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ShipmentHistory extends BaseModel
 {
-
     /**
      * @var string
      */

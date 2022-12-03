@@ -11,7 +11,6 @@ use Botble\Table\TableBuilder;
 
 class SimpleSliderForm extends FormAbstract
 {
-
     /**
      * @var TableBuilder
      */
@@ -33,7 +32,7 @@ class SimpleSliderForm extends FormAbstract
     public function buildForm()
     {
         $this
-            ->setupModel(new SimpleSlider)
+            ->setupModel(new SimpleSlider())
             ->setValidatorClass(SimpleSliderRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [
@@ -71,8 +70,10 @@ class SimpleSliderForm extends FormAbstract
                 'slider-items' => [
                     'title'   => trans('plugins/simple-slider::simple-slider.slide_items'),
                     'content' => $this->tableBuilder->create(SimpleSliderItemTable::class)
-                        ->setAjaxUrl(route('simple-slider-item.index',
-                            $this->getModel()->id ?: 0))
+                        ->setAjaxUrl(route(
+                            'simple-slider-item.index',
+                            $this->getModel()->id ?: 0
+                        ))
                         ->renderTable(),
                 ],
             ]);

@@ -1,68 +1,102 @@
 class Location {
-    static getStates($element, countryId) {
+    static getStates($el, countryId, $button = null) {
         $.ajax({
-            url: $element.data('url') + '?country_id=' + countryId,
+            url: $el.data('url'),
+            data: {
+                country_id: countryId,
+            },
             type: 'GET',
             beforeSend: () => {
-                $element.closest('form').find('button[type=submit], input[type=submit]').prop('disabled', true);
+                $button && $button.prop('disabled', true);
             },
-            success: data => {
-                let option = '';
-                $.each(data.data, (index, item) => {
-                    option += '<option value="' + item.id + '">' + item.name + '</option>';
-                });
+            success: res => {
+                if (res.error) {
+                    Botble.showError(res.message);
+                } else {
+                    let options = '';
+                    $.each(res.data, (index, item) => {
+                        options += '<option value="' + (item.id || '') + '">' + item.name + '</option>';
+                    });
 
-                $element.html(option);
-                $element.closest('form').find('button[type=submit], input[type=submit]').prop('disabled', false);
+                    $el.html(options);
+                }
+            },
+            complete: () => {
+                $button && $button.prop('disabled', false);
             }
         });
     }
 
-    static getCities($element, stateId) {
+    static getCities($el, stateId, $button = null) {
         $.ajax({
-            url: $element.data('url') + '?state_id=' + stateId,
+            url: $el.data('url'),
+            data: {
+                state_id: stateId,
+            },
             type: 'GET',
             beforeSend: () => {
-                $element.closest('form').find('button[type=submit], input[type=submit]').prop('disabled', true);
+                $button && $button.prop('disabled', true);
             },
-            success: data => {
-                let option = '';
-                $.each(data.data, (index, item) => {
-                    option += '<option value="' + item.id + '">' + item.name + '</option>';
-                });
+            success: res => {
+                if (res.error) {
+                    Botble.showError(res.message);
+                } else {
+                    let options = '';
+                    $.each(res.data, (index, item) => {
+                        options += '<option value="' + (item.id || '') + '">' + item.name + '</option>';
+                    });
 
-                $element.html(option);
-                $element.trigger('change');
-                $element.closest('form').find('button[type=submit], input[type=submit]').prop('disabled', false);
+                    $el.html(options);
+                    $el.trigger('change');
+                }
+            },
+            complete: () => {
+                $button && $button.prop('disabled', false);
             }
         });
     }
 
     init() {
+
         const country = 'select[data-type="country"]';
         const state = 'select[data-type="state"]';
         const city = 'select[data-type="city"]';
 
-        $(document).on('change', country, function (event) {
-            event.preventDefault();
+        $(document).on('change', country, function (e) {
+            e.preventDefault();
 
-            const $element = $(document).find(state);
-            if ($element.length && $(this).val()) {
-                Location.getStates($element, $(event.currentTarget).val());
+            const $state = $(document).find(state);
+            const $city = $(document).find(city);
+
+            $state.find('option:not([value=""]):not([value="0"])').remove();
+            $city.find('option:not([value=""]):not([value="0"])').remove();
+
+            if ($state.length) {
+                const val = $(e.currentTarget).val();
+                if (val) {
+                    const $button = $(e.currentTarget).closest('form').find('button[type=submit], input[type=submit]');
+                    Location.getStates($state, val, $button);
+                }
             }
         });
 
-        $(document).on('change', state, function (event) {
-            event.preventDefault();
+        $(document).on('change', state, function (e) {
+            e.preventDefault();
 
-            const $element = $(document).find(city);
-            if ($element.length) {
-                Location.getCities($element, $(event.currentTarget).val());
+            const $city = $(document).find(city);
+
+            if ($city.length) {
+                $city.find('option:not([value=""]):not([value="0"])').remove();
+                const val = $(e.currentTarget).val();
+                if (val) {
+                    const $button = $(e.currentTarget).closest('form').find('button[type=submit], input[type=submit]');
+                    Location.getCities($city, val, $button);
+                }
             }
         });
     }
 }
 
-$(document).ready(() => {
+$(() => {
     (new Location()).init();
 });

@@ -71,7 +71,11 @@ class NewsletterController extends BaseController
      */
     public function deletes(Request $request, BaseHttpResponse $response)
     {
-        return $this->executeDeleteItems($request, $response, $this->newsletterRepository,
-            NEWSLETTER_MODULE_SCREEN_NAME);
+        return $this->executeDeleteItems(
+            $request,
+            $response,
+            $this->newsletterRepository,
+            NEWSLETTER_MODULE_SCREEN_NAME
+        );
     }
 }

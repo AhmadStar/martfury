@@ -12,7 +12,6 @@ use Language;
 
 class AddHrefLangListener
 {
-
     /**
      * Handle the event.
      *
@@ -24,7 +23,6 @@ class AddHrefLangListener
         try {
             if (defined('THEME_FRONT_HEADER')) {
                 add_filter(THEME_FRONT_HEADER, function ($header) use ($event) {
-
                     $urls = [];
 
                     if (in_array($event->slug->reference_type, Language::supportedModels())) {
@@ -38,8 +36,11 @@ class AddHrefLangListener
                                 }
                             }
                         } else {
-                            $languageMeta = LanguageMeta::where('language_meta.lang_meta_code', '!=',
-                                Language::getCurrentLocaleCode())
+                            $languageMeta = LanguageMeta::where(
+                                'language_meta.lang_meta_code',
+                                '!=',
+                                Language::getCurrentLocaleCode()
+                            )
                                 ->join('language_meta as meta', 'meta.lang_meta_origin', 'language_meta.lang_meta_origin')
                                 ->where([
                                     'meta.reference_type' => $event->slug->reference_type,

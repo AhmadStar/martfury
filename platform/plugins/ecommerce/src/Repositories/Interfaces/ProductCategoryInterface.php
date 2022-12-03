@@ -7,7 +7,6 @@ use Illuminate\Support\Collection;
 
 interface ProductCategoryInterface extends RepositoryInterface
 {
-
     /**
      * get categories filter by $param.
      *

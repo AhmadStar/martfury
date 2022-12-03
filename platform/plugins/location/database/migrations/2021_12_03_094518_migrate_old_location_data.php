@@ -9,7 +9,7 @@ use Botble\Location\Models\State;
 use Botble\Location\Models\StateTranslation;
 use Illuminate\Database\Migrations\Migration;
 
-return new class extends Migration {
+return new class () extends Migration {
     /**
      * Run the migrations.
      *
@@ -18,7 +18,6 @@ return new class extends Migration {
     public function up()
     {
         if (is_plugin_active('language')) {
-
             Schema::dropIfExists('countries_backup');
             Schema::dropIfExists('states_backup');
             Schema::dropIfExists('cities_backup');
@@ -40,7 +39,6 @@ return new class extends Migration {
                 ->get();
 
             foreach ($cities as $item) {
-
                 $originalItem = City::find($item->reference_id);
 
                 if (!$originalItem) {
@@ -74,7 +72,6 @@ return new class extends Migration {
                 ->get();
 
             foreach ($states as $item) {
-
                 $originalItem = State::find($item->reference_id);
 
                 if (!$originalItem) {
@@ -107,7 +104,6 @@ return new class extends Migration {
                 ->get();
 
             foreach ($countries as $item) {
-
                 $originalItem = Country::find($item->reference_id);
 
                 if (!$originalItem) {
@@ -166,5 +162,7 @@ return new class extends Migration {
         Schema::rename('cities_backup', 'cities');
 
         DB::statement('INSERT language_meta_backup SELECT * FROM language_meta');
+
+        Schema::drop('language_meta_backup');
     }
 };

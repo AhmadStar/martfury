@@ -3,13 +3,12 @@
 namespace Botble\Theme;
 
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Arr;
 use Theme as ThemeFacade;
 
 class AssetContainer
 {
-
     /**
      * Use a theme path.
      *
@@ -145,6 +144,36 @@ class AssetContainer
         }
 
         return $this->$type($name, $source, $dependencies, $attributes);
+    }
+
+    /**
+     * Add an asset to the container using the path.
+     *
+     * The same `add` but usePath() before to add.
+     *
+     * <code>
+     *      // Add an asset to the container
+     *      Asset::container()->addUsingPath('jquery', 'js/jquery.js');
+     *
+     *      // Add an asset that has dependencies on other assets
+     *      Asset::addUsingPath('jquery', 'js/jquery.js', 'jquery-ui');
+     *
+     *      // Add an asset that should have attributes applied to its tags
+     *      Asset::addUsingPath('jquery', 'js/jquery.js', null, ['defer']);
+     * </code>
+     *
+     * @param string $name
+     * @param string|array $source
+     * @param array $dependencies
+     * @param array $attributes
+     * @param string|null $version
+     * @return AssetContainer
+     */
+    public function addUsingPath(string $name, $source, array $dependencies = [], array $attributes = [], ?string $version = null): self
+    {
+        return $this
+            ->usePath()
+            ->add($name, $source, $dependencies, $attributes, $version);
     }
 
     /**
@@ -302,6 +331,20 @@ class AssetContainer
     }
 
     /**
+     * Add a CSS file to the registered assets using the path.
+     *
+     * @param string $name
+     * @param string $source
+     * @param array $dependencies
+     * @param array $attributes
+     * @return AssetContainer
+     */
+    public function styleUsingPath(string $name, string $source, array $dependencies = [], array $attributes = []): self
+    {
+        return $this->usePath()->style($name, $source, $dependencies, $attributes);
+    }
+
+    /**
      * Check using theme path.
      *
      * @return boolean
@@ -377,6 +420,20 @@ class AssetContainer
         $this->register('script', $name, $source, $dependencies, $attributes);
 
         return $this;
+    }
+
+    /**
+     * Add a JavaScript file to the registered assets using the path.
+     *
+     * @param string $name
+     * @param string $source
+     * @param array $dependencies
+     * @param array $attributes
+     * @return AssetContainer
+     */
+    public function scriptUsingPath(string $name, string $source, array $dependencies = [], array $attributes = []): self
+    {
+        return $this->usePath()->script($name, $source, $dependencies, $attributes);
     }
 
     /**

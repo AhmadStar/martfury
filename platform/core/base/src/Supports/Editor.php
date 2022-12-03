@@ -30,7 +30,7 @@ class Editor
      * @return string
      * @throws Throwable
      */
-    public function render($name, $value = null, $withShortcode = false, array $attributes = [])
+    public function render(string $name, $value = null, bool $withShortcode = false, array $attributes = []): string
     {
         $attributes['class'] = Arr::get($attributes, 'class', '') . ' editor-' . BaseHelper::getRichEditor();
 

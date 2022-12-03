@@ -2,12 +2,17 @@
 
 namespace Botble\Ecommerce\Providers;
 
+use ApiHelper;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
 use Botble\Ecommerce\Commands\SendAbandonedCartsEmailCommand;
 use Botble\Ecommerce\Facades\CartFacade;
+use Botble\Ecommerce\Facades\CurrencyFacade;
 use Botble\Ecommerce\Facades\EcommerceHelperFacade;
+use Botble\Ecommerce\Facades\InvoiceHelperFacade;
 use Botble\Ecommerce\Facades\OrderHelperFacade;
+use Botble\Ecommerce\Facades\OrderReturnHelperFacade;
 use Botble\Ecommerce\Facades\ProductCategoryHelperFacade;
+use Botble\Ecommerce\Http\Middleware\CaptureFootprintsMiddleware;
 use Botble\Ecommerce\Http\Middleware\RedirectIfCustomer;
 use Botble\Ecommerce\Http\Middleware\RedirectIfNotCustomer;
 use Botble\Ecommerce\Models\Address;
@@ -16,11 +21,15 @@ use Botble\Ecommerce\Models\Currency;
 use Botble\Ecommerce\Models\Customer;
 use Botble\Ecommerce\Models\Discount;
 use Botble\Ecommerce\Models\FlashSale;
+use Botble\Ecommerce\Models\GlobalOption;
 use Botble\Ecommerce\Models\GroupedProduct;
+use Botble\Ecommerce\Models\Invoice;
 use Botble\Ecommerce\Models\Order;
 use Botble\Ecommerce\Models\OrderAddress;
 use Botble\Ecommerce\Models\OrderHistory;
 use Botble\Ecommerce\Models\OrderProduct;
+use Botble\Ecommerce\Models\OrderReturn;
+use Botble\Ecommerce\Models\OrderReturnItem;
 use Botble\Ecommerce\Models\Product;
 use Botble\Ecommerce\Models\ProductAttribute;
 use Botble\Ecommerce\Models\ProductAttributeSet;
@@ -45,11 +54,15 @@ use Botble\Ecommerce\Repositories\Caches\CurrencyCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\CustomerCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\DiscountCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\FlashSaleCacheDecorator;
+use Botble\Ecommerce\Repositories\Caches\GlobalOptionCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\GroupedProductCacheDecorator;
+use Botble\Ecommerce\Repositories\Caches\InvoiceCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\OrderAddressCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\OrderCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\OrderHistoryCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\OrderProductCacheDecorator;
+use Botble\Ecommerce\Repositories\Caches\OrderReturnCacheDecorator;
+use Botble\Ecommerce\Repositories\Caches\OrderReturnItemCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\ProductAttributeCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\ProductAttributeSetCacheDecorator;
 use Botble\Ecommerce\Repositories\Caches\ProductCacheDecorator;
@@ -74,11 +87,15 @@ use Botble\Ecommerce\Repositories\Eloquent\CurrencyRepository;
 use Botble\Ecommerce\Repositories\Eloquent\CustomerRepository;
 use Botble\Ecommerce\Repositories\Eloquent\DiscountRepository;
 use Botble\Ecommerce\Repositories\Eloquent\FlashSaleRepository;
+use Botble\Ecommerce\Repositories\Eloquent\GlobalOptionRepository;
 use Botble\Ecommerce\Repositories\Eloquent\GroupedProductRepository;
+use Botble\Ecommerce\Repositories\Eloquent\InvoiceRepository;
 use Botble\Ecommerce\Repositories\Eloquent\OrderAddressRepository;
 use Botble\Ecommerce\Repositories\Eloquent\OrderHistoryRepository;
 use Botble\Ecommerce\Repositories\Eloquent\OrderProductRepository;
 use Botble\Ecommerce\Repositories\Eloquent\OrderRepository;
+use Botble\Ecommerce\Repositories\Eloquent\OrderReturnItemRepository;
+use Botble\Ecommerce\Repositories\Eloquent\OrderReturnRepository;
 use Botble\Ecommerce\Repositories\Eloquent\ProductAttributeRepository;
 use Botble\Ecommerce\Repositories\Eloquent\ProductAttributeSetRepository;
 use Botble\Ecommerce\Repositories\Eloquent\ProductCategoryRepository;
@@ -103,11 +120,15 @@ use Botble\Ecommerce\Repositories\Interfaces\CurrencyInterface;
 use Botble\Ecommerce\Repositories\Interfaces\CustomerInterface;
 use Botble\Ecommerce\Repositories\Interfaces\DiscountInterface;
 use Botble\Ecommerce\Repositories\Interfaces\FlashSaleInterface;
+use Botble\Ecommerce\Repositories\Interfaces\GlobalOptionInterface;
 use Botble\Ecommerce\Repositories\Interfaces\GroupedProductInterface;
+use Botble\Ecommerce\Repositories\Interfaces\InvoiceInterface;
 use Botble\Ecommerce\Repositories\Interfaces\OrderAddressInterface;
 use Botble\Ecommerce\Repositories\Interfaces\OrderHistoryInterface;
 use Botble\Ecommerce\Repositories\Interfaces\OrderInterface;
 use Botble\Ecommerce\Repositories\Interfaces\OrderProductInterface;
+use Botble\Ecommerce\Repositories\Interfaces\OrderReturnInterface;
+use Botble\Ecommerce\Repositories\Interfaces\OrderReturnItemInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductAttributeInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductAttributeSetInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductCategoryInterface;
@@ -126,9 +147,16 @@ use Botble\Ecommerce\Repositories\Interfaces\ShippingRuleItemInterface;
 use Botble\Ecommerce\Repositories\Interfaces\StoreLocatorInterface;
 use Botble\Ecommerce\Repositories\Interfaces\TaxInterface;
 use Botble\Ecommerce\Repositories\Interfaces\WishlistInterface;
+use Botble\Ecommerce\Services\Footprints\Footprinter;
+use Botble\Ecommerce\Services\Footprints\FootprinterInterface;
+use Botble\Ecommerce\Services\Footprints\TrackingFilter;
+use Botble\Ecommerce\Services\Footprints\TrackingFilterInterface;
+use Botble\Ecommerce\Services\Footprints\TrackingLogger;
+use Botble\Ecommerce\Services\Footprints\TrackingLoggerInterface;
 use Botble\Ecommerce\Services\HandleApplyCouponService;
 use Botble\Ecommerce\Services\HandleRemoveCouponService;
 use Botble\LanguageAdvanced\Supports\LanguageAdvancedManager;
+use Botble\Payment\Models\Payment;
 use Cart;
 use EcommerceHelper;
 use EmailHandler;
@@ -139,6 +167,7 @@ use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use SeoHelper;
 use SlugHelper;
@@ -146,7 +175,6 @@ use SocialService;
 
 class EcommerceServiceProvider extends ServiceProvider
 {
-
     use LoadAndPublishDataTrait;
 
     public function register()
@@ -174,182 +202,221 @@ class EcommerceServiceProvider extends ServiceProvider
 
         $router->aliasMiddleware('customer', RedirectIfNotCustomer::class);
         $router->aliasMiddleware('customer.guest', RedirectIfCustomer::class);
+        $router->pushMiddlewareToGroup('web', CaptureFootprintsMiddleware::class);
 
         $this->app->bind(ProductInterface::class, function () {
             return new ProductCacheDecorator(
-                new ProductRepository(new Product)
+                new ProductRepository(new Product())
             );
         });
 
         $this->app->bind(ProductCategoryInterface::class, function () {
             return new ProductCategoryCacheDecorator(
-                new ProductCategoryRepository(new ProductCategory)
+                new ProductCategoryRepository(new ProductCategory())
             );
         });
 
         $this->app->bind(ProductTagInterface::class, function () {
             return new ProductTagCacheDecorator(
-                new ProductTagRepository(new ProductTag)
+                new ProductTagRepository(new ProductTag())
+            );
+        });
+
+        $this->app->bind(GlobalOptionInterface::class, function () {
+            return new GlobalOptionCacheDecorator(
+                new GlobalOptionRepository(new GlobalOption())
             );
         });
 
         $this->app->bind(BrandInterface::class, function () {
             return new BrandCacheDecorator(
-                new BrandRepository(new Brand)
+                new BrandRepository(new Brand())
             );
         });
 
         $this->app->bind(ProductCollectionInterface::class, function () {
             return new ProductCollectionCacheDecorator(
-                new ProductCollectionRepository(new ProductCollection)
+                new ProductCollectionRepository(new ProductCollection())
             );
         });
 
         $this->app->bind(CurrencyInterface::class, function () {
             return new CurrencyCacheDecorator(
-                new CurrencyRepository(new Currency)
+                new CurrencyRepository(new Currency())
             );
         });
 
         $this->app->bind(ProductAttributeSetInterface::class, function () {
             return new ProductAttributeSetCacheDecorator(
-                new ProductAttributeSetRepository(new ProductAttributeSet),
+                new ProductAttributeSetRepository(new ProductAttributeSet()),
                 ECOMMERCE_GROUP_CACHE_KEY
             );
         });
 
         $this->app->bind(ProductAttributeInterface::class, function () {
             return new ProductAttributeCacheDecorator(
-                new ProductAttributeRepository(new ProductAttribute),
+                new ProductAttributeRepository(new ProductAttribute()),
                 ECOMMERCE_GROUP_CACHE_KEY
             );
         });
 
         $this->app->bind(ProductVariationInterface::class, function () {
             return new ProductVariationCacheDecorator(
-                new ProductVariationRepository(new ProductVariation),
+                new ProductVariationRepository(new ProductVariation()),
                 ECOMMERCE_GROUP_CACHE_KEY
             );
         });
 
         $this->app->bind(ProductVariationItemInterface::class, function () {
             return new ProductVariationItemCacheDecorator(
-                new ProductVariationItemRepository(new ProductVariationItem),
+                new ProductVariationItemRepository(new ProductVariationItem()),
                 ECOMMERCE_GROUP_CACHE_KEY
             );
         });
 
         $this->app->bind(TaxInterface::class, function () {
             return new TaxCacheDecorator(
-                new TaxRepository(new Tax)
+                new TaxRepository(new Tax())
             );
         });
 
         $this->app->bind(ReviewInterface::class, function () {
             return new ReviewCacheDecorator(
-                new ReviewRepository(new Review)
+                new ReviewRepository(new Review())
             );
         });
 
         $this->app->bind(ShippingInterface::class, function () {
             return new ShippingCacheDecorator(
-                new ShippingRepository(new Shipping)
+                new ShippingRepository(new Shipping())
             );
         });
 
         $this->app->bind(ShippingRuleInterface::class, function () {
             return new ShippingRuleCacheDecorator(
-                new ShippingRuleRepository(new ShippingRule)
+                new ShippingRuleRepository(new ShippingRule())
             );
         });
 
         $this->app->bind(ShippingRuleItemInterface::class, function () {
             return new ShippingRuleItemCacheDecorator(
-                new ShippingRuleItemRepository(new ShippingRuleItem)
+                new ShippingRuleItemRepository(new ShippingRuleItem())
             );
         });
 
         $this->app->bind(ShipmentInterface::class, function () {
             return new ShipmentCacheDecorator(
-                new ShipmentRepository(new Shipment)
+                new ShipmentRepository(new Shipment())
             );
         });
 
         $this->app->bind(ShipmentHistoryInterface::class, function () {
             return new ShipmentHistoryCacheDecorator(
-                new ShipmentHistoryRepository(new ShipmentHistory)
+                new ShipmentHistoryRepository(new ShipmentHistory())
             );
         });
 
         $this->app->bind(OrderInterface::class, function () {
             return new OrderCacheDecorator(
-                new OrderRepository(new Order)
+                new OrderRepository(new Order())
             );
         });
 
         $this->app->bind(OrderHistoryInterface::class, function () {
             return new OrderHistoryCacheDecorator(
-                new OrderHistoryRepository(new OrderHistory)
+                new OrderHistoryRepository(new OrderHistory())
             );
         });
 
         $this->app->bind(OrderProductInterface::class, function () {
             return new OrderProductCacheDecorator(
-                new OrderProductRepository(new OrderProduct)
+                new OrderProductRepository(new OrderProduct())
             );
         });
 
         $this->app->bind(OrderAddressInterface::class, function () {
             return new OrderAddressCacheDecorator(
-                new OrderAddressRepository(new OrderAddress)
+                new OrderAddressRepository(new OrderAddress())
+            );
+        });
+
+        $this->app->bind(OrderReturnInterface::class, function () {
+            return new OrderReturnCacheDecorator(
+                new OrderReturnRepository(new OrderReturn())
+            );
+        });
+
+        $this->app->bind(OrderReturnItemInterface::class, function () {
+            return new OrderReturnItemCacheDecorator(
+                new OrderReturnItemRepository(new OrderReturnItem())
             );
         });
 
         $this->app->bind(DiscountInterface::class, function () {
             return new DiscountCacheDecorator(
-                new DiscountRepository(new Discount)
+                new DiscountRepository(new Discount())
             );
         });
 
         $this->app->bind(WishlistInterface::class, function () {
             return new WishlistCacheDecorator(
-                new WishlistRepository(new Wishlist)
+                new WishlistRepository(new Wishlist())
             );
         });
 
         $this->app->bind(AddressInterface::class, function () {
             return new AddressCacheDecorator(
-                new AddressRepository(new Address)
+                new AddressRepository(new Address())
             );
         });
         $this->app->bind(CustomerInterface::class, function () {
             return new CustomerCacheDecorator(
-                new CustomerRepository(new Customer)
+                new CustomerRepository(new Customer())
             );
         });
 
         $this->app->bind(GroupedProductInterface::class, function () {
             return new GroupedProductCacheDecorator(
-                new GroupedProductRepository(new GroupedProduct)
+                new GroupedProductRepository(new GroupedProduct())
             );
         });
 
         $this->app->bind(StoreLocatorInterface::class, function () {
             return new StoreLocatorCacheDecorator(
-                new StoreLocatorRepository(new StoreLocator)
+                new StoreLocatorRepository(new StoreLocator())
             );
         });
 
         $this->app->bind(FlashSaleInterface::class, function () {
             return new FlashSaleCacheDecorator(
-                new FlashSaleRepository(new FlashSale)
+                new FlashSaleRepository(new FlashSale())
             );
         });
 
         $this->app->bind(ProductLabelInterface::class, function () {
             return new ProductLabelCacheDecorator(
-                new ProductLabelRepository(new ProductLabel)
+                new ProductLabelRepository(new ProductLabel())
             );
+        });
+
+        $this->app->bind(InvoiceInterface::class, function () {
+            return new InvoiceCacheDecorator(new InvoiceRepository(new Invoice()));
+        });
+
+        $this->app->bind(TrackingFilterInterface::class, function ($app) {
+            return $app->make(TrackingFilter::class);
+        });
+
+        $this->app->bind(TrackingLoggerInterface::class, function ($app) {
+            return $app->make(TrackingLogger::class);
+        });
+
+        $this->app->singleton(FootprinterInterface::class, function ($app) {
+            return $app->make(Footprinter::class);
+        });
+
+        Request::macro('footprint', function () {
+            return app(FootprinterInterface::class)->footprint($this);
         });
 
         $this->setNamespace('plugins/ecommerce')->loadHelpers();
@@ -357,8 +424,11 @@ class EcommerceServiceProvider extends ServiceProvider
         $loader = AliasLoader::getInstance();
         $loader->alias('Cart', CartFacade::class);
         $loader->alias('OrderHelper', OrderHelperFacade::class);
+        $loader->alias('OrderReturnHelper', OrderReturnHelperFacade::class);
         $loader->alias('EcommerceHelper', EcommerceHelperFacade::class);
         $loader->alias('ProductCategoryHelper', ProductCategoryHelperFacade::class);
+        $loader->alias('CurrencyHelper', CurrencyFacade::class);
+        $loader->alias('InvoiceHelper', InvoiceHelperFacade::class);
     }
 
     public function boot()
@@ -384,11 +454,11 @@ class EcommerceServiceProvider extends ServiceProvider
                 'order',
                 'discount',
                 'customer',
-                'payment',
                 'cart',
                 'shipment',
                 'wishlist',
                 'compare',
+                'invoice',
             ])
             ->loadAndPublishConfigurations([
                 'general',
@@ -400,6 +470,15 @@ class EcommerceServiceProvider extends ServiceProvider
             ->loadAndPublishViews()
             ->loadMigrations()
             ->publishAssets();
+
+        if (class_exists('ApiHelper') && ApiHelper::enabled()) {
+            ApiHelper::setConfig([
+                'model'           => Customer::class,
+                'guard'           => 'customer',
+                'password_broker' => 'customers',
+                'verify_email'    => true,
+            ]);
+        }
 
         if (File::exists(storage_path('app/invoices/template.blade.php'))) {
             $this->loadViewsFrom(storage_path('app/invoices'), 'plugins/ecommerce/invoice');
@@ -487,7 +566,7 @@ class EcommerceServiceProvider extends ServiceProvider
                             break;
                         }
 
-                        $request = new Request;
+                        $request = new Request();
                         $request->replace([
                             'language' => request()->input('language'),
                             'ref_lang' => request()->input('ref_lang'),
@@ -552,6 +631,15 @@ class EcommerceServiceProvider extends ServiceProvider
                     'permissions' => ['orders.index'],
                 ])
                 ->registerItem([
+                    'id'          => 'cms-plugins-ecommerce-invoice',
+                    'priority'    => 2,
+                    'parent_id'   => 'cms-plugins-ecommerce',
+                    'name'        => 'plugins/ecommerce::invoice.name',
+                    'icon'        => 'fas fa-book',
+                    'url'         => route('ecommerce.invoice.index'),
+                    'permissions' => ['ecommerce.invoice.index'],
+                ])
+                ->registerItem([
                     'id'          => 'cms-plugins-ecommerce-incomplete-order',
                     'priority'    => 2,
                     'parent_id'   => 'cms-plugins-ecommerce',
@@ -559,6 +647,15 @@ class EcommerceServiceProvider extends ServiceProvider
                     'icon'        => 'fas fa-shopping-basket',
                     'url'         => route('orders.incomplete-list'),
                     'permissions' => ['orders.index'],
+                ])
+                ->registerItem([
+                    'id'          => 'cms-plugins-ecommerce-order-return',
+                    'priority'    => 3,
+                    'parent_id'   => 'cms-plugins-ecommerce',
+                    'name'        => 'plugins/ecommerce::order.order_return',
+                    'icon'        => 'fa fa-cart-arrow-down',
+                    'url'         => route('order_returns.index'),
+                    'permissions' => ['orders.edit'],
                 ])
                 ->registerItem([
                     'id'          => 'cms-plugins-ecommerce.product',
@@ -595,6 +692,15 @@ class EcommerceServiceProvider extends ServiceProvider
                     'icon'        => 'fas fa-glass-martini',
                     'url'         => route('product-attribute-sets.index'),
                     'permissions' => ['product-attribute-sets.index'],
+                ])
+                ->registerItem([
+                    'id'          => 'cms-plugins-ecommerce-global-options',
+                    'priority'    => 3,
+                    'parent_id'   => 'cms-plugins-ecommerce',
+                    'name'        => 'plugins/ecommerce::product-option.name',
+                    'icon'        => 'fa fa-database',
+                    'url'         => route('global-option.index'),
+                    'permissions' => ['global-option.index'],
                 ])
                 ->registerItem([
                     'id'          => 'cms-plugins-brands',
@@ -685,6 +791,15 @@ class EcommerceServiceProvider extends ServiceProvider
                     'icon'        => 'fas fa-plus',
                     'url'         => route('ecommerce.advanced-settings'),
                     'permissions' => ['ecommerce.settings'],
+                ])
+                ->registerItem([
+                    'id'          => 'cms-plugins-ecommerce.tracking-settings',
+                    'priority'    => 999,
+                    'parent_id'   => 'cms-plugins-ecommerce',
+                    'name'        => 'plugins/ecommerce::ecommerce.setting.tracking_settings',
+                    'icon'        => 'fa-solid fa-chart-pie',
+                    'url'         => route('ecommerce.tracking-settings'),
+                    'permissions' => ['ecommerce.settings'],
                 ]);
 
             if (EcommerceHelper::isTaxEnabled()) {
@@ -730,15 +845,6 @@ class EcommerceServiceProvider extends ServiceProvider
                     'url'         => route('ecommerce.export.products.index'),
                     'permissions' => ['ecommerce.export.products.index'],
                 ]);
-
-            if (defined('SOCIAL_LOGIN_MODULE_SCREEN_NAME')) {
-                SocialService::registerModule([
-                    'guard'        => 'customer',
-                    'model'        => Customer::class,
-                    'login_url'    => route('customer.login'),
-                    'redirect_url' => route('public.index'),
-                ]);
-            }
         });
 
         $this->app->booted(function () {
@@ -750,6 +856,21 @@ class EcommerceServiceProvider extends ServiceProvider
             ]);
 
             $this->app->make(Schedule::class)->command(SendAbandonedCartsEmailCommand::class)->weekly('23:30');
+
+            if (is_plugin_active('payment')) {
+                Payment::resolveRelationUsing('order', function ($model) {
+                    return $model->belongsTo(Order::class, 'order_id')->withDefault();
+                });
+            }
+
+            if (defined('SOCIAL_LOGIN_MODULE_SCREEN_NAME') && Route::has('customer.login')) {
+                SocialService::registerModule([
+                    'guard'        => 'customer',
+                    'model'        => Customer::class,
+                    'login_url'    => route('customer.login'),
+                    'redirect_url' => route('public.index'),
+                ]);
+            }
         });
 
         $this->app->register(EventServiceProvider::class);

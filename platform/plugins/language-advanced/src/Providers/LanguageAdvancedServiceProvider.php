@@ -4,8 +4,10 @@ namespace Botble\LanguageAdvanced\Providers;
 
 use Botble\Base\Models\BaseModel;
 use Botble\Base\Traits\LoadAndPublishDataTrait;
+use Botble\Language\Models\Language as LanguageModel;
 use Botble\LanguageAdvanced\Supports\LanguageAdvancedManager;
 use Botble\Page\Models\Page;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Language;
@@ -38,13 +40,17 @@ class LanguageAdvancedServiceProvider extends ServiceProvider
                      * @var BaseModel $item
                      */
                     $item::resolveRelationUsing('translations', function ($model) {
-                        return $model->hasMany(LanguageAdvancedManager::getTranslationModel($model),
-                            $model->getTable() . '_id');
+                        return $model->hasMany(
+                            LanguageAdvancedManager::getTranslationModel($model),
+                            $model->getTable() . '_id'
+                        );
                     });
 
                     foreach ($columns as $column) {
-                        MacroableModels::addMacro($item, 'get' . Str::title($column) . 'Attribute',
-                            function () use ($column) {
+                        MacroableModels::addMacro(
+                            $item,
+                            'get' . ucfirst(Str::camel($column)) . 'Attribute',
+                            function () use ($column, $item) {
                                 /**
                                  * @var BaseModel $this
                                  */
@@ -59,10 +65,10 @@ class LanguageAdvancedServiceProvider extends ServiceProvider
                                 }
 
                                 return $this->getAttribute($column);
-                            });
+                            }
+                        );
                     }
                 }
-
             });
 
             $config = $this->app['config'];
@@ -82,6 +88,16 @@ class LanguageAdvancedServiceProvider extends ServiceProvider
 
                 $config->set(['plugins.language.general.supported' => $supportedModels]);
             }
+
+            Event::listen('eloquent.deleted: ' . LanguageModel::class, function (LanguageModel $language) {
+                foreach (LanguageAdvancedManager::getSupported() as $model => $columns) {
+                    $model = LanguageAdvancedManager::getTranslationModel($model);
+
+                    if (class_exists($model)) {
+                        (new $model)->where('lang_code', $language->lang_code)->delete();
+                    }
+                }
+            });
         }
     }
 }

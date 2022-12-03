@@ -9,7 +9,6 @@ use Request;
 
 class MenuNode extends BaseModel
 {
-
     /**
      * The database table used by the model.
      *
@@ -69,7 +68,7 @@ class MenuNode extends BaseModel
         }
 
         if (!$this->reference_type) {
-            return $value ? (string)$value : '/';
+            return '/';
         }
 
         if (!$this->reference) {

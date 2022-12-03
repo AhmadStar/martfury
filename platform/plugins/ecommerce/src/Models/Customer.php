@@ -5,10 +5,12 @@ namespace Botble\Ecommerce\Models;
 use Botble\Base\Supports\Avatar;
 use Botble\Base\Traits\EnumCastable;
 use Botble\Ecommerce\Enums\CustomerStatusEnum;
+use Botble\Ecommerce\Notifications\ConfirmEmailNotification;
 use Botble\Ecommerce\Notifications\ResetPasswordNotification;
 use Botble\Marketplace\Models\Revenue;
 use Botble\Marketplace\Models\VendorInfo;
 use Botble\Marketplace\Models\Withdrawal;
+use Carbon\Carbon;
 use Eloquent;
 use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -24,7 +26,8 @@ use Illuminate\Support\Str;
  */
 class Customer extends Authenticatable
 {
-    use Notifiable, EnumCastable;
+    use Notifiable;
+    use EnumCastable;
 
     /**
      * @var string
@@ -75,6 +78,16 @@ class Customer extends Authenticatable
     }
 
     /**
+     * Send the password reset notification.
+     *
+     * @return void
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $this->notify(new ConfirmEmailNotification());
+    }
+
+    /**
      * @return string
      */
     public function getAvatarUrlAttribute()
@@ -84,7 +97,7 @@ class Customer extends Authenticatable
         }
 
         try {
-            return (new Avatar)->create($this->name)->toBase64();
+            return (new Avatar())->create($this->name)->toBase64();
         } catch (Exception $exception) {
             return RvMedia::getDefaultImage();
         }
@@ -173,12 +186,12 @@ class Customer extends Authenticatable
         return $this
             ->belongsToMany(Discount::class, 'ec_discount_customers', 'customer_id')
             ->where('type', 'promotion')
-            ->where('start_date', '<=', now())
+            ->where('start_date', '<=', Carbon::now())
             ->where('target', 'customer')
             ->where(function ($query) {
                 return $query
                     ->whereNull('end_date')
-                    ->orWhere('end_date', '>=', now());
+                    ->orWhere('end_date', '>=', Carbon::now());
             })
             ->where('product_quantity', 1);
     }

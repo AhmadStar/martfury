@@ -23,11 +23,11 @@ class ContactServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(ContactInterface::class, function () {
-            return new ContactCacheDecorator(new ContactRepository(new Contact));
+            return new ContactCacheDecorator(new ContactRepository(new Contact()));
         });
 
         $this->app->bind(ContactReplyInterface::class, function () {
-            return new ContactReplyCacheDecorator(new ContactReplyRepository(new ContactReply));
+            return new ContactReplyCacheDecorator(new ContactReplyRepository(new ContactReply()));
         });
     }
 

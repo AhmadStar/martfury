@@ -38,7 +38,10 @@ class LocationImport implements
     SkipsOnError,
     WithChunkReading
 {
-    use Importable, SkipsFailures, SkipsErrors, ImportTrait;
+    use Importable;
+    use SkipsFailures;
+    use SkipsErrors;
+    use ImportTrait;
 
     /**
      * @var CityInterface
@@ -261,8 +264,10 @@ class LocationImport implements
                     'states_id'    => $state->id,
                     'lang_code'    => $language->lang_code,
                     'name'         => Arr::get($row, 'name_' . $language->lang_code) ?: Arr::get($row, 'name'),
-                    'abbreviation' => Arr::get($row, 'abbreviation_' . $language->lang_code) ?: Arr::get($row,
-                        'abbreviation'),
+                    'abbreviation' => Arr::get($row, 'abbreviation_' . $language->lang_code) ?: Arr::get(
+                        $row,
+                        'abbreviation'
+                    ),
                 ]);
             }
         }
@@ -311,8 +316,10 @@ class LocationImport implements
                     'countries_id' => $country->id,
                     'lang_code'    => $language->lang_code,
                     'name'         => Arr::get($row, 'name_' . $language->lang_code) ?: Arr::get($row, 'name'),
-                    'nationality'  => Arr::get($row, 'nationality_' . $language->lang_code) ?: Arr::get($row,
-                        'nationality'),
+                    'nationality'  => Arr::get($row, 'nationality_' . $language->lang_code) ?: Arr::get(
+                        $row,
+                        'nationality'
+                    ),
                 ]);
             }
         }

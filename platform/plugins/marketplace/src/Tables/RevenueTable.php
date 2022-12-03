@@ -11,7 +11,6 @@ use Yajra\DataTables\DataTables;
 
 class RevenueTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -68,8 +67,11 @@ class RevenueTable extends TableAbstract
                     return '&mdash;';
                 }
 
-                return Html::link(route('marketplace.vendor.orders.edit', $item->order->id),
-                    get_order_code($item->order->id), ['target' => '_blank']);
+                return Html::link(
+                    route('marketplace.vendor.orders.edit', $item->order->id),
+                    $item->order->code,
+                    ['target' => '_blank']
+                );
             })
             ->editColumn('created_at', function ($item) {
                 return BaseHelper::formatDate($item->created_at);

@@ -4,7 +4,6 @@ namespace Botble\Chart\Supports;
 
 class Chart extends Base
 {
-
     /**
      * A string containing the name of the attribute that contains date (X) values.
      * Timestamps are accepted in the form of millisecond timestamps (as returned by Date.getTime() or as strings in the
@@ -13,8 +12,7 @@ class Chart extends Base
      * 2012 Q1
      * 2012 W1
      * 2012-02
-     * 2012-02-24
-     * 2012-02-24 15:00
+     * 2012-02-24     *  15:00
      * 2012-02-24 15:00:00
      * 2012-02-24 15:00:00.000
      *
@@ -69,7 +67,7 @@ class Chart extends Base
     protected $ymin = 0;
 
     /**
-     * Set to false to always show a hover legend.
+     * Set too false to always show a hover legend.
      * Set to true or 'auto' to only show the hover legend when the mouse cursor is over the chart.
      * Set to 'always' to never show a hover legend.
      *
@@ -98,7 +96,7 @@ class Chart extends Base
     protected $hoverCallback = '';
 
     /**
-     * Set to false to disable drawing the x and y axes.
+     * Set too false to disable drawing the x and y axes.
      *
      * @brief Axes
      *
@@ -107,7 +105,7 @@ class Chart extends Base
     protected $axes = true;
 
     /**
-     * Set to false to disable drawing the horizontal grid lines.
+     * Set too false to disable drawing the horizontal grid lines.
      *
      * @brief Grid
      *
@@ -244,7 +242,7 @@ class Chart extends Base
     protected $goalLineColors = ['#666633', '#999966', '#cc6666', '#663333'];
 
     /**
-     * Set to false to skip time/date parsing for X values, instead treating them as an equally-spaced series.
+     * Set too false to skip time/date parsing for X values, instead treating them as an equally-spaced series.
      *
      * @brief Parse time
      *

@@ -2,30 +2,27 @@
 
 namespace Botble\PluginManagement\Services;
 
+use BaseHelper;
 use Botble\Base\Supports\Helper;
 use Botble\PluginManagement\Events\ActivatedPluginEvent;
-use Botble\Setting\Supports\SettingStore;
 use Composer\Autoload\ClassLoader;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Foundation\Application;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
+use Setting;
+use Throwable;
 
 class PluginService
 {
-
     /**
      * @var Application
      */
     protected $app;
-
-    /**
-     * @var SettingStore
-     */
-    protected $settingStore;
 
     /**
      * @var Filesystem
@@ -35,13 +32,11 @@ class PluginService
     /**
      * PluginService constructor.
      * @param Application $app
-     * @param SettingStore $settingStore
      * @param Filesystem $files
      */
-    public function __construct(Application $app, SettingStore $settingStore, Filesystem $files)
+    public function __construct(Application $app, Filesystem $files)
     {
         $this->app = $app;
-        $this->settingStore = $settingStore;
         $this->files = $files;
     }
 
@@ -57,7 +52,7 @@ class PluginService
             return $validate;
         }
 
-        $content = get_file_data(plugin_path($plugin) . '/plugin.json');
+        $content = BaseHelper::getFileData(plugin_path($plugin) . '/plugin.json');
         if (empty($content)) {
             return [
                 'error'   => true,
@@ -68,59 +63,76 @@ class PluginService
         if (!Arr::get($content, 'ready', 1)) {
             return [
                 'error'   => true,
-                'message' => trans('packages/plugin-management::plugin.plugin_is_not_ready',
-                    ['name' => Str::studly($plugin)]),
+                'message' => trans(
+                    'packages/plugin-management::plugin.plugin_is_not_ready',
+                    ['name' => Str::studly($plugin)]
+                ),
             ];
         }
 
         $activatedPlugins = get_active_plugins();
         if (!in_array($plugin, $activatedPlugins)) {
-
             if (!empty(Arr::get($content, 'require'))) {
                 $valid = count(array_intersect($content['require'], $activatedPlugins)) == count($content['require']);
                 if (!$valid) {
-
                     return [
                         'error'   => true,
-                        'message' => trans('packages/plugin-management::plugin.missing_required_plugins',
-                            ['plugins' => implode(',', $content['require'])]),
+                        'message' => trans(
+                            'packages/plugin-management::plugin.missing_required_plugins',
+                            ['plugins' => implode(',', $content['require'])]
+                        ),
                     ];
                 }
             }
 
-            if (!class_exists($content['provider'])) {
-                $loader = new ClassLoader;
-                $loader->setPsr4($content['namespace'], plugin_path($plugin . '/src'));
-                $loader->register(true);
+            try {
+                DB::beginTransaction();
 
-                $published = $this->publishAssets($plugin);
+                if (!class_exists($content['provider'])) {
 
-                if ($published['error']) {
-                    return $published;
+                    $loader = new ClassLoader();
+                    $loader->setPsr4($content['namespace'], plugin_path($plugin . '/src'));
+                    $loader->register(true);
+
+                    if (class_exists($content['namespace'] . 'Plugin')) {
+                        call_user_func([$content['namespace'] . 'Plugin', 'activate']);
+                    }
+
+                    if ($this->files->isDirectory(plugin_path($plugin . '/database/migrations'))) {
+                        $this->app['migrator']->run(plugin_path($plugin . '/database/migrations'));
+                    }
+
+                    $this->app->register($content['provider']);
+
+                    $published = $this->publishAssets($plugin);
+
+                    if ($published['error']) {
+                        return $published;
+                    }
                 }
+
+                Setting::set('activated_plugins', json_encode(array_values(array_merge($activatedPlugins, [$plugin]))))
+                    ->save();
 
                 if (class_exists($content['namespace'] . 'Plugin')) {
-                    call_user_func([$content['namespace'] . 'Plugin', 'activate']);
+                    call_user_func([$content['namespace'] . 'Plugin', 'activated']);
                 }
 
-                if ($this->files->isDirectory(plugin_path($plugin . '/database/migrations'))) {
-                    $this->app->make('migrator')->run(plugin_path($plugin . '/database/migrations'));
-                }
+                Helper::clearCache();
 
-                $this->app->register($content['provider']);
+                event(new ActivatedPluginEvent($plugin));
+
+                DB::commit();
+            } catch (Throwable $exception) {
+                rescue(function () {
+                    DB::rollBack();
+                });
+
+                return [
+                    'error'   => true,
+                    'message' => $exception->getMessage(),
+                ];
             }
-
-            $this->settingStore
-                ->set('activated_plugins', json_encode(array_values(array_merge($activatedPlugins, [$plugin]))))
-                ->save();
-
-            if (class_exists($content['namespace'] . 'Plugin')) {
-                call_user_func([$content['namespace'] . 'Plugin', 'activated']);
-            }
-
-            Helper::clearCache();
-
-            event(new ActivatedPluginEvent($plugin));
 
             return [
                 'error'   => false,
@@ -183,13 +195,16 @@ class PluginService
         if (!$this->files->isWritable($pluginPath)) {
             return [
                 'error'   => true,
-                'message' => trans('packages/plugin-management::plugin.folder_is_not_writeable',
-                    ['name' => $pluginPath]),
+                'message' => trans(
+                    'packages/plugin-management::plugin.folder_is_not_writeable',
+                    ['name' => $pluginPath]
+                ),
             ];
         }
 
         if ($this->files->isDirectory(plugin_path($plugin . '/public'))) {
-            $this->files->copyDirectory(plugin_path($plugin . '/public'), $pluginPath . '/' . $plugin);
+            $publishedPath = public_path('vendor/core') . '/' . $this->getPluginNamespace($plugin);
+            $this->files->copyDirectory(plugin_path($plugin . '/public'), $publishedPath);
         }
 
         return [
@@ -215,12 +230,14 @@ class PluginService
 
         $location = plugin_path($plugin);
 
+        $content = [];
+
         if ($this->files->exists($location . '/plugin.json')) {
-            $content = get_file_data($location . '/plugin.json');
+            $content = BaseHelper::getFileData($location . '/plugin.json');
 
             if (!empty($content)) {
                 if (!class_exists($content['provider'])) {
-                    $loader = new ClassLoader;
+                    $loader = new ClassLoader();
                     $loader->setPsr4($content['namespace'], plugin_path($plugin . '/src'));
                     $loader->register(true);
                 }
@@ -234,7 +251,7 @@ class PluginService
         }
 
         $migrations = [];
-        foreach (scan_folder($location . '/database/migrations') as $file) {
+        foreach (BaseHelper::scanFolder($location . '/database/migrations') as $file) {
             $migrations[] = pathinfo($file, PATHINFO_FILENAME);
         }
 
@@ -247,6 +264,12 @@ class PluginService
         }
 
         Helper::removeModuleFiles($plugin, 'plugins');
+
+        $publishedPath = public_path('vendor/core') . '/' . $this->getPluginNamespace($plugin);
+
+        if (File::isDirectory($publishedPath)) {
+            File::deleteDirectory($publishedPath);
+        }
 
         if (class_exists($content['namespace'] . 'Plugin')) {
             call_user_func([$content['namespace'] . 'Plugin', 'removed']);
@@ -273,7 +296,7 @@ class PluginService
             return $validate;
         }
 
-        $content = get_file_data(plugin_path($plugin) . '/plugin.json');
+        $content = BaseHelper::getFileData(plugin_path($plugin) . '/plugin.json');
         if (empty($content)) {
             return [
                 'error'   => true,
@@ -282,7 +305,7 @@ class PluginService
         }
 
         if (!class_exists($content['provider'])) {
-            $loader = new ClassLoader;
+            $loader = new ClassLoader();
             $loader->setPsr4($content['namespace'], plugin_path($plugin . '/src'));
             $loader->register(true);
         }
@@ -292,11 +315,12 @@ class PluginService
             if (class_exists($content['namespace'] . 'Plugin')) {
                 call_user_func([$content['namespace'] . 'Plugin', 'deactivate']);
             }
+
             if (($key = array_search($plugin, $activatedPlugins)) !== false) {
                 unset($activatedPlugins[$key]);
             }
-            $this->settingStore
-                ->set('activated_plugins', json_encode(array_values($activatedPlugins)))
+
+            Setting::set('activated_plugins', json_encode(array_values($activatedPlugins)))
                 ->save();
 
             if (class_exists($content['namespace'] . 'Plugin')) {
@@ -315,5 +339,14 @@ class PluginService
             'error'   => true,
             'message' => trans('packages/plugin-management::plugin.deactivated_already'),
         ];
+    }
+
+    /**
+     * @param string $plugin
+     * @return string
+     */
+    public function getPluginNamespace(string $plugin): string
+    {
+        return $this->app['config']->get('core.base.general.plugin_namespaces.' . $plugin, $plugin);
     }
 }

@@ -43,8 +43,11 @@ class BlogService
         switch ($slug->reference_type) {
             case Post::class:
                 $post = app(PostInterface::class)
-                    ->getFirstBy($condition, ['*'],
-                        ['categories', 'tags', 'slugable', 'categories.slugable', 'tags.slugable']);
+                    ->getFirstBy(
+                        $condition,
+                        ['*'],
+                        ['categories', 'tags', 'slugable', 'categories.slugable', 'tags.slugable']
+                    );
 
                 if (empty($post)) {
                     abort(404);
@@ -55,7 +58,7 @@ class BlogService
                 SeoHelper::setTitle($post->name)
                     ->setDescription($post->description);
 
-                $meta = new SeoOpenGraph;
+                $meta = new SeoOpenGraph();
                 if ($post->image) {
                     $meta->setImage(RvMedia::getImageUrl($post->image));
                 }
@@ -67,15 +70,16 @@ class BlogService
                 SeoHelper::setSeoOpenGraph($meta);
 
                 if (function_exists('admin_bar') && Auth::check() && Auth::user()->hasPermission('posts.edit')) {
-                    admin_bar()->registerLink(trans('plugins/blog::posts.edit_this_post'),
-                        route('posts.edit', $post->id));
+                    admin_bar()->registerLink(
+                        trans('plugins/blog::posts.edit_this_post'),
+                        route('posts.edit', $post->id)
+                    );
                 }
 
                 Theme::breadcrumb()->add(__('Home'), route('public.index'));
 
                 $category = $post->categories->sortByDesc('id')->first();
                 if ($category) {
-
                     if ($category->parents->count()) {
                         foreach ($category->parents as $parentCategory) {
                             Theme::breadcrumb()->add($parentCategory->name, $parentCategory->url);
@@ -85,7 +89,7 @@ class BlogService
                     Theme::breadcrumb()->add($category->name, $category->url);
                 }
 
-                Theme::breadcrumb()->add(SeoHelper::getTitle(), $post->url);
+                Theme::breadcrumb()->add($post->name, $post->url);
 
                 do_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, POST_MODULE_SCREEN_NAME, $post);
 
@@ -106,7 +110,7 @@ class BlogService
                 SeoHelper::setTitle($category->name)
                     ->setDescription($category->description);
 
-                $meta = new SeoOpenGraph;
+                $meta = new SeoOpenGraph();
                 if ($category->image) {
                     $meta->setImage(RvMedia::getImageUrl($category->image));
                 }
@@ -118,8 +122,10 @@ class BlogService
                 SeoHelper::setSeoOpenGraph($meta);
 
                 if (function_exists('admin_bar') && Auth::check() && Auth::user()->hasPermission('categories.edit')) {
-                    admin_bar()->registerLink(trans('plugins/blog::categories.edit_this_category'),
-                        route('categories.edit', $category->id));
+                    admin_bar()->registerLink(
+                        trans('plugins/blog::categories.edit_this_category'),
+                        route('categories.edit', $category->id)
+                    );
                 }
 
                 $allRelatedCategoryIds = $category->getChildrenIds($category, [$category->id]);
@@ -136,7 +142,7 @@ class BlogService
                     }
                 }
 
-                Theme::breadcrumb()->add(SeoHelper::getTitle(), $category->url);
+                Theme::breadcrumb()->add($category->name, $category->url);
 
                 do_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, CATEGORY_MODULE_SCREEN_NAME, $category);
 
@@ -156,7 +162,7 @@ class BlogService
                 SeoHelper::setTitle($tag->name)
                     ->setDescription($tag->description);
 
-                $meta = new SeoOpenGraph;
+                $meta = new SeoOpenGraph();
                 $meta->setDescription($tag->description);
                 $meta->setUrl($tag->url);
                 $meta->setTitle($tag->name);
@@ -170,7 +176,7 @@ class BlogService
 
                 Theme::breadcrumb()
                     ->add(__('Home'), route('public.index'))
-                    ->add(SeoHelper::getTitle(), $tag->url);
+                    ->add($tag->name, $tag->url);
 
                 do_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, TAG_MODULE_SCREEN_NAME, $tag);
 

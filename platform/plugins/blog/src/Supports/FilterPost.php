@@ -6,13 +6,16 @@ use Botble\Base\Enums\BaseStatusEnum;
 
 class FilterPost
 {
-
     /**
      * @param array $request
      * @return array
      */
     public static function setFilters(array $request): array
     {
+        if (isset($request['order'])) {
+            $request['order'] = strtolower($request['order']);
+        }
+
         return [
             'page'               => $request['page'] ?? 1,
             'per_page'           => $request['per_page'] ?? 10,
@@ -23,7 +26,7 @@ class FilterPost
             'include'            => $request['include'] ?? null,
             'after'              => $request['after'] ?? null,
             'before'             => $request['before'] ?? null,
-            'order'              => $request['order'] ?? 'desc',
+            'order'              => isset($request['order']) && in_array($request['order'], ['asc', 'desc']) ? $request['order'] : 'desc',
             'order_by'           => $request['order_by'] ?? 'updated_at',
             'status'             => BaseStatusEnum::PUBLISHED,
             'categories'         => $request['categories'] ?? null,

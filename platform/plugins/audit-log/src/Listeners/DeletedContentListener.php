@@ -9,7 +9,6 @@ use AuditLog;
 
 class DeletedContentListener
 {
-
     /**
      * Handle the event.
      *

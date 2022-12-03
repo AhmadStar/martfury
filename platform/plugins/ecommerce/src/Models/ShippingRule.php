@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ShippingRule extends BaseModel
 {
-
     /**
      * @var string
      */

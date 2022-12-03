@@ -7,5 +7,4 @@ use Botble\Location\Repositories\Interfaces\StateInterface;
 
 class StateCacheDecorator extends CacheAbstractDecorator implements StateInterface
 {
-
 }

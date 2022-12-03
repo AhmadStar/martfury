@@ -14,7 +14,6 @@ use Yajra\DataTables\DataTables;
 
 class SimpleSliderTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

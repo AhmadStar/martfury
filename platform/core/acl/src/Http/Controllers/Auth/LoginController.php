@@ -9,10 +9,12 @@ use Botble\ACL\Repositories\Interfaces\UserInterface;
 use Botble\ACL\Traits\AuthenticatesUsers;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Carbon\Carbon;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
 class LoginController extends BaseController
@@ -56,7 +58,7 @@ class LoginController extends BaseController
     }
 
     /**
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function showLoginForm()
     {
@@ -116,7 +118,7 @@ class LoginController extends BaseController
         }
 
         if ($this->attemptLogin($request)) {
-            app(UserInterface::class)->update(['id' => $user->id], ['last_login' => now()]);
+            app(UserInterface::class)->update(['id' => $user->id], ['last_login' => Carbon::now()]);
             if (!session()->has('url.intended')) {
                 session()->flash('url.intended', url()->current());
             }
@@ -124,7 +126,7 @@ class LoginController extends BaseController
         }
 
         // If the login attempt was unsuccessful we will increment the number of attempts
-        // to login and redirect the user back to the login form. Of course, when this
+        // to log in and redirect the user back to the login form. Of course, when this
         // user surpasses their maximum number of attempts they will get locked out.
         $this->incrementLoginAttempts($request);
 

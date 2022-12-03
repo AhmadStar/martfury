@@ -46,7 +46,7 @@ class Util
      * @param bool $isDirectory
      * @return false|string|string[]
      */
-    public static function normalizePath($path, $isDirectory = false)
+    public static function normalizePath($path, bool $isDirectory = false)
     {
         $path = str_replace('\\', '/', $path);
 

@@ -2,8 +2,6 @@
 
 namespace Botble\Ecommerce\Repositories\Caches;
 
-use Botble\Ecommerce\Repositories\Interfaces\ProductCategoryInterface;
-use Botble\Ecommerce\Repositories\Interfaces\ProductCollectionInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductInterface;
 use Botble\Support\Repositories\Caches\CacheAbstractDecorator;
 
@@ -117,6 +115,14 @@ class ProductCacheDecorator extends CacheAbstractDecorator implements ProductInt
      * {@inheritDoc}
      */
     public function getProductsRecentlyViewed(int $customerId, array $params = [])
+    {
+        return $this->getDataIfExistCache(__FUNCTION__, func_get_args());
+    }
+
+    /**
+     * @return mixed
+     */
+    public function saveProductOptions()
     {
         return $this->getDataIfExistCache(__FUNCTION__, func_get_args());
     }

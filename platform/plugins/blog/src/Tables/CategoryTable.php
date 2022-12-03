@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class CategoryTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

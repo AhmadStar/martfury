@@ -7,5 +7,4 @@ use Botble\Marketplace\Repositories\Interfaces\VendorInfoInterface;
 
 class VendorInfoCacheDecorator extends CacheAbstractDecorator implements VendorInfoInterface
 {
-
 }

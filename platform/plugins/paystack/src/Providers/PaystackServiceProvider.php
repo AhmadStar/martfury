@@ -3,7 +3,7 @@
 namespace Botble\Paystack\Providers;
 
 use Botble\Base\Traits\LoadAndPublishDataTrait;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\ServiceProvider;
 
 class PaystackServiceProvider extends ServiceProvider
@@ -11,7 +11,8 @@ class PaystackServiceProvider extends ServiceProvider
     use LoadAndPublishDataTrait;
 
     /**
-     * @throws FileNotFoundException
+     * @return void
+     * @throws BindingResolutionException
      */
     public function boot()
     {

@@ -100,7 +100,7 @@ class FlashSaleController extends BaseController
                 continue;
             }
 
-            $extra['price'] = (double)$extra['price'];
+            $extra['price'] = (float)$extra['price'];
             $extra['quantity'] = (int)$extra['quantity'];
 
             if ($flashSale->products()->where('id', $productId)->count()) {

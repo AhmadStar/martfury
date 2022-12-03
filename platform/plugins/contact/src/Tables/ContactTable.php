@@ -15,7 +15,6 @@ use Yajra\DataTables\DataTables;
 
 class ContactTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

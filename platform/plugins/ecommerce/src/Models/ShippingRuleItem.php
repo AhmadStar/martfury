@@ -6,7 +6,6 @@ use Botble\Base\Models\BaseModel;
 
 class ShippingRuleItem extends BaseModel
 {
-
     /**
      * @var string
      */

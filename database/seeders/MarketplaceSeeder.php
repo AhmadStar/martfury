@@ -38,12 +38,12 @@ class MarketplaceSeeder extends BaseSeeder
             if ($customer->is_vendor) {
                 $vendors[] = $customer->id;
 
-                $vendorInfo = new VendorInfo;
+                $vendorInfo = new VendorInfo();
                 $vendorInfo->bank_info = [
-                    'name'        => $faker->name,
-                    'number'      => $faker->e164PhoneNumber,
-                    'full_name'   => $faker->name,
-                    'description' => $faker->name,
+                    'name'        => $faker->name(),
+                    'number'      => $faker->e164PhoneNumber(),
+                    'full_name'   => $faker->name(),
+                    'description' => $faker->name(),
                 ];
                 $vendorInfo->customer_id = $customer->id;
 
@@ -66,13 +66,13 @@ class MarketplaceSeeder extends BaseSeeder
         for ($i = 0; $i < count($vendors); $i++) {
             $store = Store::create([
                 'name'        => $storeNames[$i],
-                'email'       => $faker->safeEmail,
-                'phone'       => $faker->e164PhoneNumber,
+                'email'       => $faker->safeEmail(),
+                'phone'       => $faker->e164PhoneNumber(),
                 'logo'        => 'stores/' . ($i + 1) . '.png',
-                'country'     => $faker->countryCode,
-                'state'       => $faker->state,
-                'city'        => $faker->city,
-                'address'     => $faker->streetAddress,
+                'country'     => $faker->countryCode(),
+                'state'       => $faker->state(),
+                'city'        => $faker->city(),
+                'address'     => $faker->streetAddress(),
                 'customer_id' => $vendors[$i],
                 'description' => $faker->text(50),
                 'content'     => $faker->text(150),

@@ -9,7 +9,6 @@ use Language;
 
 class LocalizationRedirectFilter extends LaravelLocalizationMiddlewareBase
 {
-
     /**
      * Handle an incoming request.
      *

@@ -7,17 +7,17 @@ use Botble\Ads\Http\Requests\AdsRequest;
 use Botble\Ads\Models\Ads;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Forms\FormAbstract;
+use Carbon\Carbon;
 
 class AdsForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new Ads)
+            ->setupModel(new Ads())
             ->setValidatorClass(AdsRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [
@@ -75,7 +75,7 @@ class AdsForm extends FormAbstract
                 'attr'          => [
                     'class' => 'form-control datepicker',
                 ],
-                'default_value' => now()->format('m/d/Y'),
+                'default_value' => Carbon::now()->format('m/d/Y'),
             ])
             ->add('image', 'mediaImage', [
                 'label'      => trans('core/base::forms.image'),

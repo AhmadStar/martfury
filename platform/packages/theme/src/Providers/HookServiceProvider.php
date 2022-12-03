@@ -2,12 +2,12 @@
 
 namespace Botble\Theme\Providers;
 
+use BaseHelper;
 use Botble\Dashboard\Supports\DashboardWidgetInstance;
 use Botble\Theme\Supports\Vimeo;
 use Botble\Theme\Supports\Youtube;
 use Html;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
 
@@ -111,8 +111,9 @@ class HookServiceProvider extends ServiceProvider
                         'type'       => 'mediaImage',
                         'label'      => trans('packages/theme::theme.theme_option_favicon'),
                         'attributes' => [
-                            'name'  => 'favicon',
-                            'value' => null,
+                            'name'       => 'favicon',
+                            'value'      => null,
+                            'attributes' => ['allow_thumb' => false],
                         ],
                     ],
                     [
@@ -120,8 +121,9 @@ class HookServiceProvider extends ServiceProvider
                         'type'       => 'mediaImage',
                         'label'      => trans('packages/theme::theme.theme_option_logo'),
                         'attributes' => [
-                            'name'  => 'logo',
-                            'value' => null,
+                            'name'       => 'logo',
+                            'value'      => null,
+                            'attributes' => ['allow_thumb' => false],
                         ],
                     ],
                 ],
@@ -151,11 +153,11 @@ class HookServiceProvider extends ServiceProvider
                 $videoId = Vimeo::getVimeoID($url);
                 if ($videoId) {
                     $iframe = Html::tag('iframe', '', [
-                        'class'           => 'embed-responsive-item',
-                        'height'          => 315,
-                        'width'           => 420,
-                        'allow'           => 'autoplay; fullscreen; picture-in-picture',
-                        'src'             => 'https://player.vimeo.com/video/' . $videoId,
+                        'class'  => 'embed-responsive-item',
+                        'height' => 315,
+                        'width'  => 420,
+                        'allow'  => 'autoplay; fullscreen; picture-in-picture',
+                        'src'    => 'https://player.vimeo.com/video/' . $videoId,
                     ])->toHtml();
                 }
             }
@@ -188,9 +190,9 @@ class HookServiceProvider extends ServiceProvider
      */
     public function addStatsWidgets(array $widgets, Collection $widgetSettings): array
     {
-        $themes = count(scan_folder(theme_path()));
+        $themes = count(BaseHelper::scanFolder(theme_path()));
 
-        return (new DashboardWidgetInstance)
+        return (new DashboardWidgetInstance())
             ->setType('stats')
             ->setPermission('theme.index')
             ->setTitle(trans('packages/theme::theme.theme'))

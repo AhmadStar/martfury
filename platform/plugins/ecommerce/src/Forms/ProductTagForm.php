@@ -9,14 +9,13 @@ use Botble\Ecommerce\Models\ProductTag;
 
 class ProductTagForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new ProductTag)
+            ->setupModel(new ProductTag())
             ->setValidatorClass(ProductTagRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

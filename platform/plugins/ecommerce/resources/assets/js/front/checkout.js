@@ -47,6 +47,8 @@ class MainCheckout {
 
     init() {
         let shippingForm = '#main-checkout-product-info';
+        let customerShippingAddressForm = '.customer-address-payment-form';
+        let customerBillingAddressForm = '.customer-billing-address-form';
 
         let disablePaymentMethodsForm = () => {
             $('.payment-info-loading').show();
@@ -59,6 +61,56 @@ class MainCheckout {
 
             document.dispatchEvent(new CustomEvent('payment-form-reloaded'));
         }
+
+        let reloadAddressForm = url => {
+            const isAddressAvailable = $(customerShippingAddressForm + ' #address_id option:selected').val();
+
+            const addressForm = $(customerShippingAddressForm).clone();
+            const billingAddressForm = $(customerBillingAddressForm).clone();
+
+            const selectedCountry = $(customerShippingAddressForm + ' #address_country option:selected').val();
+            const selectedState = $(customerShippingAddressForm + ' #address_state option:selected').val();
+            const selectedCity = $(customerShippingAddressForm + ' #address_city option:selected').val();
+
+            const billingAddressSelectedCountry = $(customerBillingAddressForm + ' #address_country option:selected').val();
+            const billingAddressSelectedState = $(customerBillingAddressForm + ' #address_state option:selected').val();
+            const billingAddressSelectedCity = $(customerBillingAddressForm + ' #address_city option:selected').val();
+
+            $('.shipping-info-loading').show();
+            $(shippingForm).load(url, () => {
+                if (!isAddressAvailable) {
+                    $(customerShippingAddressForm).replaceWith(addressForm);
+                    if (selectedCountry) {
+                        $(customerShippingAddressForm + ' #address_country').val(selectedCountry);
+                    }
+
+                    if (selectedState) {
+                        $(customerShippingAddressForm + ' #address_state').val(selectedState);
+                    }
+
+                    if (selectedCity) {
+                        $(customerShippingAddressForm + ' #address_city').val(selectedCity);
+                    }
+                }
+
+                $(customerBillingAddressForm).replaceWith(billingAddressForm);
+
+                if (billingAddressSelectedCountry) {
+                    $(customerShippingAddressForm + ' #billing-address-country').val(billingAddressSelectedCountry);
+                }
+
+                if (billingAddressSelectedState) {
+                    $(customerShippingAddressForm + ' #billing-address-state').val(billingAddressSelectedState);
+                }
+
+                if (billingAddressSelectedCity) {
+                    $(customerShippingAddressForm + ' #billing-address-city').val(billingAddressSelectedCity);
+                }
+
+                $('.shipping-info-loading').hide();
+                enablePaymentMethodsForm();
+            });
+        };
 
         let loadShippingFeeAtTheFirstTime = () => {
             let shippingMethod = $(document).find('input[name=shipping_method]:checked').first();
@@ -73,36 +125,10 @@ class MainCheckout {
 
                 $('.mobile-total').text('...');
 
-                const isAddressAvailable = $('.customer-address-payment-form #address_id option:selected').val();
-
-                const addressForm = $('.customer-address-payment-form').clone();
-
-                const selectedCountry = $('.customer-address-payment-form #address_country option:selected').val();
-                const selectedState = $('.customer-address-payment-form #address_state option:selected').val();
-                const selectedCity = $('.customer-address-payment-form #address_city option:selected').val();
-
-                $('.shipping-info-loading').show();
-                $(shippingForm).load(window.location.href
+                reloadAddressForm(window.location.href
                     + '?shipping_method=' + shippingMethod.val()
                     + '&shipping_option=' + shippingMethod.data('option')
-                    + ' ' + shippingForm + ' > *', () => {
-                    if (!isAddressAvailable) {
-                        $('.customer-address-payment-form').replaceWith(addressForm);
-                        if (selectedCountry) {
-                            $('.customer-address-payment-form #address_country').val(selectedCountry);
-                        }
-
-                        if (selectedState) {
-                            $('.customer-address-payment-form #address_state').val(selectedState);
-                        }
-
-                        if (selectedCity) {
-                            $('.customer-address-payment-form #address_city').val(selectedCity);
-                        }
-                    }
-                    $('.shipping-info-loading').hide();
-                    enablePaymentMethodsForm();
-                });
+                    + ' ' + shippingForm + ' > *');
             }
         }
 
@@ -127,9 +153,11 @@ class MainCheckout {
                 shippingMethods.map((i, shm) => {
                     let val = $(shm).filter(':checked').val();
                     let sId = $(shm).data('id');
+
                     if (!storeIds.includes(sId)) {
                         storeIds.push(sId);
                     }
+
                     if (val) {
                         methods['shipping_method'][sId] = val;
                         methods['shipping_option'][sId] = $(shm).data('option');
@@ -150,39 +178,13 @@ class MainCheckout {
 
             disablePaymentMethodsForm();
 
-            const isAddressAvailable = $('.customer-address-payment-form #address_id option:selected').val();
-
-            const addressForm = $('.customer-address-payment-form').clone();
-
-            const selectedCountry = $('.customer-address-payment-form #address_country option:selected').val();
-            const selectedState = $('.customer-address-payment-form #address_state option:selected').val();
-            const selectedCity = $('.customer-address-payment-form #address_city option:selected').val();
-
-            $('.shipping-info-loading').show();
-            $(shippingForm).load(window.location.href + '?' + $.param(methods) + ' ' + shippingForm + ' > *', () => {
-                if (!isAddressAvailable) {
-                    $('.customer-address-payment-form').replaceWith(addressForm);
-                    if (selectedCountry) {
-                        $('.customer-address-payment-form #address_country').val(selectedCountry);
-                    }
-
-                    if (selectedState) {
-                        $('.customer-address-payment-form #address_state').val(selectedState);
-                    }
-
-                    if (selectedCity) {
-                        $('.customer-address-payment-form #address_city').val(selectedCity);
-                    }
-                }
-                $('.shipping-info-loading').hide();
-                enablePaymentMethodsForm();
-            });
+            reloadAddressForm(window.location.href + '?' + $.param(methods) + ' ' + shippingForm + ' > *');
         }
 
         loadShippingFeeAtTheSecondTime();
 
         $(document).on('change', 'input.shipping_method_input', () => {
-            loadShippingFeeAtTheSecondTime()
+            loadShippingFeeAtTheSecondTime();
         });
 
         $(document).on('change', 'input[name=shipping_method]', event => {
@@ -194,37 +196,10 @@ class MainCheckout {
 
             $('.mobile-total').text('...');
 
-            const isAddressAvailable = $('.customer-address-payment-form #address_id option:selected').val();
-
-            const addressForm = $('.customer-address-payment-form').clone();
-
-            const selectedCountry = $('.customer-address-payment-form #address_country option:selected').val();
-            const selectedState = $('.customer-address-payment-form #address_state option:selected').val();
-            const selectedCity = $('.customer-address-payment-form #address_city option:selected').val();
-
-            $('.shipping-info-loading').show();
-            $(shippingForm).load(window.location.href
+            reloadAddressForm(window.location.href
                 + '?shipping_method=' + $this.val()
                 + '&shipping_option=' + $this.data('option')
-                + ' ' + shippingForm + ' > *', () => {
-                if (!isAddressAvailable) {
-                    $('.customer-address-payment-form').replaceWith(addressForm);
-                    if (selectedCountry) {
-                        $('.customer-address-payment-form #address_country').val(selectedCountry);
-                    }
-
-                    if (selectedState) {
-                        $('.customer-address-payment-form #address_state').val(selectedState);
-                    }
-
-                    if (selectedCity) {
-                        $('.customer-address-payment-form #address_city').val(selectedCity);
-                    }
-                }
-
-                $('.shipping-info-loading').hide();
-                enablePaymentMethodsForm();
-            });
+                + ' ' + shippingForm + ' > *');
         });
 
         let validatedFormFields = () => {
@@ -243,7 +218,7 @@ class MainCheckout {
             return validated;
         }
 
-        $(document).on('change', '.customer-address-payment-form .address-control-item', event => {
+        $(document).on('change', customerShippingAddressForm + ' .address-control-item', event => {
             let _self = $(event.currentTarget);
             _self.closest('.form-group').find('.text-danger').remove();
             if (validatedFormFields()) {

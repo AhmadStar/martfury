@@ -14,7 +14,7 @@ if (!function_exists('get_product_by_id')) {
      * @param int $productId
      * @return mixed
      */
-    function get_product_by_id($productId)
+    function get_product_by_id(int $productId)
     {
         return app(ProductInterface::class)->findById($productId);
     }
@@ -31,6 +31,9 @@ if (!function_exists('get_products')) {
             'condition' => [
                 'ec_products.status'       => BaseStatusEnum::PUBLISHED,
                 'ec_products.is_variation' => 0,
+                function ($query) {
+                    return $query->notOutOfStock();
+                },
             ],
             'order_by'  => [
                 'ec_products.order'      => 'ASC',
@@ -64,6 +67,9 @@ if (!function_exists('get_products_on_sale')) {
             'condition' => [
                 'ec_products.status'       => BaseStatusEnum::PUBLISHED,
                 'ec_products.is_variation' => 0,
+                function ($query) {
+                    return $query->notOutOfStock();
+                },
             ],
             'order_by'  => [
                 'ec_products.order'      => 'ASC',
@@ -97,6 +103,9 @@ if (!function_exists('get_featured_products')) {
                 'ec_products.is_featured'  => 1,
                 'ec_products.is_variation' => 0,
                 'ec_products.status'       => BaseStatusEnum::PUBLISHED,
+                function ($query) {
+                    return $query->notOutOfStock();
+                },
             ],
             'take'      => null,
             'order_by'  => [
@@ -118,15 +127,18 @@ if (!function_exists('get_top_rated_products')) {
      * @param array $withCount
      * @return mixed
      */
-    function get_top_rated_products($limit = 10, array $with = [], array $withCount = [])
+    function get_top_rated_products(int $limit = 10, array $with = [], array $withCount = [])
     {
         $topProductIds = get_top_rated_product_ids($limit);
 
-        $products = get_products([
+        return get_products([
             'condition' => [
                 'ec_products.status'       => BaseStatusEnum::PUBLISHED,
                 'ec_products.is_variation' => 0,
                 ['ec_products.id', 'IN', $topProductIds],
+                function ($query) {
+                    return $query->notOutOfStock();
+                },
             ],
             'order_by'  => [
                 'reviews_avg_star'       => 'DESC',
@@ -145,8 +157,6 @@ if (!function_exists('get_top_rated_products')) {
             'withCount' => $withCount,
             'withAvg'   => ['reviews', 'star'],
         ]);
-
-        return $products;
     }
 }
 
@@ -155,7 +165,7 @@ if (!function_exists('get_top_rated_product_ids')) {
      * @param int $limit
      * @return mixed
      */
-    function get_top_rated_product_ids($limit = 10)
+    function get_top_rated_product_ids(int $limit = 10)
     {
         return app(ReviewInterface::class)->getModel()
             ->where([
@@ -181,6 +191,9 @@ if (!function_exists('get_trending_products')) {
             'condition' => [
                 'ec_products.status'       => BaseStatusEnum::PUBLISHED,
                 'ec_products.is_variation' => 0,
+                function ($query) {
+                    return $query->notOutOfStock();
+                },
             ],
             'take'      => 10,
             'order_by'  => [
@@ -223,13 +236,16 @@ if (!function_exists('get_featured_product_categories')) {
 
 if (!function_exists('get_product_collections')) {
     /**
+     * @param array $condition
+     * @param array $with
+     * @param array $select
      * @return Collection
      */
     function get_product_collections(
         array $condition = ['status' => BaseStatusEnum::PUBLISHED],
         array $with = [],
         array $select = ['*']
-    ) {
+    ): Collection {
         return app(ProductCollectionInterface::class)->allBy($condition, $with, $select);
     }
 }
@@ -239,7 +255,7 @@ if (!function_exists('get_products_by_collections')) {
      * @param array $params
      * @return Collection
      */
-    function get_products_by_collections(array $params = [])
+    function get_products_by_collections(array $params = []): Collection
     {
         return app(ProductInterface::class)->getProductsByCollections($params);
     }
@@ -248,9 +264,9 @@ if (!function_exists('get_products_by_collections')) {
 if (!function_exists('get_default_product_variation')) {
     /**
      * @param int $configurableId
-     * @return Product
+     * @return Product|Collection
      */
-    function get_default_product_variation($configurableId)
+    function get_default_product_variation(int $configurableId)
     {
         return app(ProductInterface::class)
             ->getProductVariations($configurableId, [
@@ -283,7 +299,7 @@ if (!function_exists('the_product_price')) {
      * @param array $htmlWrap
      * @return string
      */
-    function the_product_price($product, array $htmlWrap = [])
+    function the_product_price(Product $product, array $htmlWrap = []): string
     {
         $htmlWrapParams = array_merge([
             'open_wrap_price'  => '<del>',
@@ -291,10 +307,12 @@ if (!function_exists('the_product_price')) {
             'open_wrap_sale'   => '<ins>',
             'close_wrap_sale'  => '</ins>',
         ], $htmlWrap);
+
         if ($product->front_sale_price !== $product->price) {
             return $htmlWrapParams['open_wrap_price'] . format_price($product->price) . $htmlWrapParams['close_wrap_price'] .
                 $htmlWrapParams['open_wrap_sale'] . format_price($product->front_sale_price) . $htmlWrapParams['close_wrap_sale'];
         }
+
         return $htmlWrapParams['open_wrap_sale'] . $product->price . $htmlWrapParams['close_wrap_sale'];
     }
 }
@@ -304,14 +322,17 @@ if (!function_exists('get_related_products')) {
      * Get related products of $product
      * @param Product $product
      * @param int $limit
-     * @return array
+     * @return array|Collection
      */
-    function get_related_products($product, $limit = 4)
+    function get_related_products(Product $product, int $limit = 4)
     {
         $params = [
             'condition' => [
                 'ec_products.status'       => BaseStatusEnum::PUBLISHED,
                 'ec_products.is_variation' => 0,
+                function ($query) {
+                    return $query->notOutOfStock();
+                },
             ],
             'order_by'  => [
                 'ec_products.order'      => 'ASC',
@@ -348,9 +369,9 @@ if (!function_exists('get_cross_sale_products')) {
      * @param Product $product
      * @param int $limit
      * @param array $with
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return Collection|\Illuminate\Database\Eloquent\Collection
      */
-    function get_cross_sale_products($product, int $limit = 4, array $with = [])
+    function get_cross_sale_products(Product $product, int $limit = 4, array $with = [])
     {
         $with = array_merge([
             'slugable',
@@ -363,6 +384,7 @@ if (!function_exists('get_cross_sale_products')) {
             ->crossSales()
             ->limit($limit)
             ->with($with)
+            ->notOutOfStock()
             ->withCount(EcommerceHelper::withReviewsCount())
             ->get();
     }
@@ -373,9 +395,9 @@ if (!function_exists('get_up_sale_products')) {
      * @param Product $product
      * @param int $limit
      * @param array $with
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return \Illuminate\Database\Eloquent\Collection|Collection
      */
-    function get_up_sale_products($product, int $limit = 4, array $with = [])
+    function get_up_sale_products(Product $product, int $limit = 4, array $with = [])
     {
         $with = array_merge([
             'slugable',
@@ -388,6 +410,7 @@ if (!function_exists('get_up_sale_products')) {
             ->upSales()
             ->limit($limit)
             ->with($with)
+            ->notOutOfStock()
             ->withCount(EcommerceHelper::withReviewsCount())
             ->get();
     }
@@ -398,7 +421,7 @@ if (!function_exists('get_cart_cross_sale_products')) {
      * @param array $productIds
      * @param int $limit
      * @param array $with
-     * @return \Illuminate\Database\Eloquent\Collection
+     * @return \Illuminate\Database\Eloquent\Collection|Collection
      */
     function get_cart_cross_sale_products(array $productIds, int $limit = 4, array $with = [])
     {
@@ -412,6 +435,9 @@ if (!function_exists('get_cart_cross_sale_products')) {
                 'ec_products.status'       => BaseStatusEnum::PUBLISHED,
                 'ec_products.is_variation' => 0,
                 ['ec_products.id', 'IN', $crossSaleIds],
+                function ($query) {
+                    return $query->notOutOfStock();
+                },
             ],
             'order_by'  => [
                 'ec_products.order'      => 'ASC',
@@ -442,14 +468,15 @@ if (!function_exists('get_product_attributes_with_set')) {
      * @param int $setId
      * @return array
      */
-    function get_product_attributes_with_set($product, int $setId)
+    function get_product_attributes_with_set(Product $product, int $setId): array
     {
         $productAttributes = app(ProductInterface::class)->getRelatedProductAttributes($product);
+
         $attributes = [];
 
         foreach ($productAttributes as $attribute) {
             if ($attribute->attribute_set_id === $setId) {
-                array_push($attributes, $attribute);
+                $attributes[] = $attribute;
             }
         }
 
@@ -459,6 +486,14 @@ if (!function_exists('get_product_attributes_with_set')) {
 
 if (!function_exists('handle_next_attributes_in_product')) {
     /**
+     * @param $productAttributes
+     * @param $productVariationsInfo
+     * @param $setId
+     * @param $selectedAttributes
+     * @param $key
+     * @param $variationNextIds
+     * @param null $variationInfo
+     * @param array $unavailableAttributeIds
      * @return array
      */
     function handle_next_attributes_in_product(
@@ -469,8 +504,8 @@ if (!function_exists('handle_next_attributes_in_product')) {
         $key,
         $variationNextIds,
         $variationInfo = null,
-        $unavailableAttributeIds = []
-    ) {
+        array $unavailableAttributeIds = []
+    ): array {
         foreach ($productAttributes as $attribute) {
             if ($variationInfo != null && !$variationInfo->where('id', $attribute->id)->count()) {
                 $unavailableAttributeIds[] = $attribute->id;

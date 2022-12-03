@@ -8,7 +8,6 @@ use EcommerceHelper;
 use Botble\Marketplace\Repositories\Interfaces\RevenueInterface;
 use Botble\Marketplace\Tables\RevenueTable;
 use Carbon\CarbonPeriod;
-use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -60,7 +59,9 @@ class RevenueController
             ->selectRaw(
                 'SUM(CASE WHEN type IS NULL OR type = ? THEN amount WHEN type = ? THEN amount * -1 ELSE 0 END) as amount,
                 DATE(created_at) as date,
-                currency', [RevenueTypeEnum::ADD_AMOUNT, RevenueTypeEnum::SUBTRACT_AMOUNT])
+                currency',
+                [RevenueTypeEnum::ADD_AMOUNT, RevenueTypeEnum::SUBTRACT_AMOUNT]
+            )
             ->where('customer_id', $customerId)
             ->whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate)
@@ -94,8 +95,10 @@ class RevenueController
                 $currency = $first->currencyRelation;
             }
 
-            $amount = $currency && $currency->id ? format_price($data['data']->sum(),
-                $currency) : human_price_text($data['data']->sum(), null, $key);
+            $amount = $currency && $currency->id ? format_price(
+                $data['data']->sum(),
+                $currency
+            ) : human_price_text($data['data']->sum(), null, $key);
             $earningSales[] = [
                 'text'  => __('Items Earning Sales: :amount', compact('amount')),
                 'color' => Arr::get($colors, $earningSales->count(), Arr::first($colors)),

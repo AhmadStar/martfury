@@ -9,15 +9,13 @@ use Botble\Ecommerce\Models\Tax;
 
 class TaxForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
-
         $this
-            ->setupModel(new Tax)
+            ->setupModel(new Tax())
             ->setValidatorClass(TaxRequest::class)
             ->withCustomFields()
             ->add('title', 'text', [

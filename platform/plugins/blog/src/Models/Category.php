@@ -82,7 +82,7 @@ class Category extends BaseModel
 
         $parent = $this->parent;
 
-        while($parent->id) {
+        while ($parent->id) {
             $parents->push($parent);
             $parent = $parent->parent;
         }

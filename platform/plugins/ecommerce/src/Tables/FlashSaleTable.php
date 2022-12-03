@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class FlashSaleTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

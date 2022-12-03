@@ -10,9 +10,9 @@ trait ViewExpressionTrait
      * Convert a given html to HtmlString object that was introduced in Laravel 5.1.
      *
      * @param string $html
-     * @return HtmlString|string
+     * @return HtmlString
      */
-    protected function convertToViewExpression($html)
+    protected function convertToViewExpression(string $html): HtmlString
     {
         return new HtmlString($html);
     }

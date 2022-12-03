@@ -24,11 +24,11 @@ class FaqServiceProvider extends ServiceProvider
     public function register()
     {
         $this->app->bind(FaqCategoryInterface::class, function () {
-            return new FaqCategoryCacheDecorator(new FaqCategoryRepository(new FaqCategory));
+            return new FaqCategoryCacheDecorator(new FaqCategoryRepository(new FaqCategory()));
         });
 
         $this->app->bind(FaqInterface::class, function () {
-            return new FaqCacheDecorator(new FaqRepository(new Faq));
+            return new FaqCacheDecorator(new FaqRepository(new Faq()));
         });
     }
 

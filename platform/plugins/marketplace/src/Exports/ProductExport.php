@@ -34,7 +34,6 @@ class ProductExport extends TableExportHandler
             ->setWidth(40);
 
         for ($index = 2; $index <= $totalRows; $index++) {
-
             $this->drawingImage($event, 'B', $index);
 
             $status = $event->sheet->getDelegate()

@@ -7,7 +7,6 @@ use Botble\Chart\Supports\ChartTypes;
 
 class BarChart extends Chart
 {
-
     /**
      * @var float
      */

@@ -34,7 +34,7 @@ class UserForm extends FormAbstract
         $defaultRole = $this->roleRepository->getFirstBy(['is_default' => 1]);
 
         $this
-            ->setupModel(new User)
+            ->setupModel(new User())
             ->setValidatorClass(CreateUserRequest::class)
             ->withCustomFields()
             ->add('rowOpen1', 'html', [

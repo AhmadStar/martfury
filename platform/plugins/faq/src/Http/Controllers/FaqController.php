@@ -8,6 +8,7 @@ use Botble\Faq\Http\Requests\FaqRequest;
 use Botble\Faq\Repositories\Interfaces\FaqInterface;
 use Botble\Base\Http\Controllers\BaseController;
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Botble\Faq\Tables\FaqTable;
 use Botble\Base\Events\CreatedContentEvent;
@@ -16,6 +17,8 @@ use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Faq\Forms\FaqForm;
 use Botble\Base\Forms\FormBuilder;
+use Illuminate\Contracts\View\View;
+use Throwable;
 
 class FaqController extends BaseController
 {
@@ -37,12 +40,11 @@ class FaqController extends BaseController
 
     /**
      * @param FaqTable $table
-     * @return \Illuminate\Http\JsonResponse|\Illuminate\View\View
-     * @throws \Throwable
+     * @return JsonResponse|View
+     * @throws Throwable
      */
     public function index(FaqTable $table)
     {
-
         page_title()->setTitle(trans('plugins/faq::faq.name'));
 
         return $table->renderTable();

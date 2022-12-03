@@ -59,8 +59,12 @@ class ProductVariation extends BaseModel
      */
     public function productAttributes(): BelongsToMany
     {
-        return $this->belongsToMany(ProductAttribute::class, 'ec_product_variation_items', 'variation_id',
-            'attribute_id');
+        return $this->belongsToMany(
+            ProductAttribute::class,
+            'ec_product_variation_items',
+            'variation_id',
+            'attribute_id'
+        );
     }
 
     protected static function boot()

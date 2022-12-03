@@ -5,7 +5,7 @@ namespace Botble\Setting\Supports;
 use Botble\Base\Supports\Helper;
 use Botble\Setting\Models\Setting;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Arr;
@@ -82,7 +82,7 @@ class DatabaseSettingStore extends SettingStore
 
         if (config('core.setting.general.cache.enabled')) {
             try {
-                $jsonSettingStore = new JsonSettingStore(new Filesystem);
+                $jsonSettingStore = new JsonSettingStore(new Filesystem());
                 $jsonSettingStore->write($data);
             } catch (Exception $exception) {
                 info($exception->getMessage());
@@ -127,7 +127,7 @@ class DatabaseSettingStore extends SettingStore
         $isSettingCacheEnabled = config('core.setting.general.cache.enabled');
 
         if ($isSettingCacheEnabled) {
-            $jsonSettingStore = new JsonSettingStore(new Filesystem);
+            $jsonSettingStore = new JsonSettingStore(new Filesystem());
             if (File::exists($jsonSettingStore->getPath())) {
                 $data = $jsonSettingStore->read();
                 if (!empty($data)) {
@@ -140,7 +140,7 @@ class DatabaseSettingStore extends SettingStore
 
         if ($isSettingCacheEnabled) {
             if (!isset($jsonSettingStore)) {
-                $jsonSettingStore = new JsonSettingStore(new Filesystem);
+                $jsonSettingStore = new JsonSettingStore(new Filesystem());
             }
 
             $jsonSettingStore->write($data);

@@ -16,7 +16,6 @@ use SlugHelper;
 
 class PostController extends Controller
 {
-
     /**
      * @var PostInterface
      */

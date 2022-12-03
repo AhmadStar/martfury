@@ -3,7 +3,6 @@
 Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'shipments', 'as' => 'ecommerce.shipments.'], function () {
-
             Route::match(['GET', 'POST'], '/', [
                 'as'   => 'index',
                 'uses' => 'ShipmentController@index',

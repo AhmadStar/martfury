@@ -5,27 +5,28 @@
         <script>
             "use strict";
             $('#' + '{{ Arr::get($selectAttributes, 'id') }}').select2({
-                minimumInputLength: 2,
+                minimumInputLength: 1,
                 ajax: {
                     url: '{{ Arr::get($selectAttributes, 'data-url') }}',
                     quietMillis: 500,
-                    data: function (params) {
+                    data: params => {
                         return {
                             q: params.term,
                         };
                     },
-                    processResults: function (data) {
-                        let results = data.data.map((item) => {
+                    processResults: data => {
+                        let results = data.data.map(item => {
                             return {
                                 id: item['id'],
                                 text: item['name'],
                             };
                         });
+
                         return {
                             results: results
                         };
                     }
-                }
+                },
             });
         </script>
     @endpush

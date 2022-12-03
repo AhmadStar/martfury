@@ -6,6 +6,7 @@
             activate-license-url="{{ route('settings.license.activate') }}"
             deactivate-license-url="{{ route('settings.license.deactivate') }}"
             reset-license-url="{{ route('settings.license.reset') }}"
+            manage-license="{{ auth()->user()->hasPermission('core.manage.license') ? 'yes' : 'no' }}"
         ></license-component>
     </div>
     {!! Form::open(['route' => ['settings.edit']]) !!}
@@ -116,7 +117,7 @@
                                    for="admin-logo">{{ trans('core/setting::setting.general.admin_logo') }}
                             </label>
                             <div class="admin-logo-image-setting">
-                                {!! Form::mediaImage('admin_logo', setting('admin_logo'), ['allow_thumb' => false]) !!}
+                                {!! Form::mediaImage('admin_logo', setting('admin_logo'), ['allow_thumb' => false, 'default_image' => url(config('core.base.general.logo'))]) !!}
                             </div>
                         </div>
                         <div class="form-group mb-3">
@@ -124,7 +125,7 @@
                                    for="admin-favicon">{{ trans('core/setting::setting.general.admin_favicon') }}
                             </label>
                             <div class="admin-favicon-image-setting">
-                                {!! Form::mediaImage('admin_favicon', setting('admin_favicon'), ['allow_thumb' => false]) !!}
+                                {!! Form::mediaImage('admin_favicon', setting('admin_favicon'), ['allow_thumb' => false, 'default_image' => url(config('core.base.general.favicon'))]) !!}
                             </div>
                         </div>
 
@@ -221,20 +222,22 @@
                                    for="enable_cache">{{ trans('core/setting::setting.general.enable_cache') }}
                             </label>
                             <label class="me-2">
-                                <input type="radio" name="enable_cache" value="1" @if (setting('enable_cache')) checked @endif>
+                                <input type="radio" name="enable_cache" value="1" @if (setting('enable_cache')) checked @endif class="setting-selection-option" data-target="#cache-settings">
                                 {{ trans('core/setting::setting.general.yes') }}
                             </label>
                             <label>
-                                <input type="radio" name="enable_cache" value="0" @if (!setting('enable_cache')) checked @endif>
+                                <input type="radio" name="enable_cache" value="0" @if (!setting('enable_cache')) checked @endif class="setting-selection-option" data-target="#cache-settings">
                                 {{ trans('core/setting::setting.general.no') }}
                             </label>
                         </div>
 
-                        <div class="form-group mb-3">
-                            <label class="text-title-field"
-                                   for="cache_time">{{ trans('core/setting::setting.general.cache_time') }}</label>
-                            <input type="number" class="next-input" name="cache_time" id="cache_time"
-                                   value="{{ setting('cache_time', 10) }}">
+                        <div id="cache-settings" class="mb-4 border rounded-top rounded-bottom p-3 bg-light @if (!setting('enable_cache')) d-none @endif">
+                            <div class="form-group mb-3">
+                                <label class="text-title-field"
+                                       for="cache_time">{{ trans('core/setting::setting.general.cache_time') }}</label>
+                                <input type="number" class="next-input" name="cache_time" id="cache_time"
+                                       value="{{ setting('cache_time', 10) }}">
+                            </div>
                         </div>
 
                         <div class="form-group mb-3">

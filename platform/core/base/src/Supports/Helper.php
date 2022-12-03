@@ -3,14 +3,14 @@
 namespace Botble\Base\Supports;
 
 use Artisan;
-use Cache;
 use Eloquent;
 use Exception;
-use File;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Request;
 
@@ -81,7 +81,7 @@ class Helper
             public_path('vendor/core/' . $type . '/' . $module),
             resource_path('assets/' . $type . '/' . $module),
             resource_path('views/vendor/' . $type . '/' . $module),
-            resource_path('lang/vendor/' . $type . '/' . $module),
+            lang_path('vendor/' . $type . '/' . $module),
             config_path($type . '/' . $module),
         ];
 
@@ -167,7 +167,7 @@ class Helper
             return false;
         }
 
-        $coreApi = new Core;
+        $coreApi = new Core();
 
         $result = $coreApi->verifyLicense(true);
 
@@ -274,7 +274,7 @@ class Helper
     }
 
     /**
-     * @param int $value
+     * @param int|float $value
      * @return int|float
      */
     public static function convertHrToBytes($value)

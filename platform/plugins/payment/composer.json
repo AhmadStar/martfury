@@ -3,8 +3,6 @@
     "description": "Payment plugin",
     "type": "package",
     "require": {
-        "doctrine/dbal": "^2.6 || ^3",
-        "laravel/cashier": "^13.0",
-        "paypal/paypal-checkout-sdk": "^1.0"
+        "doctrine/dbal": "^3.1"
     }
 }

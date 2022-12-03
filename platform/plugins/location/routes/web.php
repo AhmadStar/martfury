@@ -1,7 +1,6 @@
 <?php
 
 Route::group(['namespace' => 'Botble\Location\Http\Controllers', 'middleware' => ['web', 'core']], function () {
-
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'countries', 'as' => 'country.'], function () {
             Route::resource('', 'CountryController')->parameters(['' => 'country']);
@@ -50,8 +49,8 @@ Route::group(['namespace' => 'Botble\Location\Http\Controllers', 'middleware' =>
 
         Route::group(['prefix' => 'locations/bulk-import', 'as' => 'location.bulk-import.'], function () {
             Route::get('/', [
-                'as'         => 'index',
-                'uses'       => 'BulkImportController@index',
+                'as'   => 'index',
+                'uses' => 'BulkImportController@index',
             ]);
 
             Route::post('/', [
@@ -66,10 +65,29 @@ Route::group(['namespace' => 'Botble\Location\Http\Controllers', 'middleware' =>
                 'permission' => 'location.bulk-import.index',
             ]);
 
+            Route::get('ajax/available-remote-locations', [
+                'as'         => 'available-remote-locations',
+                'uses'       => 'BulkImportController@ajaxGetAvailableRemoteLocations',
+                'permission' => 'location.bulk-import.index',
+            ]);
+
             Route::post('/import-location-data/{country}', [
                 'as'         => 'import-location-data',
                 'uses'       => 'BulkImportController@importLocationData',
                 'permission' => 'location.bulk-import.index',
+            ]);
+        });
+
+        Route::group(['prefix' => 'locations/export', 'as' => 'location.export.'], function () {
+            Route::get('/', [
+                'as'   => 'index',
+                'uses' => 'ExportController@index',
+            ]);
+
+            Route::post('/', [
+                'as'         => 'process',
+                'uses'       => 'ExportController@export',
+                'permission' => 'location.export.index',
             ]);
         });
     });
@@ -78,5 +96,4 @@ Route::group(['namespace' => 'Botble\Location\Http\Controllers', 'middleware' =>
         ->name('ajax.states-by-country');
     Route::get('ajax/cities-by-state', 'CityController@ajaxGetCities')
         ->name('ajax.cities-by-state');
-
 });

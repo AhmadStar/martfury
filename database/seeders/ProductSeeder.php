@@ -5,19 +5,24 @@ namespace Database\Seeders;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Models\MetaBox as MetaBoxModel;
 use Botble\Base\Supports\BaseSeeder;
+use Botble\Ecommerce\Enums\ProductTypeEnum;
 use Botble\Ecommerce\Models\Order;
 use Botble\Ecommerce\Models\OrderAddress;
 use Botble\Ecommerce\Models\OrderHistory;
 use Botble\Ecommerce\Models\OrderProduct;
 use Botble\Ecommerce\Models\Product;
+use Botble\Ecommerce\Models\ProductFile;
 use Botble\Ecommerce\Models\ProductVariation;
 use Botble\Ecommerce\Models\ProductVariationItem;
 use Botble\Ecommerce\Models\Shipment;
 use Botble\Ecommerce\Models\ShipmentHistory;
 use Botble\Ecommerce\Models\Wishlist;
+use Botble\Ecommerce\Services\Products\StoreProductService;
+use Botble\Payment\Models\Payment;
 use Botble\Slug\Models\Slug;
 use Faker\Factory;
 use File;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -167,7 +172,10 @@ class ProductSeeder extends BaseSeeder
         OrderHistory::truncate();
         Shipment::truncate();
         ShipmentHistory::truncate();
+        Payment::truncate();
+
         MetaBoxModel::where('reference_type', Product::class)->delete();
+        ProductFile::truncate();
 
         foreach ($products as $key => $item) {
             $item['description'] = '<ul><li> Unrestrained and portable active stereo speaker</li>
@@ -213,6 +221,13 @@ class ProductSeeder extends BaseSeeder
             $item['weight'] = $faker->numberBetween(500, 900);
             $item['with_storehouse_management'] = true;
 
+            // Support Digital Product
+            $productName = $item['name'];
+            if ($key % 4 == 0) {
+                $item['product_type'] = ProductTypeEnum::DIGITAL;
+                $item['name'] .= ' (' . ProductTypeEnum::DIGITAL()->label() . ')';
+            }
+
             $images = [
                 'products/' . ($key + 1) . '.jpg',
             ];
@@ -249,13 +264,18 @@ class ProductSeeder extends BaseSeeder
             Slug::create([
                 'reference_type' => Product::class,
                 'reference_id'   => $product->id,
-                'key'            => Str::slug($product->name),
+                'key'            => Str::slug($productName),
                 'prefix'         => SlugHelper::getPrefix(Product::class),
             ]);
 
-            MetaBox::saveMetaBoxData($product, 'faq_schema_config',
-                json_decode('[[{"key":"question","value":"What Shipping Methods Are Available?"},{"key":"answer","value":"Ex Portland Pitchfork irure mustache. Eutra fap before they sold out literally. Aliquip ugh bicycle rights actually mlkshk, seitan squid craft beer tempor."}],[{"key":"question","value":"Do You Ship Internationally?"},{"key":"answer","value":"Hoodie tote bag mixtape tofu. Typewriter jean shorts wolf quinoa, messenger bag organic freegan cray."}],[{"key":"question","value":"How Long Will It Take To Get My Package?"},{"key":"answer","value":"Swag slow-carb quinoa VHS typewriter pork belly brunch, paleo single-origin coffee Wes Anderson. Flexitarian Pitchfork forage, literally paleo fap pour-over. Wes Anderson Pinterest YOLO fanny pack meggings, deep v XOXO chambray sustainable slow-carb raw denim church-key fap chillwave Etsy. +1 typewriter kitsch, American Apparel tofu Banksy Vice."}],[{"key":"question","value":"What Payment Methods Are Accepted?"},{"key":"answer","value":"Fashion axe DIY jean shorts, swag kale chips meh polaroid kogi butcher Wes Anderson chambray next level semiotics gentrify yr. Voluptate photo booth fugiat Vice. Austin sed Williamsburg, ea labore raw denim voluptate cred proident mixtape excepteur mustache. Twee chia photo booth readymade food truck, hoodie roof party swag keytar PBR DIY."}],[{"key":"question","value":"Is Buying On-Line Safe?"},{"key":"answer","value":"Art party authentic freegan semiotics jean shorts chia cred. Neutra Austin roof party Brooklyn, synth Thundercats swag 8-bit photo booth. Plaid letterpress leggings craft beer meh ethical Pinterest."}]]',
-                    true));
+            MetaBox::saveMetaBoxData(
+                $product,
+                'faq_schema_config',
+                json_decode(
+                    '[[{"key":"question","value":"What Shipping Methods Are Available?"},{"key":"answer","value":"Ex Portland Pitchfork irure mustache. Eutra fap before they sold out literally. Aliquip ugh bicycle rights actually mlkshk, seitan squid craft beer tempor."}],[{"key":"question","value":"Do You Ship Internationally?"},{"key":"answer","value":"Hoodie tote bag mixtape tofu. Typewriter jean shorts wolf quinoa, messenger bag organic freegan cray."}],[{"key":"question","value":"How Long Will It Take To Get My Package?"},{"key":"answer","value":"Swag slow-carb quinoa VHS typewriter pork belly brunch, paleo single-origin coffee Wes Anderson. Flexitarian Pitchfork forage, literally paleo fap pour-over. Wes Anderson Pinterest YOLO fanny pack meggings, deep v XOXO chambray sustainable slow-carb raw denim church-key fap chillwave Etsy. +1 typewriter kitsch, American Apparel tofu Banksy Vice."}],[{"key":"question","value":"What Payment Methods Are Accepted?"},{"key":"answer","value":"Fashion axe DIY jean shorts, swag kale chips meh polaroid kogi butcher Wes Anderson chambray next level semiotics gentrify yr. Voluptate photo booth fugiat Vice. Austin sed Williamsburg, ea labore raw denim voluptate cred proident mixtape excepteur mustache. Twee chia photo booth readymade food truck, hoodie roof party swag keytar PBR DIY."}],[{"key":"question","value":"Is Buying On-Line Safe?"},{"key":"answer","value":"Art party authentic freegan semiotics jean shorts chia cred. Neutra Austin roof party Brooklyn, synth Thundercats swag 8-bit photo booth. Plaid letterpress leggings craft beer meh ethical Pinterest."}]]',
+                    true
+                )
+            );
         }
 
         foreach ($products as $key => $item) {
@@ -273,7 +293,6 @@ class ProductSeeder extends BaseSeeder
             ]);
 
             for ($j = 0; $j < $faker->numberBetween(1, 5); $j++) {
-
                 $variation = Product::create([
                     'name'                       => $product->name,
                     'status'                     => BaseStatusEnum::PUBLISHED,
@@ -284,12 +303,15 @@ class ProductSeeder extends BaseSeeder
                     'wide'                       => $product->wide,
                     'length'                     => $product->length,
                     'price'                      => $product->price,
-                    'sale_price'                 => $product->id % 4 == 0 ? ($product->price - $product->price * $faker->numberBetween(10,
-                            30) / 100) : null,
+                    'sale_price'                 => $product->id % 4 == 0 ? ($product->price - $product->price * $faker->numberBetween(
+                        10,
+                        30
+                    ) / 100) : null,
                     'brand_id'                   => $product->brand_id,
                     'with_storehouse_management' => $product->with_storehouse_management,
                     'is_variation'               => true,
-                    'images'                     => json_encode([isset($product->images[$j]) ? $product->images[$j] : Arr::first($product->images)]),
+                    'images'                     => json_encode([$product->images[$j] ?? Arr::first($product->images)]),
+                    'product_type'               => $product->product_type,
                 ]);
 
                 $productVariation = ProductVariation::create([
@@ -314,6 +336,20 @@ class ProductSeeder extends BaseSeeder
                     'attribute_id' => $faker->numberBetween(6, 10),
                     'variation_id' => $productVariation->id,
                 ]);
+
+                if ($product->isTypeDigital()) {
+                    foreach ($product->images as $img) {
+                        $productFile = database_path('seeders/files/' . $img);
+
+                        if (!File::isFile($productFile)) {
+                            continue;
+                        }
+
+                        $fileUpload = new UploadedFile($productFile, Str::replace('products/', '', $img), 'image/jpeg', null, true);
+                        $productFileData = app(StoreProductService::class)->saveProductFile($fileUpload);
+                        $variation->productFiles()->create($productFileData);
+                    }
+                }
             }
         }
 
@@ -409,26 +445,5 @@ class ProductSeeder extends BaseSeeder
                 }
             }
         }
-    }
-
-    /**
-     * @param int $from
-     * @param int $to
-     * @param array $exceptions
-     * @return int
-     */
-    protected function random(int $from, int $to, array $exceptions = [])
-    {
-        sort($exceptions); // lets us use break; in the foreach reliably
-        $number = rand($from, $to - count($exceptions)); // or mt_rand()
-        foreach ($exceptions as $exception) {
-            if ($number >= $exception) {
-                $number++; // make up for the gap
-            } else /*if ($number < $exception)*/ {
-                break;
-            }
-        }
-
-        return $number;
     }
 }

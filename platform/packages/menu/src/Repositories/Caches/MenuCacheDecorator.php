@@ -7,7 +7,6 @@ use Botble\Support\Repositories\Caches\CacheAbstractDecorator;
 
 class MenuCacheDecorator extends CacheAbstractDecorator implements MenuInterface
 {
-
     /**
      * {@inheritDoc}
      */

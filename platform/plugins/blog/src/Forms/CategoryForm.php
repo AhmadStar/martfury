@@ -9,7 +9,6 @@ use Botble\Blog\Models\Category;
 
 class CategoryForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -28,7 +27,7 @@ class CategoryForm extends FormAbstract
         $categories = [0 => trans('plugins/blog::categories.none')] + $categories;
 
         $this
-            ->setupModel(new Category)
+            ->setupModel(new Category())
             ->setValidatorClass(CategoryRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

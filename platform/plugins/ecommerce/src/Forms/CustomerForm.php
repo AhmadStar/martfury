@@ -10,7 +10,6 @@ use Botble\Ecommerce\Models\Customer;
 
 class CustomerForm extends FormAbstract
 {
-
     /**
      * @var string
      */
@@ -22,7 +21,7 @@ class CustomerForm extends FormAbstract
     public function buildForm()
     {
         $this
-            ->setupModel(new Customer)
+            ->setupModel(new Customer())
             ->setValidatorClass(CustomerCreateRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

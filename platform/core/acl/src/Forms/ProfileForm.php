@@ -14,7 +14,7 @@ class ProfileForm extends FormAbstract
     public function buildForm()
     {
         $this
-            ->setupModel(new User)
+            ->setupModel(new User())
             ->setFormOption('template', 'core/base::forms.form-no-wrap')
             ->setFormOption('id', 'profile-form')
             ->setFormOption('class', 'row')

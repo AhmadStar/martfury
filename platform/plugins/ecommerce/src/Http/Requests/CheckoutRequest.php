@@ -5,6 +5,7 @@ namespace Botble\Ecommerce\Http\Requests;
 use Botble\Ecommerce\Enums\ShippingMethodEnum;
 use Botble\Payment\Enums\PaymentMethodEnum;
 use Botble\Support\Http\Requests\Request;
+use Cart;
 use EcommerceHelper;
 use Illuminate\Validation\Rule;
 
@@ -38,7 +39,12 @@ class CheckoutRequest extends Request
             $rules['address.name'] = 'required|min:3|max:120';
         }
 
-        return apply_filters(PROCESS_CHECOUT_RULES_REQUEST_ECOMMERCE, $rules);
+        $products = Cart::instance('cart')->products();
+        if (!EcommerceHelper::isAvailableShipping($products)) {
+            unset($rules['shipping_method']);
+        }
+
+        return apply_filters(PROCESS_CHECKOUT_RULES_REQUEST_ECOMMERCE, $rules);
     }
 
     /**

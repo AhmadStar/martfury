@@ -8,7 +8,7 @@ if (!function_exists('get_product_price')) {
      * @param array $priceData
      * @return array
      */
-    function get_product_price(array $priceData)
+    function get_product_price(array $priceData): array
     {
         $defaultSaleType = Arr::get($priceData, 'default_sale_type', 'none');
         $defaultStartDate = Arr::get($priceData, 'default_start_date');
@@ -24,7 +24,6 @@ if (!function_exists('get_product_price')) {
         $priceInfo = [
             'start_date' => null,
             'end_date'   => null,
-            'price'      => null,
             'old_price'  => null,
         ];
 
@@ -40,15 +39,15 @@ if (!function_exists('get_product_price')) {
         }
 
         if ($saleType == 'always') {
-            $priceInfo['price'] = $price < $salePrice ? $price : $salePrice;
-            $priceInfo['old_price'] = $salePrice < $price ? $price : $salePrice;
+            $priceInfo['price'] = min($price, $salePrice);
+            $priceInfo['old_price'] = max($salePrice, $price);
         } elseif (is_product_on_sale($saleType, $startDate, $endDate)) {
-            $priceInfo['price'] = $price < $salePrice ? $price : $salePrice;
-            $priceInfo['old_price'] = $salePrice < $price ? $price : $salePrice;
+            $priceInfo['price'] = min($price, $salePrice);
+            $priceInfo['old_price'] = max($salePrice, $price);
             $priceInfo['start_date'] = $startDate;
             $priceInfo['end_date'] = $endDate;
         } else {
-            $priceInfo['price'] = $price > $salePrice ? $price : $salePrice;
+            $priceInfo['price'] = max($price, $salePrice);
         }
 
         return $priceInfo;
@@ -57,13 +56,13 @@ if (!function_exists('get_product_price')) {
 
 if (!function_exists('get_sale_percentage')) {
     /**
-     * @param float $price
-     * @param float $salePrice
+     * @param float|int $price
+     * @param float|int $salePrice
      * @param bool $abs
      * @param bool $appendSymbol
      * @return string
      */
-    function get_sale_percentage($price, $salePrice, $abs = false, $appendSymbol = true)
+    function get_sale_percentage($price, $salePrice, bool $abs = false, bool $appendSymbol = true): string
     {
         $symbol = $appendSymbol ? '%' : '';
 
@@ -89,7 +88,7 @@ if (!function_exists('is_product_on_sale')) {
      * @param null $endDate
      * @return bool
      */
-    function is_product_on_sale($saleStatus, $startDate = null, $endDate = null)
+    function is_product_on_sale(string $saleStatus, $startDate = null, $endDate = null): bool
     {
         if ($saleStatus == 'none' || !$endDate) {
             return false;
@@ -99,17 +98,13 @@ if (!function_exists('is_product_on_sale')) {
             return true;
         }
 
-        $now = now();
+        $now = Carbon::now();
 
         $startDate = Carbon::parse($startDate);
         $endDate = Carbon::parse($endDate);
 
         if ($now >= $endDate || $startDate > $now) {
             return false;
-        }
-
-        if (!$startDate) {
-            return true;
         }
 
         return true;

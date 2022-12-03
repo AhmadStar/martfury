@@ -16,8 +16,8 @@
                             <span class="photo">
                                 <img src="{{ $order->user->id ? $order->user->avatar_url : $order->address->avatar_url }}" class="rounded-circle" alt="{{ $order->address->name }}">
                             </span>
-                            <span class="subject"><span class="from"> {{ $order->address->name }} </span><span class="time">{{ $order->created_at->toDateTimeString() }} </span></span>
-                            <span class="message"> {{ $order->address->phone }} - {{ $order->address->email }} </span>
+                            <span class="subject"><span class="from"> {{ $order->address->name ?: $order->user->name }} </span><span class="time">{{ $order->created_at->toDateTimeString() }} </span></span>
+                            <span class="message"> {{ $order->address->phone ? $order->address->phone . ' - ' : null }} {{ $order->address->email ?: $order->user->email }} </span>
                         </a>
                     </li>
                 @endforeach

@@ -15,7 +15,6 @@ use Yajra\DataTables\DataTables;
 
 class AdsTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -51,8 +50,11 @@ class AdsTable extends TableAbstract
         $data = $this->table
             ->eloquent($this->query())
             ->editColumn('image', function ($item) {
-                return Html::image(RvMedia::getImageUrl($item->image, 'thumb', false, RvMedia::getDefaultImage()),
-                    $item->name, ['width' => 50]);
+                return Html::image(
+                    RvMedia::getImageUrl($item->image, 'thumb', false, RvMedia::getDefaultImage()),
+                    $item->name,
+                    ['width' => 50]
+                );
             })
             ->editColumn('name', function ($item) {
                 if (!Auth::user()->hasPermission('ads.edit')) {

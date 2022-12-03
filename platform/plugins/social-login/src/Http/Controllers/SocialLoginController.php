@@ -7,18 +7,22 @@ use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Setting\Supports\SettingStore;
 use Botble\SocialLogin\Http\Requests\SocialLoginRequest;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Laravel\Socialite\AbstractUser;
 use RvMedia;
 use Socialite;
 use SocialService;
 
 class SocialLoginController extends BaseController
 {
-
     /**
      * Redirect the user to the {provider} authentication page.
      *
@@ -27,7 +31,7 @@ class SocialLoginController extends BaseController
      * @param BaseHttpResponse $response
      * @return mixed
      */
-    public function redirectToProvider($provider, Request $request, BaseHttpResponse $response)
+    public function redirectToProvider(string $provider, Request $request, BaseHttpResponse $response)
     {
         $guard = $this->guard($request);
 
@@ -70,8 +74,9 @@ class SocialLoginController extends BaseController
 
     /**
      * @param string $provider
+     * @return bool
      */
-    protected function setProvider(string $provider)
+    protected function setProvider(string $provider): bool
     {
         config()->set([
             'services.' . $provider => [
@@ -107,13 +112,13 @@ class SocialLoginController extends BaseController
 
         try {
             /**
-             * @var \Laravel\Socialite\AbstractUser $oAuth
+             * @var AbstractUser $oAuth
              */
             $oAuth = Socialite::driver($provider)->user();
-        } catch (Exception $ex) {
-            $message = $ex->getMessage();
+        } catch (Exception $exception) {
+            $message = $exception->getMessage();
 
-            if ($provider == 'github') {
+            if (in_array($provider, ['github', 'facebook'])) {
                 $message = json_encode($message);
             }
 
@@ -134,7 +139,7 @@ class SocialLoginController extends BaseController
                 ->setMessage(__('Cannot login, no email provided!'));
         }
 
-        $account = (new $providerData['model'])->where('email', $oAuth->getEmail())->first();
+        $account = (new $providerData['model']())->where('email', $oAuth->getEmail())->first();
 
         if (!$account) {
             $avatarId = null;
@@ -160,9 +165,9 @@ class SocialLoginController extends BaseController
 
             $data = apply_filters('social_login_before_saving_account', $data, $oAuth, $providerData);
 
-            $account = new $providerData['model'];
+            $account = new $providerData['model']();
             $account->fill($data);
-            $account->confirmed_at = now();
+            $account->confirmed_at = Carbon::now();
             $account->save();
         }
 
@@ -174,7 +179,7 @@ class SocialLoginController extends BaseController
     }
 
     /**
-     * @return \Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @return Application|Factory|View
      */
     public function getSettings()
     {

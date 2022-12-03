@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 
 class HttpsProtocolMiddleware
 {
-
     /**
      * @param Request $request
      * @param Closure $next

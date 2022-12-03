@@ -20,7 +20,7 @@
                     </div>
                 </div>
 
-                @include('plugins/ecommerce::orders.thank-you.customer-info', ['order' => Arr::first($orders)])
+                @include('plugins/ecommerce::orders.thank-you.customer-info', ['order' => Arr::first($orders), 'isShowShipping' => false])
 
                 <a href="{{ route('public.index') }}" class="btn payment-checkout-btn"> {{ __('Continue shopping') }} </a>
             </div>
@@ -29,9 +29,14 @@
 
                 @foreach ($orders as $order)
                     @include('plugins/ecommerce::orders.thank-you.order-info', ['isShowTotalInfo' => true])
+
+                    @if (!$loop->last)
+                        <hr>
+                    @endif
                 @endforeach
 
                 @if (count($orders) > 1)
+                    <hr>
 
                     <!-- total info -->
                     <div class="bg-light p-3">
@@ -44,14 +49,16 @@
                             </div>
                         </div>
 
-                        <div class="row total-price">
-                            <div class="col-6">
-                                <p>{{ __('Shipping fee') }}:</p>
+                        @if ($orders->filter(function ($order) {return $order->shipment->id;})->count())
+                            <div class="row total-price">
+                                <div class="col-6">
+                                    <p>{{ __('Shipping fee') }}:</p>
+                                </div>
+                                <div class="col-6">
+                                    <p class="text-end">{{ format_price($orders->sum('shipping_amount')) }} </p>
+                                </div>
                             </div>
-                            <div class="col-6">
-                                <p class="text-end">{{ format_price($orders->sum('shipping_amount')) }} </p>
-                            </div>
-                        </div>
+                        @endif
 
                         @if ($orders->sum('discount_amount'))
                             <div class="row total-price">

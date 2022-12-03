@@ -7,7 +7,6 @@ use MarketplaceHelper;
 
 class CustomEditorField extends FormField
 {
-
     /**
      * @param array $options
      * @param bool $showLabel

@@ -3,6 +3,7 @@
 namespace Botble\Setting\Http\Controllers;
 
 use Assets;
+use BaseHelper;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Supports\Core;
@@ -11,13 +12,14 @@ use Botble\Media\Repositories\Interfaces\MediaFileInterface;
 use Botble\Setting\Http\Requests\EmailTemplateRequest;
 use Botble\Setting\Http\Requests\LicenseSettingRequest;
 use Botble\Setting\Http\Requests\MediaSettingRequest;
+use Botble\Setting\Http\Requests\ResetEmailTemplateRequest;
 use Botble\Setting\Http\Requests\SendTestEmailRequest;
 use Botble\Setting\Http\Requests\SettingRequest;
 use Botble\Setting\Repositories\Interfaces\SettingInterface;
 use Carbon\Carbon;
 use EmailHandler;
 use Exception;
-use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -48,8 +50,8 @@ class SettingController extends BaseController
     {
         page_title()->setTitle(trans('core/setting::setting.title'));
 
-        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js');
-        Assets::addStylesDirectly('vendor/core/core/setting/css/setting.css');
+        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js')
+            ->addStylesDirectly('vendor/core/core/setting/css/setting.css');
 
         return view('core/setting::index');
     }
@@ -122,8 +124,9 @@ class SettingController extends BaseController
     public function getEmailConfig()
     {
         page_title()->setTitle(trans('core/base::layouts.setting_email'));
-        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js');
-        Assets::addStylesDirectly('vendor/core/core/setting/css/setting.css');
+
+        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js')
+            ->addStylesDirectly('vendor/core/core/setting/css/setting.css');
 
         return view('core/setting::email');
     }
@@ -146,13 +149,11 @@ class SettingController extends BaseController
      * @param string $type
      * @param string $module
      * @param string $template
-     * @return \Illuminate\Contracts\Foundation\Application|Factory|View
-     * @throws FileNotFoundException
+     * @return Application|Factory|View
      */
     public function getEditEmailTemplate($type, $module, $template)
     {
-        $title = trans(config($type . '.' . $module . '.email.templates.' . $template . '.title', ''));
-        page_title()->setTitle($title);
+        page_title()->setTitle(trans(config($type . '.' . $module . '.email.templates.' . $template . '.title', '')));
 
         Assets::addStylesDirectly([
             'vendor/core/core/base/libraries/codemirror/lib/codemirror.css',
@@ -193,21 +194,26 @@ class SettingController extends BaseController
                 ->save();
         }
 
-        save_file_data($request->input('template_path'), $request->input('email_content'), false);
+        $templatePath = get_setting_email_template_path($request->input('module'), $request->input('template_file'));
+
+        BaseHelper::saveFileData($templatePath, $request->input('email_content'), false);
 
         return $response->setMessage(trans('core/base::notices.update_success_message'));
     }
 
     /**
-     * @param Request $request
+     * @param ResetEmailTemplateRequest $request
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse
      * @throws Exception
      */
-    public function postResetToDefault(Request $request, BaseHttpResponse $response)
+    public function postResetToDefault(ResetEmailTemplateRequest $request, BaseHttpResponse $response)
     {
         $this->settingRepository->deleteBy(['key' => $request->input('email_subject_key')]);
-        File::delete($request->input('template_path'));
+
+        $templatePath = get_setting_email_template_path($request->input('module'), $request->input('template_file'));
+
+        File::delete($templatePath);
 
         return $response->setMessage(trans('core/setting::setting.email.reset_success'));
     }
@@ -257,8 +263,8 @@ class SettingController extends BaseController
     {
         page_title()->setTitle(trans('core/setting::setting.media.title'));
 
-        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js');
-        Assets::addStylesDirectly('vendor/core/core/setting/css/setting.css');
+        Assets::addScriptsDirectly('vendor/core/core/setting/js/setting.js')
+            ->addStylesDirectly('vendor/core/core/setting/css/setting.css');
 
         return view('core/setting::media');
     }
@@ -297,7 +303,7 @@ class SettingController extends BaseController
 
             $activatedAt = Carbon::createFromTimestamp(filectime($coreApi->getLicenseFilePath()));
         } catch (Throwable $exception) {
-            $activatedAt = now();
+            $activatedAt = Carbon::now();
             $result = ['message' => $exception->getMessage()];
         }
 
@@ -322,7 +328,7 @@ class SettingController extends BaseController
             $username = end($buyer);
 
             return $response
-                ->setError(true)
+                ->setError()
                 ->setMessage('Envato username must not a URL. Please try with username "' . $username . '"!');
         }
 
@@ -346,7 +352,9 @@ class SettingController extends BaseController
 
             return $response->setMessage($result['message'])->setData($data);
         } catch (Throwable $exception) {
-            return $response->setError(true)->setMessage($exception->getMessage());
+            return $response
+                ->setError()
+                ->setMessage($exception->getMessage());
         }
     }
 
@@ -403,8 +411,7 @@ class SettingController extends BaseController
      */
     public function generateThumbnails(MediaFileInterface $fileRepository, BaseHttpResponse $response)
     {
-        @ini_set('max_execution_time', -1);
-        @ini_set('memory_limit', -1);
+        BaseHelper::maximumExecutionTimeAndMemoryLimit();
 
         $files = $fileRepository->allBy([], [], ['url', 'mime_type', 'folder_id']);
 

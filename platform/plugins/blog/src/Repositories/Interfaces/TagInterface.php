@@ -6,7 +6,6 @@ use Botble\Support\Repositories\Interfaces\RepositoryInterface;
 
 interface TagInterface extends RepositoryInterface
 {
-
     /**
      * @return array
      */

@@ -55,6 +55,7 @@ class Plugin extends PluginOperationAbstract
         Schema::dropIfExists('ec_orders');
         Schema::dropIfExists('ec_order_product');
         Schema::dropIfExists('ec_order_addresses');
+        Schema::dropIfExists('ec_order_referrals');
         Schema::dropIfExists('ec_discounts');
         Schema::dropIfExists('ec_wish_lists');
         Schema::dropIfExists('ec_cart');
@@ -90,5 +91,13 @@ class Plugin extends PluginOperationAbstract
         Schema::dropIfExists('ec_product_collections_translations');
         Schema::dropIfExists('ec_product_labels_translations');
         Schema::dropIfExists('ec_product_tags_translations');
+        Schema::dropIfExists('ec_order_returns');
+        Schema::dropIfExists('ec_order_return_items');
+        Schema::dropIfExists('ec_global_options');
+        Schema::dropIfExists('ec_global_option_value');
+        Schema::dropIfExists('ec_options');
+        Schema::dropIfExists('ec_option_value');
+        Schema::dropIfExists('ec_invoice_items');
+        Schema::dropIfExists('ec_invoices');
     }
 }

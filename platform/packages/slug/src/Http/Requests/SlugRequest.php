@@ -6,7 +6,6 @@ use Botble\Support\Http\Requests\Request;
 
 class SlugRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -15,7 +14,7 @@ class SlugRequest extends Request
     public function rules()
     {
         return [
-            'name'    => 'required',
+            'value'   => 'required',
             'slug_id' => 'required',
         ];
     }

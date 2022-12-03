@@ -11,14 +11,15 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Menu;
 use Theme;
+use Throwable;
 use ZipArchive;
 
 class Core
 {
-
     /**
      * @var string
      */
@@ -70,6 +71,11 @@ class Core
     protected $sessionKey = '44622179e10cab6';
 
     /**
+     * @var string
+     */
+    protected $coreFilePath;
+
+    /**
      * Core constructor.
      */
     public function __construct()
@@ -81,7 +87,9 @@ class Core
         $this->rootPath = base_path();
         $this->licenseFile = storage_path('.license');
 
-        $core = get_file_data(core_path('core.json'));
+        $this->coreFilePath = core_path('core.json');
+
+        $core = BaseHelper::getFileData($this->coreFilePath);
 
         if ($core) {
             $this->productId = Arr::get($core, 'productId');
@@ -359,6 +367,7 @@ class Core
      * @param string $version
      * @param string|null $license
      * @param string|null $client
+     * @throws Throwable
      */
     public function downloadUpdate(string $updateId, string $version, ?string $license = null, ?string $client = null)
     {
@@ -379,7 +388,7 @@ class Core
         }
 
         ob_end_flush();
-        ob_implicit_flush(true);
+        ob_implicit_flush();
         $version = str_replace('.', '_', $version);
         ob_start();
         $sourceSize = $this->apiUrl . '/api/get_update_size/main/' . $updateId;
@@ -402,7 +411,10 @@ class Core
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $dataArray);
 
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        curl_setopt(
+            $ch,
+            CURLOPT_HTTPHEADER,
+            [
                 'LB-API-KEY: ' . $this->apiKey,
                 'LB-URL: ' . $this->getSiteURL(),
                 'LB-IP: ' . $this->getSiteIP(),
@@ -459,100 +471,123 @@ class Core
                     echo '<script>document.getElementById(\'prog\').value = 65;</script>';
                 }
 
-                $this->clearCache();
+                $this->processUpdate($destination);
+            }
+        }
 
-                ob_flush();
-                if (class_exists('ZipArchive', false)) {
-                    $zip = new ZipArchive;
-                    $res = $zip->open($destination);
-                    if ($res === true) {
-                        $zip->extractTo($this->rootPath . '/');
-                        $zip->close();
-                        unlink($destination);
-                        echo 'Main update files downloaded and extracted.<br><br>';
-                        if ($this->showUpdateProcess) {
-                            echo '<script>document.getElementById(\'prog\').value = 75;</script>';
-                        }
-                    } else {
-                        echo 'Update zip extraction failed.<br><br>';
-                    }
-                } else {
-                    $archive = new Zip($destination);
-                    $archive->extract(PCLZIP_OPT_PATH, $this->rootPath . '/');
+        ob_flush();
+        ob_end_flush();
+    }
 
+    public function processUpdate(string $destination)
+    {
+        $this->clearCache();
+
+        $coreTempPath = storage_path('app/core.json');
+
+        try {
+            DB::beginTransaction();
+
+            File::copy($this->coreFilePath, $coreTempPath);
+
+            ob_flush();
+            if (class_exists('ZipArchive', false)) {
+                $zip = new ZipArchive();
+                $res = $zip->open($destination);
+                if ($res === true) {
+                    $zip->extractTo($this->rootPath . '/');
+                    $zip->close();
                     unlink($destination);
                     echo 'Main update files downloaded and extracted.<br><br>';
                     if ($this->showUpdateProcess) {
                         echo '<script>document.getElementById(\'prog\').value = 75;</script>';
                     }
+                } else {
+                    echo 'Update zip extraction failed.<br><br>';
                 }
+            } else {
+                $archive = new Zip($destination);
+                $archive->extract(PCLZIP_OPT_PATH, $this->rootPath . '/');
 
-                ob_flush();
-
-                $migrator = app('migrator');
-
-                $migrator->run(database_path('migrations'));
-
-                $paths = [
-                    core_path(),
-                    package_path(),
-                    plugin_path(),
-                ];
-
-                foreach ($paths as $path) {
-                    foreach (scan_folder($path) as $module) {
-
-                        if ($path == plugin_path() && !is_plugin_active($module)) {
-                            continue;
-                        }
-
-                        $modulePath = $path . '/' . $module;
-
-                        if (!File::isDirectory($modulePath)) {
-                            continue;
-                        }
-
-                        $publishedPath = 'vendor/core/' . File::basename($path);
-
-                        if (!File::isDirectory($publishedPath)) {
-                            File::makeDirectory($publishedPath, 0755, true);
-                        }
-
-                        if (File::isDirectory($modulePath . '/public')) {
-                            File::copyDirectory($modulePath . '/public', $publishedPath . '/' . $module);
-                        }
-
-                        if (File::isDirectory($modulePath . '/database/migrations')) {
-                            $migrator->run($modulePath . '/database/migrations');
-                        }
-                    }
-                }
-
-                File::delete(theme_path(Theme::getThemeName() . '/public/css/style.integration.css'));
-
-                $customCSS = Theme::getStyleIntegrationPath();
-
-                if (File::exists($customCSS)) {
-                    File::copy($customCSS, storage_path('app/style.integration.css.' . time()));
-                }
-
-                app(ThemeService::class)->publishAssets();
-
-                $this->clearCache();
-
-                event(new UpdatedEvent());
-
+                unlink($destination);
+                echo 'Main update files downloaded and extracted.<br><br>';
                 if ($this->showUpdateProcess) {
-                    echo '<script>document.getElementById(\'prog\').value = 100;</script>';
+                    echo '<script>document.getElementById(\'prog\').value = 75;</script>';
                 }
-
-                echo 'Update database successfully!';
             }
 
-        }
+            ob_flush();
 
-        ob_flush();
-        ob_end_flush();
+            $migrator = app('migrator');
+
+            $migrator->run(database_path('migrations'));
+
+            $paths = [
+                core_path(),
+                package_path(),
+                plugin_path(),
+            ];
+
+            foreach ($paths as $path) {
+                foreach (BaseHelper::scanFolder($path) as $module) {
+                    if ($path == plugin_path() && !is_plugin_active($module)) {
+                        continue;
+                    }
+
+                    $modulePath = $path . '/' . $module;
+
+                    if (!File::isDirectory($modulePath)) {
+                        continue;
+                    }
+
+                    $publishedPath = 'vendor/core/' . File::basename($path);
+
+                    if (!File::isDirectory($publishedPath)) {
+                        File::makeDirectory($publishedPath, 0755, true);
+                    }
+
+                    if (File::isDirectory($modulePath . '/public')) {
+                        File::copyDirectory($modulePath . '/public', $publishedPath . '/' . $module);
+                    }
+
+                    if (File::isDirectory($modulePath . '/database/migrations')) {
+                        $migrator->run($modulePath . '/database/migrations');
+                    }
+                }
+            }
+
+            File::delete(theme_path(Theme::getThemeName() . '/public/css/style.integration.css'));
+
+            $customCSS = Theme::getStyleIntegrationPath();
+
+            if (File::exists($customCSS)) {
+                File::copy($customCSS, storage_path('app/style.integration.css.') . time());
+            }
+
+            app(ThemeService::class)->publishAssets();
+
+            $this->clearCache();
+
+            event(new UpdatedEvent());
+
+            if ($this->showUpdateProcess) {
+                echo '<script>document.getElementById(\'prog\').value = 100;</script>';
+            }
+
+            echo '<br><span class="text-success">Update database successfully!</span>';
+
+            DB::commit();
+
+            File::delete($coreTempPath);
+        } catch (Throwable $exception) {
+            rescue(function () {
+                DB::rollBack();
+            });
+
+            File::copy($coreTempPath, $this->coreFilePath);
+
+            echo '<br><span class="text-danger">' . $exception->getMessage() . '</span>';
+        }
     }
 
     /**
@@ -560,20 +595,22 @@ class Core
      */
     protected function clearCache(): bool
     {
-        Helper::clearCache();
-        Menu::clearCacheMenuItems();
+        try {
+            Helper::clearCache();
+            Menu::clearCacheMenuItems();
 
-        foreach (File::glob(config('view.compiled') . '/*') as $view) {
-            File::delete($view);
+            File::delete(app()->getCachedConfigPath());
+            File::delete(app()->getCachedRoutesPath());
+            File::delete(base_path('bootstrap/cache/packages.php'));
+            File::delete(base_path('bootstrap/cache/services.php'));
+            foreach (File::glob(storage_path('app/purifier') . '/*') as $view) {
+                File::delete($view);
+            }
+
+            return true;
+        } catch (Exception $exception) {
+            return false;
         }
-
-        File::delete(app()->getCachedConfigPath());
-        File::delete(app()->getCachedRoutesPath());
-        File::delete(base_path('bootstrap/cache/packages.php'));
-        File::delete(base_path('bootstrap/cache/services.php'));
-        File::deleteDirectory(storage_path('app/purifier'));
-
-        return true;
     }
 
     /**
@@ -581,12 +618,14 @@ class Core
      */
     protected function getSiteURL(): string
     {
-        $thisServerName = request()->server('SERVER_NAME') ?: request()->server('HTTP_HOST');
+        $request = request();
 
-        $thisHttpOrHttps = request()->server('HTTPS') == 'on' || request()->server('HTTP_X_FORWARDED_PROTO') == 'https'
+        $thisServerName = $request->server('SERVER_NAME') ?: $request->server('HTTP_HOST');
+
+        $thisHttpOrHttps = $request->server('HTTPS') == 'on' || $request->server('HTTP_X_FORWARDED_PROTO') == 'https'
             ? 'https://' : 'http://';
 
-        return $thisHttpOrHttps . $thisServerName . request()->server('REQUEST_URI');
+        return $thisHttpOrHttps . $thisServerName . $request->server('REQUEST_URI');
     }
 
     /**
@@ -608,7 +647,10 @@ class Core
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_NOBODY, true);
 
-        curl_setopt($curl, CURLOPT_HTTPHEADER, [
+        curl_setopt(
+            $curl,
+            CURLOPT_HTTPHEADER,
+            [
                 'LB-API-KEY: ' . $this->apiKey,
                 'LB-URL: ' . $this->getSiteURL(),
                 'LB-IP: ' . $this->getSiteIP(),

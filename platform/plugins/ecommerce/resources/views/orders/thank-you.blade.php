@@ -1,6 +1,6 @@
 @extends('plugins/ecommerce::orders.master')
 @section('title')
-    {{ __('Order successfully. Order number :id', ['id' => get_order_code($order->id)]) }}
+    {{ __('Order successfully. Order number :id', ['id' => $order->code]) }}
 @stop
 @section('content')
 
@@ -27,6 +27,8 @@
             <div class="col-lg-5 col-md-6 d-none d-md-block right">
 
                 @include('plugins/ecommerce::orders.thank-you.order-info')
+
+                <hr>
 
                 <!-- total info -->
                 @include('plugins/ecommerce::orders.thank-you.total-info', ['order' => $order])

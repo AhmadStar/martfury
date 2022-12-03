@@ -22,7 +22,7 @@ class CityRepository extends RepositoriesAbstract implements CityInterface
             ->where('states.status', BaseStatusEnum::PUBLISHED)
             ->where('countries.status', BaseStatusEnum::PUBLISHED);
 
-        if (is_plugin_active('language-advanced') && Language::getCurrentLocale() != Language::getDefaultLocale()) {
+        if (is_plugin_active('language') && is_plugin_active('language-advanced') && Language::getCurrentLocale() != Language::getDefaultLocale()) {
             $data = $data
                 ->where(function (Builder $query) use ($keyword) {
                     return $query
@@ -45,10 +45,9 @@ class CityRepository extends RepositoriesAbstract implements CityInterface
         $data = $data->limit($limit);
 
         if ($with) {
-            $data = $this->model->with($with);
+            $data = $data->with($with);
         }
 
         return $this->applyBeforeExecuteQuery($data)->get($select);
     }
 }
-

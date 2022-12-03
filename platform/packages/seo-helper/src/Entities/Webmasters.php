@@ -83,7 +83,7 @@ class Webmasters implements WebmastersContract
      */
     public function reset()
     {
-        $this->meta = new MetaCollection;
+        $this->meta = new MetaCollection();
 
         return $this;
     }

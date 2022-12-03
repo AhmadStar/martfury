@@ -4,6 +4,7 @@ namespace Botble\Support\Repositories\Eloquent;
 
 use Botble\Base\Supports\RepositoryHelper;
 use Botble\Support\Repositories\Interfaces\RepositoryInterface;
+use Closure;
 use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -43,7 +44,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
-    public function setModel($model)
+    public function setModel(string $model): self
     {
         $this->model = $model;
 
@@ -53,7 +54,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
-    public function getTable()
+    public function getTable(): string
     {
         return $this->model->getTable();
     }
@@ -83,7 +84,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
-    public function applyBeforeExecuteQuery($data, $isSingle = false)
+    public function applyBeforeExecuteQuery($data, bool $isSingle = false)
     {
         $data = RepositoryHelper::applyBeforeExecuteQuery($data, $this->originalModel, $isSingle);
 
@@ -93,11 +94,11 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     }
 
     /**
-     * {@inheritDoc}
+     * @return $this
      */
-    public function resetModel()
+    public function resetModel(): self
     {
-        $this->model = new $this->originalModel;
+        $this->model = new $this->originalModel();
 
         return $this;
     }
@@ -115,9 +116,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
             return $result;
         }
 
-        throw (new ModelNotFoundException)->setModel(
-            get_class($this->originalModel), $id
-        );
+        throw (new ModelNotFoundException())->setModel(get_class($this->originalModel), $id);
     }
 
     /**
@@ -133,7 +132,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
-    public function pluck($column, $key = null, array $condition = [])
+    public function pluck(string $column, $key = null, array $condition = []): array
     {
         $this->applyConditions($condition);
 
@@ -172,6 +171,11 @@ abstract class RepositoriesAbstract implements RepositoryInterface
         }
 
         foreach ($where as $field => $value) {
+            if ($value instanceof Closure) {
+                $newModel = $value($newModel);
+                continue;
+            }
+
             if (is_array($value)) {
                 [$field, $condition, $val] = $value;
                 switch (strtoupper($condition)) {
@@ -219,13 +223,13 @@ abstract class RepositoriesAbstract implements RepositoryInterface
          */
         if (is_array($data)) {
             if (empty($condition)) {
-                $item = new $this->model;
+                $item = new $this->model();
             } else {
                 $item = $this->getFirstBy($condition);
             }
 
             if (empty($item)) {
-                $item = new $this->model;
+                $item = new $this->model();
             }
 
             $item = $item->fill($data);
@@ -265,7 +269,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
-    public function delete(Model $model)
+    public function delete(Model $model): bool
     {
         return $model->delete();
     }
@@ -333,7 +337,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
-    public function count(array $condition = [])
+    public function count(array $condition = []): int
     {
         $this->applyConditions($condition);
 
@@ -382,7 +386,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
             'select'    => ['*'],
             'with'      => [],
             'withCount' => [],
-            'withAvg' => [],
+            'withAvg'   => [],
         ], $params);
 
         $this->applyConditions($params['condition']);
@@ -485,7 +489,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     /**
      * {@inheritDoc}
      */
-    public function insert(array $data)
+    public function insert(array $data): bool
     {
         return $this->model->insert($data);
     }
@@ -497,7 +501,7 @@ abstract class RepositoriesAbstract implements RepositoryInterface
     {
         $this->applyConditions($condition);
 
-        $result = $this->model->first() ?: new $this->originalModel;
+        $result = $this->model->first() ?: new $this->originalModel();
 
         $this->resetModel();
 

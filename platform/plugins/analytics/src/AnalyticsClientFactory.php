@@ -31,7 +31,7 @@ class AnalyticsClientFactory
      */
     public static function createAuthenticatedGoogleClient(array $config): GoogleClient
     {
-        $client = new GoogleClient;
+        $client = new GoogleClient();
 
         $client->setScopes([
             Google_Service_Analytics::ANALYTICS_READONLY,

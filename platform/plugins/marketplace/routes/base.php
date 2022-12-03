@@ -1,9 +1,7 @@
 <?php
 
 Route::group(['namespace' => 'Botble\Marketplace\Http\Controllers', 'middleware' => ['web', 'core']], function () {
-
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
-
         Route::group(['prefix' => 'marketplaces', 'as' => 'marketplace.'], function () {
             Route::group(['prefix' => 'stores', 'as' => 'store.'], function () {
                 Route::resource('', 'StoreController')->parameters(['' => 'store']);
@@ -13,7 +11,7 @@ Route::group(['namespace' => 'Botble\Marketplace\Http\Controllers', 'middleware'
                     'permission' => 'marketplace.store.destroy',
                 ]);
 
-                Route::get('/view/{id}', [
+                Route::get('view/{id}', [
                     'as'   => 'view',
                     'uses' => 'StoreRevenueController@view',
                 ]);
@@ -25,12 +23,11 @@ Route::group(['namespace' => 'Botble\Marketplace\Http\Controllers', 'middleware'
                         'permission' => 'marketplace.store.view',
                     ]);
 
-                    Route::post('/create/{id}', [
+                    Route::post('create/{id}', [
                         'as'   => 'create',
                         'uses' => 'StoreRevenueController@store',
                     ]);
                 });
-
             });
 
             Route::group(['prefix' => 'withdrawals', 'as' => 'withdrawal.'], function () {
@@ -43,14 +40,14 @@ Route::group(['namespace' => 'Botble\Marketplace\Http\Controllers', 'middleware'
                     ]);
             });
 
-            Route::get('/settings', [
+            Route::get('settings', [
                 'as'   => 'settings',
-                'uses' => 'MarketplaceController@settings',
+                'uses' => 'MarketplaceController@getSettings',
             ]);
 
-            Route::post('/settings', [
+            Route::post('settings', [
                 'as'         => 'settings.post',
-                'uses'       => 'MarketplaceController@settings',
+                'uses'       => 'MarketplaceController@postSettings',
                 'permission' => 'marketplace.settings',
             ]);
 
@@ -83,7 +80,5 @@ Route::group(['namespace' => 'Botble\Marketplace\Http\Controllers', 'middleware'
                 ]);
             });
         });
-
     });
-
 });

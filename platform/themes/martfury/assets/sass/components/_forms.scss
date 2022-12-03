@@ -356,6 +356,7 @@
         margin-bottom: 20px;
         height: 40px;
         border: 2px solid #c9c9c9;
+        background-color: #f6f6f6;
     }
 
     button {
@@ -384,7 +385,6 @@
     margin-bottom: 24px;
 
     .input-group {
-        border: 1px solid #d0d0d0;
         border: none;
         margin-bottom: 10px;
 
@@ -538,6 +538,7 @@
         margin-bottom: 20px;
         font-weight: 600;
     }
+
     .ps-form__submit {
         @media (min-width: 768px) {
             display: flex;

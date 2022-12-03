@@ -3,7 +3,10 @@
 var BPayment = BPayment || {};
 
 BPayment.initResources = function () {
-    let paymentMethod = $(document).find('input[name=payment_method]').first();
+    let paymentMethod = $(document).find('input[name=payment_method]:checked').first();
+    if (!paymentMethod.length) {
+        paymentMethod = $(document).find('input[name=payment_method]').first();
+    }
 
     if (paymentMethod.length) {
         paymentMethod.trigger('click').trigger('change');
@@ -63,13 +66,13 @@ BPayment.init = function () {
     $(document).off('click', '.payment-checkout-btn').on('click', '.payment-checkout-btn', function (event) {
         event.preventDefault();
 
-        var _self = $(this);
-        var form = _self.closest('form');
+        let _self = $(this);
+        let form = _self.closest('form');
         _self.attr('disabled', 'disabled');
-        var submitInitialText = _self.html();
+        let submitInitialText = _self.html();
         _self.html('<i class="fa fa-gear fa-spin"></i> ' + _self.data('processing-text'));
 
-        if ($('input[name=payment_method]:checked').val() === 'stripe') {
+        if ($('input[name=payment_method]:checked').val() === 'stripe' && $('.stripe-card-wrapper').length > 0) {
             Stripe.setPublishableKey($('#payment-stripe-key').data('value'));
             Stripe.card.createToken(form, function (status, response) {
                 if (response.error) {
@@ -94,7 +97,7 @@ BPayment.init = function () {
 $(document).ready(function () {
     BPayment.init();
 
-    document.addEventListener('payment-form-reloaded', function() {
+    document.addEventListener('payment-form-reloaded', function () {
         BPayment.initResources();
     });
 });

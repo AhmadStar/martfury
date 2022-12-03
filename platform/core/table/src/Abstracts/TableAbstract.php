@@ -7,10 +7,13 @@ use BaseHelper;
 use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Support\Repositories\Interfaces\RepositoryInterface;
 use Botble\Table\Supports\TableExportHandler;
+use Exception;
 use Form;
 use Html;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -18,20 +21,19 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
 use Request;
 use RvMedia;
-use Throwable;
+use Yajra\DataTables\CollectionDataTable;
 use Yajra\DataTables\DataTables;
+use Yajra\DataTables\Html\Builder as HtmlBuilder;
 use Yajra\DataTables\QueryDataTable;
 use Yajra\DataTables\Services\DataTable;
 
 abstract class TableAbstract extends DataTable
 {
+    public const TABLE_TYPE_ADVANCED = 'advanced';
 
-    const TABLE_TYPE_ADVANCED = 'advanced';
-
-    const TABLE_TYPE_SIMPLE = 'simple';
+    public const TABLE_TYPE_SIMPLE = 'simple';
 
     /**
      * @var bool
@@ -251,9 +253,8 @@ abstract class TableAbstract extends DataTable
     /**
      * Optional method if you want to use html builder.
      *
-     * @return \Yajra\DataTables\Html\Builder
+     * @return HtmlBuilder
      *
-     * @throws Throwable
      * @since 2.1
      */
     public function html()
@@ -275,11 +276,13 @@ abstract class TableAbstract extends DataTable
                 'info'         => true,
                 'searchDelay'  => 350,
                 'bStateSave'   => $this->bStateSave,
-                'lengthMenu'   => Arr::sortRecursive([
-                    array_values(array_unique(array_merge([10, 30, 50, 100, 500], [$this->pageLength, -1]))),
-                    array_values(array_unique(array_merge([10, 30, 50, 100, 500],
-                        [$this->pageLength, trans('core/base::tables.all')]))),
-                ]),
+                'lengthMenu'   => [
+                    array_values(array_unique(array_merge(Arr::sortRecursive([10, 30, 50, 100, 500, $this->pageLength]), [-1]))),
+                    array_values(array_unique(array_merge(
+                        Arr::sortRecursive([10, 30, 50, 100, 500, $this->pageLength]),
+                        [trans('core/base::tables.all')]
+                    ))),
+                ],
                 'pageLength'   => $this->pageLength,
                 'processing'   => true,
                 'serverSide'   => true,
@@ -381,7 +384,6 @@ abstract class TableAbstract extends DataTable
      * @param mixed $item
      * @param string|null $extra
      * @return string
-     * @throws Throwable
      */
     protected function getOperations(?string $edit, ?string $delete, $item, ?string $extra = null): string
     {
@@ -412,9 +414,8 @@ abstract class TableAbstract extends DataTable
     /**
      * @param int $id
      * @return string
-     * @throws Throwable
      */
-    protected function getCheckbox($id): string
+    protected function getCheckbox(int $id): string
     {
         return table_checkbox($id);
     }
@@ -459,7 +460,6 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @return array
-     * @throws Throwable
      * @since 2.1
      */
     public function getBuilderParameters(): array
@@ -515,7 +515,6 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @return array
-     * @throws Throwable
      * @since 2.1
      */
     public function buttons()
@@ -525,7 +524,6 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @return array
-     * @throws Throwable
      */
     public function getActionsButton(): array
     {
@@ -544,7 +542,6 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @return array
-     * @throws Throwable
      * @since 2.1
      */
     public function getActions(): array
@@ -561,6 +558,7 @@ abstract class TableAbstract extends DataTable
                 'text'      => '<span data-action="' . $key . '" data-href="' . $action['link'] . '"> ' . $action['text'] . '</span>',
             ];
         }
+
         return $actions;
     }
 
@@ -575,7 +573,6 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @return array
-     * @throws Throwable
      */
     public function getDefaultButtons(): array
     {
@@ -668,10 +665,9 @@ abstract class TableAbstract extends DataTable
      * @param array $data
      * @param array $mergeData
      * @return JsonResponse|View
-     * @throws Throwable
      * @since 2.4
      */
-    public function renderTable($data = [], $mergeData = [])
+    public function renderTable(array $data = [], array $mergeData = [])
     {
         return $this->render($this->view, $data, $mergeData);
     }
@@ -681,7 +677,6 @@ abstract class TableAbstract extends DataTable
      * @param array $data
      * @param array $mergeData
      * @return mixed
-     * @throws Throwable
      */
     public function render($view, $data = [], $mergeData = [])
     {
@@ -710,7 +705,6 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @return array
-     * @throws Throwable
      */
     public function bulkActions(): array
     {
@@ -736,7 +730,7 @@ abstract class TableAbstract extends DataTable
     }
 
     /**
-     * @param \Illuminate\Database\Eloquent\Builder|Builder $query
+     * @param EloquentBuilder|Builder $query
      * @return mixed
      */
     public function applyScopes($query)
@@ -746,7 +740,6 @@ abstract class TableAbstract extends DataTable
         $requestFilters = [];
 
         if ($request->has('filter_columns') && ($request->input('filter_table_id') == $this->getOption('id'))) {
-            $requestFilters = [];
             foreach ($request->input('filter_columns') as $key => $item) {
                 $operator = $request->input('filter_operators.' . $key);
 
@@ -779,10 +772,10 @@ abstract class TableAbstract extends DataTable
     }
 
     /**
-     * @param Builder $query
+     * @param Builder|EloquentBuilder $query
      * @param string $key
      * @param string $operator
-     * @param string $value
+     * @param string|null $value
      * @return Builder
      */
     public function applyFilterCondition($query, string $key, string $operator, ?string $value)
@@ -824,11 +817,10 @@ abstract class TableAbstract extends DataTable
      * @param string|null $title
      * @param string|null $value
      * @param string| null $type
-     * @param null $data
+     * @param array $data
      * @return array
-     * @throws Throwable
      */
-    public function getValueInput(?string $title, ?string $value, ?string $type, $data = null): array
+    public function getValueInput(?string $title, ?string $value, ?string $type, array $data = []): array
     {
         $inputName = 'value';
 
@@ -888,7 +880,7 @@ abstract class TableAbstract extends DataTable
     /**
      * @param array $ids
      * @param string $inputKey
-     * @param string $inputValue
+     * @param string|null $inputValue
      * @return boolean
      */
     public function saveBulkChanges(array $ids, string $inputKey, ?string $inputValue): bool
@@ -907,10 +899,10 @@ abstract class TableAbstract extends DataTable
     /**
      * @param Model $item
      * @param string $inputKey
-     * @param string $inputValue
+     * @param string|null $inputValue
      * @return false|Model
      */
-    public function saveBulkChangeItem($item, string $inputKey, ?string $inputValue)
+    public function saveBulkChangeItem(Model $item, string $inputKey, ?string $inputValue)
     {
         $item->{$inputKey} = $this->prepareBulkChangeValue($inputKey, $inputValue);
 
@@ -919,7 +911,7 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @param string $key
-     * @param string $value
+     * @param string|null $value
      * @return string
      */
     public function prepareBulkChangeValue(string $key, ?string $value): string
@@ -940,7 +932,6 @@ abstract class TableAbstract extends DataTable
 
     /**
      * @return string
-     * @throws Throwable
      */
     public function renderFilter(): string
     {
@@ -960,7 +951,6 @@ abstract class TableAbstract extends DataTable
         if ($request->input('filter_columns')) {
             $requestFilters = [];
             foreach ($request->input('filter_columns', []) as $key => $item) {
-
                 $operator = $request->input('filter_operators.' . $key);
 
                 $value = $request->input('filter_values.' . $key);
@@ -993,9 +983,8 @@ abstract class TableAbstract extends DataTable
      * @param string $url
      * @param null|string $permission
      * @return array
-     * @throws Throwable
      */
-    protected function addCreateButton(string $url, $permission = null, array $buttons = []): array
+    protected function addCreateButton(string $url, ?string $permission = null, array $buttons = []): array
     {
         if (!$permission || Auth::user()->hasPermission($permission)) {
             $queryString = http_build_query(Request::query());
@@ -1019,7 +1008,7 @@ abstract class TableAbstract extends DataTable
      * @param array $actions
      * @return array
      */
-    protected function addDeleteAction(string $url, $permission = null, $actions = []): array
+    protected function addDeleteAction(string $url, ?string $permission = null, array $actions = []): array
     {
         if (!$permission || Auth::user()->hasPermission($permission)) {
             $actions['delete-many'] = view('core/table::partials.delete', [
@@ -1032,12 +1021,13 @@ abstract class TableAbstract extends DataTable
     }
 
     /**
-     * @param QueryDataTable $data
+     * @param QueryDataTable | CollectionDataTable $data
      * @param array $escapeColumn
      * @param bool $mDataSupport
      * @return mixed
+     * @throws Exception
      */
-    public function toJson($data, $escapeColumn = [], $mDataSupport = true)
+    public function toJson($data, array $escapeColumn = [], bool $mDataSupport = true)
     {
         if ($this->repository && $this->repository->getModel()) {
             $data = apply_filters(BASE_FILTER_GET_LIST_DATA, $data, $this->repository->getModel());
@@ -1049,11 +1039,11 @@ abstract class TableAbstract extends DataTable
     }
 
     /**
-     * @param string $image
+     * @param string|null $image
      * @param array $attributes
      * @return Application|UrlGenerator|HtmlString|string|string[]|null
      */
-    protected function displayThumbnail($image, array $attributes = ['width' => 50])
+    protected function displayThumbnail(?string $image, array $attributes = ['width' => 50])
     {
         if ($this->request()->input('action') == 'csv') {
             return RvMedia::getImageUrl($image, null, false, RvMedia::getDefaultImage());

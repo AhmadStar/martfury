@@ -69,7 +69,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
     /**
      * {@inheritDoc}
      */
-    public function complete(User $user, $code)
+    public function complete(User $user, $code): bool
     {
         $expires = $this->expires();
 
@@ -91,7 +91,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
 
         $activation->fill([
             'completed'    => true,
-            'completed_at' => now(),
+            'completed_at' => Carbon::now(),
         ]);
 
         $activation->save();
@@ -122,14 +122,14 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
      * {@inheritDoc}
      * @throws Exception
      */
-    public function remove(User $user)
+    public function remove(User $user): ?bool
     {
         /**
          * @var Activation $activation
          */
         $activation = $this->completed($user);
 
-        if ($activation === false) {
+        if (!$activation) {
             return false;
         }
 
@@ -158,9 +158,9 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
      *
      * @return Carbon
      */
-    protected function expires()
+    protected function expires(): Carbon
     {
-        return now()->subSeconds($this->expires);
+        return Carbon::now()->subSeconds($this->expires);
     }
 
     /**
@@ -168,7 +168,7 @@ class ActivationRepository extends RepositoriesAbstract implements ActivationInt
      *
      * @return string
      */
-    protected function generateActivationCode()
+    protected function generateActivationCode(): string
     {
         return Str::random(32);
     }

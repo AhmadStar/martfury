@@ -83,7 +83,6 @@ trait ImportTrait
             $date = DateTime::createFromFormat('!' . $format, $value);
 
             return $date ? $date->format(config('core.base.general.date_format.date_time')) : $value;
-
         } catch (Exception $exception) {
             return $default;
         }
@@ -97,11 +96,13 @@ trait ImportTrait
     public function setValues(&$row, $attributes = [])
     {
         foreach ($attributes as $attribute) {
-            $this->setValue($row,
+            $this->setValue(
+                $row,
                 Arr::get($attribute, 'key'),
                 Arr::get($attribute, 'type', 'array'),
                 Arr::get($attribute, 'default'),
-                Arr::get($attribute, 'from'));
+                Arr::get($attribute, 'from')
+            );
         }
 
         return $this;
@@ -123,14 +124,14 @@ trait ImportTrait
                 $value = $value ? explode(',', $value) : [];
                 break;
             case 'bool':
-                if (Str::lower($value) == 'false' || $value == '0' || Str::lower($value) == 'no'){
+                if (Str::lower($value) == 'false' || $value == '0' || Str::lower($value) == 'no') {
                     $value = false;
                 }
                 $value = (bool) $value;
                 break;
             case 'datetime':
-                if ($value){
-                    if (in_array(gettype($value), ['integer', 'double'])){
+                if ($value) {
+                    if (in_array(gettype($value), ['integer', 'double'])) {
                         $value = $this->transformDate($value);
                     } else {
                         $value = $this->getDate($value);

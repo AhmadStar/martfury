@@ -20,14 +20,15 @@ use Botble\Ecommerce\Repositories\Interfaces\CustomerInterface;
 use Botble\Ecommerce\Tables\CustomerTable;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 use Throwable;
 
 class CustomerController extends BaseController
 {
-
     /**
      * @var CustomerInterface
      */
@@ -50,7 +51,7 @@ class CustomerController extends BaseController
 
     /**
      * @param CustomerTable $dataTable
-     * @return Factory|View
+     * @return Factory|Application|View|JsonResponse
      * @throws Throwable
      */
     public function index(CustomerTable $dataTable)
@@ -82,7 +83,7 @@ class CustomerController extends BaseController
     {
         $customer = $this->customerRepository->getModel();
         $customer->fill($request->input());
-        $customer->confirmed_at = now();
+        $customer->confirmed_at = Carbon::now();
         $customer->password = bcrypt($request->input('password'));
         $customer->dob = Carbon::parse($request->input('dob'))->toDateString();
         $customer = $this->customerRepository->createOrUpdate($customer);

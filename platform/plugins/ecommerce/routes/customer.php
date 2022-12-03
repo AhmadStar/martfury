@@ -1,6 +1,7 @@
 <?php
 
-Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers\Customers', 'middleware' => ['web', 'core']],
+Route::group(
+    ['namespace' => 'Botble\Ecommerce\Http\Controllers\Customers', 'middleware' => ['web', 'core']],
     function () {
         Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
             Route::group(['prefix' => 'customers', 'as' => 'customers.'], function () {
@@ -51,7 +52,8 @@ Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers\Customers', 'mid
                 ]);
             });
         });
-    });
+    }
+);
 
 if (defined('THEME_MODULE_SCREEN_NAME')) {
     Route::group(apply_filters(BASE_FILTER_GROUP_PUBLIC_ROUTE, []), function () {
@@ -136,7 +138,7 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
 
             Route::get('order/cancel/{id}', [
                 'as'   => 'orders.cancel',
-                'uses' => 'PublicController@getCancelOder',
+                'uses' => 'PublicController@getCancelOrder',
             ]);
 
             Route::get('address', [
@@ -178,6 +180,47 @@ if (defined('THEME_MODULE_SCREEN_NAME')) {
                 'as'   => 'avatar',
                 'uses' => 'PublicController@postAvatar',
             ]);
+
+            Route::get('order-returns', [
+                'as'   => 'order_returns',
+                'uses' => 'PublicController@getListReturnOrders',
+            ]);
+
+            Route::get('order-returns/detail/{id}', [
+                'as'   => 'order_returns.detail',
+                'uses' => 'PublicController@getDetailReturnOrder',
+            ]);
+
+            Route::get('order-returns/request/{order_id}', [
+                'as'   => 'order_returns.request_view',
+                'uses' => 'PublicController@getReturnOrder',
+            ]);
+
+            Route::post('order-returns/send_request', [
+                'as'   => 'order_returns.send_request',
+                'uses' => 'PublicController@postReturnOrder',
+            ]);
+
+            Route::get('downloads', [
+                'as'   => 'downloads',
+                'uses' => 'PublicController@getDownloads',
+            ]);
+
+            Route::get('download/{id}', [
+                'as'   => 'downloads.product',
+                'uses' => 'PublicController@getDownload',
+            ]);
+
+            Route::group([
+                'prefix' => 'invoices',
+                'as'     => 'invoices.',
+            ], function () {
+                Route::resource('', 'InvoiceController')
+                    ->only('index')
+                    ->parameters('invoices');
+                Route::get('{id}', 'InvoiceController@show')->name('show');
+                Route::get('{id}/generate-invoice', 'InvoiceController@getGenerateInvoice')->name('generate_invoice');
+            });
         });
     });
 }

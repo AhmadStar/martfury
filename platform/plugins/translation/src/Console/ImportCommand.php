@@ -8,7 +8,6 @@ use Symfony\Component\Console\Input\InputOption;
 
 class ImportCommand extends Command
 {
-
     /**
      * The console command name.
      *

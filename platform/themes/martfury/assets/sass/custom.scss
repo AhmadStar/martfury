@@ -2026,3 +2026,86 @@ input.qty-input[type=number] {
         }
     }
 }
+
+.ps-product--header-sticky {
+    .ps-product__content {
+        max-width: 500px;
+    }
+
+    .ps-product__title {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.ps-product__gallery {
+    img {
+        opacity: 0;
+    }
+
+    .slick-slide {
+        img {
+            opacity: 1;
+            margin: 0 auto;
+        }
+    }
+}
+
+.ps-product--detail {
+    .ps-product__sharing {
+        a {
+            &.whatsapp {
+                background-color: #34B7F1;
+
+                &:hover {
+                    background-color: #21aae6;
+                }
+            }
+        }
+    }
+}
+
+#homepage-1 {
+    .ps-home-banner {
+        .owl-slider {
+            .ps-banner {
+                img {
+                    max-height: 410px;
+                }
+            }
+        }
+    }
+}
+
+.ps-popup__content {
+    &.bg--cover {
+        background-color: #fff;
+    }
+}
+
+@media (max-width: 991px) {
+    .ps-block--site-features {
+        justify-content: center;
+
+        .ps-block__item {
+            text-align: center;
+
+            .ps-block__left {
+                width: 100%;
+            }
+        }
+    }
+}
+
+@media (max-width: 767px) {
+    .ps-block--site-features {
+        .ps-block__item {
+            text-align: left;
+
+            .ps-block__left {
+                width: auto;
+            }
+        }
+    }
+}

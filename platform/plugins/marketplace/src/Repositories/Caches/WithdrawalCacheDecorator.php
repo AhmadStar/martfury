@@ -7,5 +7,4 @@ use Botble\Marketplace\Repositories\Interfaces\WithdrawalInterface;
 
 class WithdrawalCacheDecorator extends CacheAbstractDecorator implements WithdrawalInterface
 {
-
 }

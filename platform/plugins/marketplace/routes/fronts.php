@@ -7,7 +7,6 @@ Route::group([
     'middleware' => ['web', 'core'],
 ], function () {
     Route::group(apply_filters(BASE_FILTER_GROUP_PUBLIC_ROUTE, []), function () {
-
         Route::get(SlugHelper::getPrefix(Store::class, 'stores'), [
             'as'   => 'public.stores',
             'uses' => 'PublicStoreController@getStores',
@@ -28,7 +27,6 @@ Route::group([
             'as'         => 'marketplace.vendor.',
             'middleware' => ['vendor'],
         ], function () {
-
             Route::group(['prefix' => 'ajax'], function () {
                 Route::post('upload', [
                     'as'   => 'upload',
@@ -215,6 +213,15 @@ Route::group([
                 ]);
             });
 
+            Route::group(['prefix' => 'order-returns', 'as' => 'order-returns.'], function () {
+                Route::resource('', 'OrderReturnController')->parameters(['' => 'order'])->except(['create', 'store']);
+
+                Route::delete('items/destroy', [
+                    'as'   => 'deletes',
+                    'uses' => 'OrderReturnController@deletes',
+                ]);
+            });
+
             Route::group(['prefix' => 'coupons', 'as' => 'discounts.'], function () {
                 Route::resource('', 'DiscountController')->parameters(['' => 'coupon'])->except(['edit', 'update']);
 
@@ -235,7 +242,6 @@ Route::group([
             'as'         => 'marketplace.vendor.',
             'middleware' => ['customer'],
         ], function () {
-
             Route::get('become-vendor', [
                 'as'   => 'become-vendor',
                 'uses' => 'DashboardController@getBecomeVendor',
@@ -245,7 +251,6 @@ Route::group([
                 'as'   => 'become-vendor.post',
                 'uses' => 'DashboardController@postBecomeVendor',
             ]);
-
         });
     });
 });
@@ -275,7 +280,6 @@ Route::group([
         'as'         => 'marketplace.vendor.',
         'middleware' => ['vendor'],
     ], function () {
-
         Route::post('language-advanced/save/{id}', [
             'as'   => 'language-advanced.save',
             'uses' => 'LanguageAdvancedController@save',

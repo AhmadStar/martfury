@@ -28,8 +28,7 @@ class StoreAttributesOfProductService
     public function __construct(
         ProductAttributeInterface $productAttributeRepository,
         ProductVariationInterface $productVariationRepository
-    )
-    {
+    ) {
         $this->productAttributeRepository = $productAttributeRepository;
 
         $this->productVariationRepository = $productVariationRepository;
@@ -41,7 +40,7 @@ class StoreAttributesOfProductService
      * @param array $attributes
      * @return Product
      */
-    public function execute(Product $product, array $attributeSets, array $attributes = [])
+    public function execute(Product $product, array $attributeSets, array $attributes = []): Product
     {
         $product->productAttributeSets()->sync($attributeSets);
 

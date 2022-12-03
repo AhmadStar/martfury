@@ -1,9 +1,7 @@
 <?php
 
-Route::group(['namespace' => 'Botble\Ads\Http\Controllers', 'middleware' => ['web']], function () {
-
+Route::group(['namespace' => 'Botble\Ads\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
-
         Route::group(['prefix' => 'ads', 'as' => 'ads.'], function () {
             Route::resource('', 'AdsController')->parameters(['' => 'ads']);
             Route::delete('items/destroy', [
@@ -22,5 +20,4 @@ Route::group(['namespace' => 'Botble\Ads\Http\Controllers', 'middleware' => ['we
             ]);
         });
     }
-
 });

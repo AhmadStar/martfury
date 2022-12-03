@@ -35,8 +35,11 @@ class HookServiceProvider extends ServiceProvider
             MetaBox::addMetaBox(
                 'faq_schema_config_wrapper',
                 trans('plugins/faq::faq.faq_schema_config', [
-                    'link' => Html::link('https://developers.google.com/search/docs/data-types/faqpage',
-                        trans('plugins/faq::faq.learn_more'), ['target' => '_blank']),
+                    'link' => Html::link(
+                        'https://developers.google.com/search/docs/data-types/faqpage',
+                        trans('plugins/faq::faq.learn_more'),
+                        ['target' => '_blank']
+                    ),
                 ]),
                 function () {
                     $value = [];
@@ -61,7 +64,6 @@ class HookServiceProvider extends ServiceProvider
 
         add_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, function ($screen, $object) {
             add_filter(THEME_FRONT_HEADER, function ($html) use ($object) {
-
                 if (!in_array(get_class($object), config('plugins.faq.general.schema_supported', []))) {
                     return $html;
                 }
@@ -105,17 +107,16 @@ class HookServiceProvider extends ServiceProvider
 
                 return $html . Html::tag('script', $schema, ['type' => 'application/ld+json'])->toHtml();
             }, 39);
-
         }, 39, 2);
 
         add_filter(BASE_FILTER_AFTER_SETTING_CONTENT, [$this, 'addSettings'], 59);
     }
 
     /**
-     * @param null|string $data
+     * @param string|null $data
      * @return string
      */
-    public function addSettings($data = null)
+    public function addSettings(?string $data = null): string
     {
         return $data . view('plugins/faq::settings')->render();
     }

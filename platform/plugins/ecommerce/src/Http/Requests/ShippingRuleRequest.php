@@ -6,7 +6,6 @@ use Botble\Support\Http\Requests\Request;
 
 class ShippingRuleRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -36,8 +35,10 @@ class ShippingRuleRequest extends Request
     {
         $attributes = [];
         foreach ($this->input('shipping_rule_items', []) as $key => $item) {
-            $attributes['shipping_rule_items.' . $key . '.adjustment_price'] = trans('plugins/ecommerce::shipping.adjustment_price_of',
-                $key);
+            $attributes['shipping_rule_items.' . $key . '.adjustment_price'] = trans(
+                'plugins/ecommerce::shipping.adjustment_price_of',
+                $key
+            );
         }
 
         return $attributes;

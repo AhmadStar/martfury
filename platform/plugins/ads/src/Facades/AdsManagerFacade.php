@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Facade;
 
 class AdsManagerFacade extends Facade
 {
-
     /**
      * @return string
      */

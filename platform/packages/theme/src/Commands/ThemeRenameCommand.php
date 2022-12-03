@@ -12,7 +12,6 @@ use Illuminate\Filesystem\Filesystem as File;
 
 class ThemeRenameCommand extends Command
 {
-
     use ThemeTrait;
 
     /**

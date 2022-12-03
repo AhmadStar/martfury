@@ -15,7 +15,6 @@ class WidgetSeeder extends BaseSeeder
      */
     public function run()
     {
-
         WidgetModel::truncate();
 
         $data = [

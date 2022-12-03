@@ -10,18 +10,20 @@ use Theme\Martfury\Http\Resources\ProductCategoryResource;
 use Theme\Martfury\Http\Resources\ProductCollectionResource;
 
 app()->booted(function () {
-
     ThemeSupport::registerGoogleMapsShortcode();
     ThemeSupport::registerYoutubeShortcode();
 
     if (is_plugin_active('ecommerce')) {
-        add_shortcode('featured-product-categories', __('Featured Product Categories'),
+        add_shortcode(
+            'featured-product-categories',
+            __('Featured Product Categories'),
             __('Featured Product Categories'),
             function ($shortCode) {
                 return Theme::partial('short-codes.featured-product-categories', [
                     'title' => $shortCode->title,
                 ]);
-            });
+            }
+        );
 
         shortcode()->setAdminConfig('featured-product-categories', function ($attributes) {
             return Theme::partial('short-codes.featured-product-categories-admin-config', compact('attributes'));
@@ -48,18 +50,23 @@ app()->booted(function () {
             return Theme::partial('short-codes.featured-brands-admin-config', compact('attributes'));
         });
 
-        add_shortcode('product-collections', __('Product Collections'), __('Product Collections'),
+        add_shortcode(
+            'product-collections',
+            __('Product Collections'),
+            __('Product Collections'),
             function ($shortCode) {
                 $productCollections = get_product_collections(
                     ['status' => BaseStatusEnum::PUBLISHED],
                     [],
-                    ['id', 'name', 'slug']);
+                    ['id', 'name', 'slug']
+                );
 
                 return Theme::partial('short-codes.product-collections', [
                     'title'              => $shortCode->title,
                     'productCollections' => ProductCollectionResource::collection($productCollections),
                 ]);
-            });
+            }
+        );
 
         shortcode()->setAdminConfig('product-collections', function ($attributes) {
             return Theme::partial('short-codes.product-collections-admin-config', compact('attributes'));
@@ -75,7 +82,10 @@ app()->booted(function () {
             return Theme::partial('short-codes.trending-products-admin-config', compact('attributes'));
         });
 
-        add_shortcode('product-category-products', __('Product category products'), __('Product category products'),
+        add_shortcode(
+            'product-category-products',
+            __('Product category products'),
+            __('Product category products'),
             function ($shortCode) {
                 $category = app(ProductCategoryInterface::class)->getFirstBy([
                     'status' => BaseStatusEnum::PUBLISHED,
@@ -97,7 +107,8 @@ app()->booted(function () {
                 $category->activeChildren = ProductCategoryResource::collection($category->activeChildren);
 
                 return Theme::partial('short-codes.product-category-products', compact('category', 'limit'));
-            });
+            }
+        );
 
         shortcode()->setAdminConfig('product-category-products', function ($attributes) {
             $categories = ProductCategoryHelper::getProductCategoriesWithIndent();
@@ -153,12 +164,10 @@ app()->booted(function () {
         }, 50, 3);
 
         /**
-         * @param array $keys
-         * @param string $order
-         * @param int $limit
+         * @param $shortcode
          * @return array
          */
-        function get_ads_keys_from_shortcode($shortcode)
+        function get_ads_keys_from_shortcode($shortcode): array
         {
             $keys = collect($shortcode->toArray())
                 ->sortKeys()

@@ -2,11 +2,11 @@
 
 namespace Botble\Marketplace\Http\Controllers\Fronts;
 
-use Assets;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Forms\FormBuilder;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Botble\Ecommerce\Enums\ProductTypeEnum;
 use Botble\Ecommerce\Http\Requests\ProductRequest;
 use Botble\Ecommerce\Http\Requests\ProductVersionRequest;
 use Botble\Ecommerce\Models\Customer;
@@ -20,6 +20,7 @@ use Botble\Ecommerce\Services\StoreProductTagService;
 use Botble\Ecommerce\Traits\ProductActionsTrait;
 use Botble\Marketplace\Forms\ProductForm;
 use Botble\Marketplace\Tables\ProductTable;
+use EcommerceHelper;
 use EmailHandler;
 use Exception;
 use Illuminate\Contracts\View\Factory;
@@ -53,24 +54,20 @@ class ProductController extends BaseController
 
     /**
      * @param FormBuilder $formBuilder
+     * @param Request $formBuilder
      * @return string
      */
-    public function create(FormBuilder $formBuilder)
+    public function create(FormBuilder $formBuilder, Request $request)
     {
-        page_title()->setTitle(trans('plugins/ecommerce::products.create'));
-
-        Assets::addStyles(['datetimepicker'])
-            ->addScripts([
-                'moment',
-                'datetimepicker',
-                'jquery-ui',
-                'input-mask',
-                'blockui',
-            ])
-            ->addStylesDirectly(['vendor/core/plugins/ecommerce/css/ecommerce.css'])
-            ->addScriptsDirectly([
-                'vendor/core/plugins/ecommerce/js/edit-product.js',
-            ]);
+        if (EcommerceHelper::isEnabledSupportDigitalProducts()) {
+            if ($request->input('product_type') == ProductTypeEnum::DIGITAL) {
+                page_title()->setTitle(trans('plugins/ecommerce::products.create_product_type.digital'));
+            } else {
+                page_title()->setTitle(trans('plugins/ecommerce::products.create_product_type.physical'));
+            }
+        } else {
+            page_title()->setTitle(trans('plugins/ecommerce::products.create'));
+        }
 
         return $formBuilder->create(ProductForm::class)->renderForm();
     }
@@ -96,14 +93,19 @@ class ProductController extends BaseController
         GroupedProductInterface         $groupedProductRepository,
         StoreAttributesOfProductService $storeAttributesOfProductService,
         StoreProductTagService          $storeProductTagService
-    )
-    {
+    ) {
         $request = $this->processRequestData($request);
 
         $product = $this->productRepository->getModel();
 
-        $product->status = MarketplaceHelper::getSetting('enable_product_approval',
-            1) ? BaseStatusEnum::PENDING : BaseStatusEnum::PUBLISHED;
+        $product->status = MarketplaceHelper::getSetting(
+            'enable_product_approval',
+            1
+        ) ? BaseStatusEnum::PENDING : BaseStatusEnum::PUBLISHED;
+
+        if (EcommerceHelper::isEnabledSupportDigitalProducts() && $request->input('product_type')) {
+            $product->product_type = $request->input('product_type');
+        }
 
         $product = $service->execute($request, $product);
 
@@ -185,19 +187,6 @@ class ProductController extends BaseController
 
         page_title()->setTitle(trans('plugins/ecommerce::products.edit', ['name' => $product->name]));
 
-        Assets::addStyles(['datetimepicker'])
-            ->addScripts([
-                'moment',
-                'datetimepicker',
-                'jquery-ui',
-                'input-mask',
-                'blockui',
-            ])
-            ->addStylesDirectly(['vendor/core/plugins/ecommerce/css/ecommerce.css'])
-            ->addScriptsDirectly([
-                'vendor/core/plugins/ecommerce/js/edit-product.js',
-            ]);
-
         return $formBuilder
             ->create(ProductForm::class, ['model' => $product])
             ->renderForm();
@@ -223,8 +212,7 @@ class ProductController extends BaseController
         ProductVariationInterface $variationRepository,
         ProductVariationItemInterface $productVariationItemRepository,
         StoreProductTagService $storeProductTagService
-    )
-    {
+    ) {
         $product = $this->productRepository->findOrFail($id);
 
         if ($product->is_variation || $product->store_id != auth('customer')->user()->store->id) {
@@ -333,11 +321,15 @@ class ProductController extends BaseController
             $product = $this->productRepository->findById($id);
         }
 
-        $dataUrl = route('marketplace.vendor.products.get-list-product-for-search',
-            ['product_id' => $product ? $product->id : 0]);
+        $dataUrl = route(
+            'marketplace.vendor.products.get-list-product-for-search',
+            ['product_id' => $product ? $product->id : 0]
+        );
 
-        return $response->setData(view('plugins/ecommerce::products.partials.extras',
-            compact('product', 'dataUrl'))->render());
+        return $response->setData(view(
+            'plugins/ecommerce::products.partials.extras',
+            compact('product', 'dataUrl')
+        )->render());
     }
 
     /**
@@ -346,10 +338,9 @@ class ProductController extends BaseController
     public function postAddVersion(
         ProductVersionRequest     $request,
         ProductVariationInterface $productVariation,
-                                  $id,
+        $id,
         BaseHttpResponse          $response
-    )
-    {
+    ) {
         $request->merge([
             'images' => json_decode($request->input('images', '[]')),
         ]);
@@ -363,10 +354,9 @@ class ProductController extends BaseController
     public function postUpdateVersion(
         ProductVersionRequest     $request,
         ProductVariationInterface $productVariation,
-                                  $id,
+        $id,
         BaseHttpResponse          $response
-    )
-    {
+    ) {
         $request->merge([
             'images' => json_decode($request->input('images', '[]')),
         ]);
@@ -384,8 +374,7 @@ class ProductController extends BaseController
         BaseHttpResponse $response,
         ProductAttributeSetInterface $productAttributeSetRepository,
         ProductVariationItemInterface $productVariationItemRepository
-    )
-    {
+    ) {
         $product = null;
         $variation = null;
         $productVariationsInfo = [];
@@ -423,9 +412,8 @@ class ProductController extends BaseController
     protected function deleteVersionItem(
         ProductVariationInterface     $productVariation,
         ProductVariationItemInterface $productVariationItem,
-                                      $variationId
-    )
-    {
+        $variationId
+    ) {
         $variation = $productVariation->findOrFail($variationId);
 
         $product = $variation->product()->first();

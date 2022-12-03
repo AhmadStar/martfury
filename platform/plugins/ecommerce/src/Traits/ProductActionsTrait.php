@@ -23,6 +23,8 @@ use Botble\Ecommerce\Repositories\Interfaces\ProductVariationInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductVariationItemInterface;
 use Botble\Ecommerce\Services\Products\CreateProductVariationsService;
 use Botble\Ecommerce\Services\Products\StoreAttributesOfProductService;
+use Botble\Ecommerce\Services\Products\StoreProductService;
+use EcommerceHelper;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -68,11 +70,11 @@ trait ProductActionsTrait
      * @param ProductAttributeInterface $productAttributeRepository
      */
     public function __construct(
-        ProductInterface $productRepository,
-        ProductCategoryInterface $productCategoryRepository,
+        ProductInterface           $productRepository,
+        ProductCategoryInterface   $productCategoryRepository,
         ProductCollectionInterface $productCollectionRepository,
-        BrandInterface $brandRepository,
-        ProductAttributeInterface $productAttributeRepository
+        BrandInterface             $brandRepository,
+        ProductAttributeInterface  $productAttributeRepository
     ) {
         $this->productRepository = $productRepository;
         $this->productCategoryRepository = $productCategoryRepository;
@@ -99,7 +101,6 @@ trait ProductActionsTrait
         $product = $this->productRepository->findOrFail($id);
 
         foreach ($versionInRequest as $variationId => $version) {
-
             $variation = $productVariation->findById($variationId);
 
             if (!$variation) {
@@ -145,13 +146,22 @@ trait ProductActionsTrait
                 $productRelatedToVariation->height = Arr::get($version, 'height', $product->height);
                 $productRelatedToVariation->weight = Arr::get($version, 'weight', $product->weight);
 
-                $productRelatedToVariation->with_storehouse_management = Arr::get($version,
-                    'with_storehouse_management', $product->with_storehouse_management);
-                $productRelatedToVariation->stock_status = Arr::get($version,
-                    'stock_status', StockStatusEnum::IN_STOCK);
+                $productRelatedToVariation->with_storehouse_management = Arr::get(
+                    $version,
+                    'with_storehouse_management',
+                    $product->with_storehouse_management
+                );
+                $productRelatedToVariation->stock_status = Arr::get(
+                    $version,
+                    'stock_status',
+                    StockStatusEnum::IN_STOCK
+                );
                 $productRelatedToVariation->quantity = Arr::get($version, 'quantity', $product->quantity);
-                $productRelatedToVariation->allow_checkout_when_out_of_stock = Arr::get($version,
-                    'allow_checkout_when_out_of_stock', $product->allow_checkout_when_out_of_stock);
+                $productRelatedToVariation->allow_checkout_when_out_of_stock = Arr::get(
+                    $version,
+                    'allow_checkout_when_out_of_stock',
+                    $product->allow_checkout_when_out_of_stock
+                );
 
                 $productRelatedToVariation->sale_type = (int)Arr::get($version, 'sale_type', $product->sale_type);
 
@@ -164,10 +174,21 @@ trait ProductActionsTrait
                 }
 
                 if ($isNew) {
+                    $productRelatedToVariation->product_type = Arr::get($version, 'product_type', $product->product_type);
                     $productRelatedToVariation->images = json_encode($version['images']);
                 }
 
                 $productRelatedToVariation = $this->productRepository->createOrUpdate($productRelatedToVariation);
+
+                if (EcommerceHelper::isEnabledSupportDigitalProducts()) {
+                    if ($isNew && $product->productFiles->count()) {
+                        foreach ($product->productFiles as $productFile) {
+                            $productRelatedToVariation->productFiles()->create($productFile->toArray());
+                        }
+                    } else {
+                        app(StoreProductService::class)->saveProductFiles(request(), $productRelatedToVariation);
+                    }
+                }
 
                 if (!$productRelatedToVariation->is_variation) {
                     if ($isNew) {
@@ -295,10 +316,10 @@ trait ProductActionsTrait
      * @throws Exception
      */
     public function deleteVersion(
-        ProductVariationInterface $productVariation,
+        ProductVariationInterface     $productVariation,
         ProductVariationItemInterface $productVariationItem,
         $variationId,
-        BaseHttpResponse $response
+        BaseHttpResponse              $response
     ) {
         $result = $this->deleteVersionItem($productVariation, $productVariationItem, $variationId);
 
@@ -320,10 +341,10 @@ trait ProductActionsTrait
      * @throws Exception
      */
     public function deleteVersions(
-        Request $request,
-        ProductVariationInterface $productVariation,
+        Request                       $request,
+        ProductVariationInterface     $productVariation,
         ProductVariationItemInterface $productVariationItem,
-        BaseHttpResponse $response
+        BaseHttpResponse              $response
     ) {
         $ids = (array)$request->input('ids');
 
@@ -348,7 +369,7 @@ trait ProductActionsTrait
      * @throws Exception
      */
     protected function deleteVersionItem(
-        ProductVariationInterface $productVariation,
+        ProductVariationInterface     $productVariation,
         ProductVariationItemInterface $productVariationItem,
         $variationId
     ) {
@@ -404,10 +425,10 @@ trait ProductActionsTrait
      * @return BaseHttpResponse
      */
     public function postAddVersion(
-        ProductVersionRequest $request,
+        ProductVersionRequest     $request,
         ProductVariationInterface $productVariation,
         $id,
-        BaseHttpResponse $response
+        BaseHttpResponse          $response
     ) {
         $addedAttributes = $request->input('attribute_sets', []);
 
@@ -419,8 +440,12 @@ trait ProductActionsTrait
                     ->setMessage(trans('plugins/ecommerce::products.form.variation_existed'));
             }
 
-            $this->postSaveAllVersions([$result['variation']->id => $request->input()], $productVariation, $id,
-                $response);
+            $this->postSaveAllVersions(
+                [$result['variation']->id => $request->input()],
+                $productVariation,
+                $id,
+                $response
+            );
 
             return $response->setMessage(trans('plugins/ecommerce::products.form.added_variation_success'));
         }
@@ -455,6 +480,9 @@ trait ProductActionsTrait
             $variation = $productVariation->findOrFail($id);
             $product = $this->productRepository->findOrFail($variation->product_id);
             $productVariationsInfo = $productVariationItemRepository->getVariationsInfo([$id]);
+            $originalProduct = $product;
+        } else {
+            $originalProduct = $this->productRepository->findOrFail($request->input('product_id'));
         }
 
         $productId = $variation ? $variation->configurable_product_id : $request->input('product_id');
@@ -465,7 +493,6 @@ trait ProductActionsTrait
             $productAttributeSets = $productAttributeSetRepository->getAllWithSelected($productId);
         }
 
-        $originalProduct = $product;
 
         return $response
             ->setData(
@@ -487,19 +514,20 @@ trait ProductActionsTrait
      * @throws Exception
      */
     public function postUpdateVersion(
-        ProductVersionRequest $request,
+        ProductVersionRequest     $request,
         ProductVariationInterface $productVariation,
         $id,
-        BaseHttpResponse $response
+        BaseHttpResponse          $response
     ) {
         $variation = $productVariation->findOrFail($id);
 
         $addedAttributes = $request->input('attribute_sets', []);
 
-        if ($addedAttributes && !empty($addedAttributes) && is_array($addedAttributes)) {
-
-            $result = $productVariation->getVariationByAttributesOrCreate($variation->configurable_product_id,
-                $addedAttributes);
+        if (!empty($addedAttributes) && is_array($addedAttributes)) {
+            $result = $productVariation->getVariationByAttributesOrCreate(
+                $variation->configurable_product_id,
+                $addedAttributes
+            );
 
             if (!$result['created'] && $result['variation']->id !== $variation->id) {
                 return $response
@@ -539,9 +567,9 @@ trait ProductActionsTrait
      */
     public function postGenerateAllVersions(
         CreateProductVariationsService $service,
-        ProductVariationInterface $productVariation,
+        ProductVariationInterface      $productVariation,
         $id,
-        BaseHttpResponse $response
+        BaseHttpResponse               $response
     ) {
         $product = $this->productRepository->findOrFail($id);
 
@@ -575,10 +603,10 @@ trait ProductActionsTrait
      * @throws Exception
      */
     public function postStoreRelatedAttributes(
-        Request $request,
+        Request                         $request,
         StoreAttributesOfProductService $service,
         $id,
-        BaseHttpResponse $response
+        BaseHttpResponse                $response
     ) {
         $product = $this->productRepository->findOrFail($id);
 
@@ -643,8 +671,10 @@ trait ProductActionsTrait
 
         $dataUrl = route('products.get-list-product-for-search', ['product_id' => $product ? $product->id : 0]);
 
-        return $response->setData(view('plugins/ecommerce::products.partials.extras',
-            compact('product', 'dataUrl'))->render());
+        return $response->setData(view(
+            'plugins/ecommerce::products.partials.extras',
+            compact('product', 'dataUrl')
+        )->render());
     }
 
     /**
@@ -671,8 +701,12 @@ trait ProductActionsTrait
              */
             $availableProducts = $availableProducts
                 ->join('ec_product_variations', 'ec_product_variations.configurable_product_id', '=', 'ec_products.id')
-                ->join('ec_product_variation_items', 'ec_product_variation_items.variation_id', '=',
-                    'ec_product_variations.id');
+                ->join(
+                    'ec_product_variation_items',
+                    'ec_product_variation_items.variation_id',
+                    '=',
+                    'ec_product_variations.id'
+                );
         }
 
         $availableProducts = $availableProducts->simplePaginate(5);
@@ -701,14 +735,18 @@ trait ProductActionsTrait
      */
     public function postCreateProductWhenCreatingOrder(
         CreateProductWhenCreatingOrderRequest $request,
-        BaseHttpResponse $response
+        BaseHttpResponse                      $response
     ) {
         $product = $this->productRepository->createOrUpdate($request->input());
 
         event(new CreatedContentEvent(PRODUCT_MODULE_SCREEN_NAME, $request, $product));
 
-        $product->image_url = RvMedia::getImageUrl(Arr::first($product->images) ?? null, 'thumb', false,
-            RvMedia::getDefaultImage());
+        $product->image_url = RvMedia::getImageUrl(
+            Arr::first($product->images) ?? null,
+            'thumb',
+            false,
+            RvMedia::getDefaultImage()
+        );
         $product->price = $product->front_sale_price;
         $product->select_qty = 1;
         $product->product_link = route('products.edit', $product->id);
@@ -735,16 +773,24 @@ trait ProductActionsTrait
             ])
             ->distinct('ec_products.id')
             ->leftJoin('ec_product_variations', 'ec_product_variations.configurable_product_id', '=', 'ec_products.id')
-            ->leftJoin('ec_product_variation_items', 'ec_product_variation_items.variation_id', '=',
-                'ec_product_variations.id')
+            ->leftJoin(
+                'ec_product_variation_items',
+                'ec_product_variation_items.variation_id',
+                '=',
+                'ec_product_variations.id'
+            )
             ->simplePaginate(5);
 
         foreach ($availableProducts as &$availableProduct) {
             /**
              * @var Product $availableProduct
              */
-            $availableProduct->image_url = RvMedia::getImageUrl(Arr::first($availableProduct->images) ?? null, 'thumb',
-                false, RvMedia::getDefaultImage());
+            $availableProduct->image_url = RvMedia::getImageUrl(
+                Arr::first($availableProduct->images) ?? null,
+                'thumb',
+                false,
+                RvMedia::getDefaultImage()
+            );
             $availableProduct->price = $availableProduct->front_sale_price;
             $availableProduct->product_link = route('products.edit', $availableProduct->original_product->id);
             $availableProduct->is_out_of_stock = $availableProduct->isOutOfStock();

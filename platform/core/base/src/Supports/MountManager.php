@@ -49,12 +49,8 @@ class MountManager
      * @return $this
      * @throws InvalidArgumentException
      */
-    public function mountFilesystem($prefix, FilesystemInterface $filesystem): MountManager
+    public function mountFilesystem(string $prefix, FilesystemInterface $filesystem): MountManager
     {
-        if (!is_string($prefix)) {
-            throw new InvalidArgumentException(__METHOD__ . ' expects argument #1 to be a string.');
-        }
-
         $this->filesystems[$prefix] = $filesystem;
 
         return $this;
@@ -67,7 +63,7 @@ class MountManager
      * @throws FilesystemNotFoundException
      * @throws InvalidArgumentException
      */
-    public function listContents($directory = '', $recursive = false): array
+    public function listContents(string $directory = '', bool $recursive = false): array
     {
         [$prefix, $directory] = $this->getPrefixAndPath($directory);
         $filesystem = $this->getFilesystem($prefix);
@@ -85,7 +81,7 @@ class MountManager
      * @return string[] [:prefix, :path]
      * @throws InvalidArgumentException
      */
-    protected function getPrefixAndPath($path): array
+    protected function getPrefixAndPath(string $path): array
     {
         if (strpos($path, '://') < 1) {
             throw new InvalidArgumentException('No prefix detected in path: ' . $path);
@@ -101,7 +97,7 @@ class MountManager
      * @return FilesystemInterface
      * @throws FilesystemNotFoundException
      */
-    public function getFilesystem($prefix)
+    public function getFilesystem(string $prefix): FilesystemInterface
     {
         if (!isset($this->filesystems[$prefix])) {
             throw new FilesystemNotFoundException('No filesystem mounted with prefix ' . $prefix);
@@ -116,7 +112,7 @@ class MountManager
      * @param string $path
      * @return bool
      */
-    public function has($path): bool
+    public function has(string $path): bool
     {
         [$prefix, $path] = $this->getPrefixAndPath($path);
 
@@ -130,7 +126,7 @@ class MountManager
      * @return string|false The file contents or false on failure.
      * @throws FileNotFoundException
      */
-    public function read($path)
+    public function read(string $path)
     {
         [$prefix, $path] = $this->getPrefixAndPath($path);
 
@@ -141,11 +137,11 @@ class MountManager
      * Create a file or update if exists.
      *
      * @param string $path The path to the file.
-     * @param string $contents The file contents.
+     * @param string|null $contents The file contents.
      * @param array $config An optional configuration array.
      * @return bool True on success, false on failure.
      */
-    public function put($path, $contents, array $config = [])
+    public function put(string $path, ?string $contents, array $config = [])
     {
         [$prefix, $path] = $this->getPrefixAndPath($path);
 

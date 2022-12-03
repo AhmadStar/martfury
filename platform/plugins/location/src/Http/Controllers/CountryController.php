@@ -18,7 +18,7 @@ use Botble\Base\Events\UpdatedContentEvent;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Location\Forms\CountryForm;
 use Botble\Base\Forms\FormBuilder;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use Throwable;
 
 class CountryController extends BaseController
@@ -44,7 +44,6 @@ class CountryController extends BaseController
      */
     public function index(CountryTable $table)
     {
-
         page_title()->setTitle(trans('plugins/location::country.name'));
 
         return $table->renderTable();

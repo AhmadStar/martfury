@@ -91,7 +91,7 @@ class ProductAttribute extends BaseModel
     public function getAttributeStyle($attributeSet = null, $productVariations = [])
     {
         if ($attributeSet && $attributeSet->use_image_from_product_variation) {
-            foreach($productVariations as $productVariation) {
+            foreach ($productVariations as $productVariation) {
                 $attribute = $productVariation->productAttributes->where('attribute_set_id', $attributeSet->id)->first();
                 if ($attribute && $attribute->id == $this->id && $productVariation->product->image) {
                     return 'background-image: url(' . RvMedia::getImageUrl($productVariation->product->image) . '); background-size: cover; background-repeat: no-repeat; background-position: center;';

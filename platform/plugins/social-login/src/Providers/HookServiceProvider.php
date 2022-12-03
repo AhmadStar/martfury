@@ -6,6 +6,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\ServiceProvider;
 use SocialService;
 use Theme;
+use Throwable;
 
 class HookServiceProvider extends ServiceProvider
 {
@@ -17,12 +18,12 @@ class HookServiceProvider extends ServiceProvider
     }
 
     /**
-     * @param string $html
+     * @param string|null $html
      * @param string $module
      * @return null|string
-     * @throws \Throwable
+     * @throws Throwable
      */
-    public function addLoginOptions($html, string $module)
+    public function addLoginOptions(?string $html, string $module): ?string
     {
         if (!SocialService::isSupportedModule($module)) {
             return $html;
@@ -39,8 +40,13 @@ class HookServiceProvider extends ServiceProvider
             if (Arr::get($data, 'use_css', true) && defined('THEME_OPTIONS_MODULE_SCREEN_NAME')) {
                 Theme::asset()
                     ->usePath(false)
-                    ->add('social-login-css', asset('vendor/core/plugins/social-login/css/social-login.css'), [], [],
-                        '1.1.0');
+                    ->add(
+                        'social-login-css',
+                        asset('vendor/core/plugins/social-login/css/social-login.css'),
+                        [],
+                        [],
+                        '1.1.0'
+                    );
             }
 
             $view = Arr::get($data, 'view', 'plugins/social-login::login-options');

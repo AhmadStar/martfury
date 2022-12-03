@@ -8,7 +8,6 @@ use Botble\Marketplace\Models\Withdrawal;
 
 class WithdrawalForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -17,7 +16,7 @@ class WithdrawalForm extends FormAbstract
         $symbol = ' (' . get_application_currency()->symbol . ')';
 
         $this
-            ->setupModel(new Withdrawal)
+            ->setupModel(new Withdrawal())
             ->setValidatorClass(WithdrawalRequest::class)
             ->withCustomFields()
             ->add('amount', 'text', [
@@ -70,8 +69,8 @@ class WithdrawalForm extends FormAbstract
                 'label_attr' => ['class' => 'control-label'],
                 'values'     => $this->getModel() ? $this->getModel()->images : [],
             ]);
-            if ($this->getModel()->canEditStatus()) {
-                $this->add('status', 'customSelect', [
+        if ($this->getModel()->canEditStatus()) {
+            $this->add('status', 'customSelect', [
                     'label'      => trans('core/base::tables.status'),
                     'label_attr' => ['class' => 'control-label required'],
                     'attr'       => [
@@ -82,12 +81,12 @@ class WithdrawalForm extends FormAbstract
                         'text' => $this->getModel()->getStatusHelper(),
                     ],
                 ]);
-            } else {
-                $this->add('status', 'html', [
+        } else {
+            $this->add('status', 'html', [
                     'html' => $this->getModel()->status->toHtml(),
                 ]);
-            }
+        }
 
-            $this->setBreakFieldPoint('status');
+        $this->setBreakFieldPoint('status');
     }
 }

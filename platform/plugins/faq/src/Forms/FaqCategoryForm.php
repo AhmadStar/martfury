@@ -9,14 +9,13 @@ use Botble\Faq\Models\FaqCategory;
 
 class FaqCategoryForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new FaqCategory)
+            ->setupModel(new FaqCategory())
             ->setValidatorClass(FaqCategoryRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

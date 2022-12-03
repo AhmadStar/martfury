@@ -3,22 +3,24 @@
 namespace Botble\PluginManagement\Http\Controllers;
 
 use Assets;
+use BaseHelper;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\PluginManagement\Services\PluginService;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
-use Illuminate\View\View;
 
 class PluginManagementController extends Controller
 {
     /**
      * Show all plugins in system
-     * @return Application|Factory|View
+     * @return Application|Factory
+     * @throws FileNotFoundException
      */
     public function index()
     {
@@ -33,7 +35,7 @@ class PluginManagementController extends Controller
             File::delete(plugin_path('.DS_Store'));
         }
 
-        $plugins = scan_folder(plugin_path());
+        $plugins = BaseHelper::scanFolder(plugin_path());
         if (!empty($plugins)) {
             $installed = get_active_plugins();
             foreach ($plugins as $plugin) {
@@ -46,9 +48,9 @@ class PluginManagementController extends Controller
                     continue;
                 }
 
-                $content = get_file_data($pluginPath . '/plugin.json');
+                $content = BaseHelper::getFileData($pluginPath . '/plugin.json');
                 if (!empty($content)) {
-                    if (!is_array($installed) || !in_array($plugin, $installed)) {
+                    if (!in_array($plugin, $installed)) {
                         $content['status'] = 0;
                     } else {
                         $content['status'] = 1;
@@ -79,7 +81,7 @@ class PluginManagementController extends Controller
     {
         $plugin = strtolower($request->input('name'));
 
-        $content = get_file_data(plugin_path($plugin . '/plugin.json'));
+        $content = BaseHelper::getFileData(plugin_path($plugin . '/plugin.json'));
         if (empty($content)) {
             return $response
                 ->setError()
@@ -110,8 +112,7 @@ class PluginManagementController extends Controller
                 ];
 
                 foreach ($paths as $path) {
-                    foreach (scan_folder($path) as $module) {
-
+                    foreach (BaseHelper::scanFolder($path) as $module) {
                         if ($path == plugin_path() && !is_plugin_active($module)) {
                             continue;
                         }

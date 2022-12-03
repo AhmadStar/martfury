@@ -24,7 +24,7 @@ class NewsletterServiceProvider extends ServiceProvider
     {
         $this->app->singleton(NewsletterInterface::class, function () {
             return new NewsletterCacheDecorator(
-                new NewsletterRepository(new Newsletter)
+                new NewsletterRepository(new Newsletter())
             );
         });
     }

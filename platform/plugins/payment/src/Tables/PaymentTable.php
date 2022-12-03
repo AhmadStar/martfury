@@ -9,11 +9,11 @@ use Botble\Table\Abstracts\TableAbstract;
 use Html;
 use Illuminate\Contracts\Routing\UrlGenerator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Yajra\DataTables\DataTables;
 
 class PaymentTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -50,10 +50,21 @@ class PaymentTable extends TableAbstract
         $data = $this->table
             ->eloquent($this->query())
             ->editColumn('charge_id', function ($item) {
-                return Html::link(route('payment.show', $item->id), $item->charge_id);
+                return Html::link(route('payment.show', $item->id), Str::limit($item->charge_id, 20));
             })
             ->editColumn('checkbox', function ($item) {
                 return $this->getCheckbox($item->id);
+            })
+            ->editColumn('customer_id', function ($item) {
+                if ($item->customer_id && $item->customer_type && class_exists($item->customer_type)) {
+                    return $item->customer->name;
+                }
+
+                if ($item->order && $item->order->address) {
+                    return $item->order->address->name;
+                }
+
+                return '&mdash;';
             })
             ->editColumn('payment_channel', function ($item) {
                 return $item->payment_channel->label();
@@ -75,7 +86,7 @@ class PaymentTable extends TableAbstract
     }
 
     /**
-     * {@inheritDoc}
+     * @return mixed
      */
     public function query()
     {
@@ -88,7 +99,13 @@ class PaymentTable extends TableAbstract
             'created_at',
             'status',
             'order_id',
-        ]);
+            'customer_id',
+            'customer_type',
+        ])->with(['customer']);
+
+        if (method_exists($query->getModel(), 'order')) {
+            $query->with(['customer', 'order']);
+        }
 
         return $this->applyScopes($query);
     }
@@ -105,6 +122,10 @@ class PaymentTable extends TableAbstract
             ],
             'charge_id'       => [
                 'title' => trans('plugins/payment::payment.charge_id'),
+                'class' => 'text-start',
+            ],
+            'customer_id'     => [
+                'title' => trans('plugins/payment::payment.payer_name'),
                 'class' => 'text-start',
             ],
             'amount'          => [

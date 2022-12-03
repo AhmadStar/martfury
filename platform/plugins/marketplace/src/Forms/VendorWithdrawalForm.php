@@ -6,12 +6,10 @@ use Botble\Base\Forms\FormAbstract;
 use Botble\Marketplace\Http\Requests\VendorEditWithdrawalRequest;
 use Botble\Marketplace\Http\Requests\VendorWithdrawalRequest;
 use Botble\Marketplace\Models\Withdrawal;
-use Html;
 use MarketplaceHelper;
 
 class VendorWithdrawalForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -37,7 +35,7 @@ class VendorWithdrawalForm extends FormAbstract
         $disabled = ['disabled' => 'disabled'];
 
         $this
-            ->setupModel(new Withdrawal)
+            ->setupModel(new Withdrawal())
             ->setValidatorClass($exists ? VendorEditWithdrawalRequest::class : VendorWithdrawalRequest::class)
             ->setFormOption('template', MarketplaceHelper::viewPath('dashboard.forms.base'))
             ->withCustomFields()
@@ -50,8 +48,10 @@ class VendorWithdrawalForm extends FormAbstract
                     'max'          => $model->balance,
                 ], $exists ? $disabled : []),
                 'help_block' => [
-                    'text' => $fee ? trans('plugins/marketplace::withdrawal.forms.fee_helper',
-                        ['fee' => format_price($fee)]) : '',
+                    'text' => $fee ? trans(
+                        'plugins/marketplace::withdrawal.forms.fee_helper',
+                        ['fee' => format_price($fee)]
+                    ) : '',
                 ],
             ]);
 

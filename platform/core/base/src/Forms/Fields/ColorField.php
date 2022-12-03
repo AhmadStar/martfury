@@ -7,7 +7,6 @@ use Kris\LaravelFormBuilder\Fields\FormField;
 
 class ColorField extends FormField
 {
-
     /**
      * {@inheritDoc}
      */

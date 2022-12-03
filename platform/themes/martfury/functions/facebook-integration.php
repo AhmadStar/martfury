@@ -26,11 +26,13 @@ app()->booted(function () {
                     'class' => 'form-control',
                 ],
             ],
-            'helper'     => __('To show chat box on that website, please go to :link and add :domain to whitelist domains!',
+            'helper'     => __(
+                'To show chat box on that website, please go to :link and add :domain to whitelist domains!',
                 [
                     'domain' => Html::link(url('')),
                     'link'   => Html::link('https://www.facebook.com/' . theme_option('facebook_page_id') . '/settings/?tab=messenger_platform'),
-                ]),
+                ]
+            ),
         ])
         ->setField([
             'id'         => 'facebook_page_id',
@@ -44,8 +46,10 @@ app()->booted(function () {
                     'class' => 'form-control',
                 ],
             ],
-            'helper'     => __('You can get fan page ID using this site :link',
-                ['link' => Html::link('https://findidfb.com')]),
+            'helper'     => __(
+                'You can get fan page ID using this site :link',
+                ['link' => Html::link('https://findidfb.com')]
+            ),
         ])
         ->setField([
             'id'         => 'facebook_comment_enabled_in_post',
@@ -77,8 +81,10 @@ app()->booted(function () {
                 ],
                 'placeholder' => 'Ex: 2061237023872679',
             ],
-            'helper'     => __('You can create your app in :link',
-                ['link' => Html::link('https://developers.facebook.com/apps')]),
+            'helper'     => __(
+                'You can create your app in :link',
+                ['link' => Html::link('https://developers.facebook.com/apps')]
+            ),
         ])
         ->setField([
             'id'         => 'facebook_admins',
@@ -103,8 +109,10 @@ app()->booted(function () {
                     ],
                 ],
             ],
-            'helper'     => __('Facebook admins to manage comments :link',
-                ['link' => Html::link('https://developers.facebook.com/docs/plugins/comments')]),
+            'helper'     => __(
+                'Facebook admins to manage comments :link',
+                ['link' => Html::link('https://developers.facebook.com/docs/plugins/comments')]
+            ),
         ]);
 
     add_filter(THEME_FRONT_HEADER, function ($html) {

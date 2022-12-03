@@ -7,10 +7,10 @@ use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Forms\FormAbstract;
 use Botble\Ecommerce\Http\Requests\FlashSaleRequest;
 use Botble\Ecommerce\Models\FlashSale;
+use Carbon\Carbon;
 
 class FlashSaleForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -24,7 +24,7 @@ class FlashSaleForm extends FormAbstract
             ]);
 
         $this
-            ->setupModel(new FlashSale)
+            ->setupModel(new FlashSale())
             ->setValidatorClass(FlashSaleRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [
@@ -50,7 +50,7 @@ class FlashSaleForm extends FormAbstract
                     'class'            => 'form-control datepicker',
                     'data-date-format' => 'yyyy/mm/dd',
                 ],
-                'default_value' => now()->addDay()->format('Y/m/d'),
+                'default_value' => Carbon::now()->addDay()->format('Y/m/d'),
             ])
             ->addMetaBoxes([
                 'products' => [

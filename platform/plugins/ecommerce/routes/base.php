@@ -30,6 +30,18 @@ Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers', 'middleware' =
             'permission' => 'ecommerce.settings',
         ]);
 
+        Route::get('tracking-settings', [
+            'as'         => 'ecommerce.tracking-settings',
+            'uses'       => 'EcommerceController@getTrackingSettings',
+            'permission' => 'ecommerce.settings',
+        ]);
+
+        Route::post('tracking-settings', [
+            'as'         => 'ecommerce.tracking-settings.post',
+            'uses'       => 'EcommerceController@postTrackingSettings',
+            'permission' => 'ecommerce.settings',
+        ]);
+
         Route::get('ajax/countries', [
             'as'         => 'ajax.countries.list',
             'uses'       => 'EcommerceController@ajaxGetCountries',
@@ -99,6 +111,19 @@ Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers', 'middleware' =
             ]);
         });
 
+        Route::group(['prefix' => 'options', 'as' => 'global-option.'], function () {
+            Route::resource('', 'ProductOptionController')->parameters(['' => 'option']);
+            Route::delete('items/destroy', [
+                'as'         => 'deletes',
+                'uses'       => 'ProductOptionController@deletes',
+                'permission' => 'global-options.destroy',
+            ]);
+            Route::get('ajax/{id}', [
+                'as'         => 'ajaxInfo',
+                'uses'       => 'ProductOptionController@ajaxInfo',
+                'permission' => 'products.edit',
+            ]);
+        });
 
         Route::group(['prefix' => 'brands', 'as' => 'brands.'], function () {
             Route::resource('', 'BrandController')
@@ -226,7 +251,6 @@ Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers', 'middleware' =
 
 Route::group(['namespace' => 'Botble\Ecommerce\Http\Controllers\Fronts', 'middleware' => ['web', 'core']], function () {
     Route::group(apply_filters(BASE_FILTER_GROUP_PUBLIC_ROUTE, []), function () {
-
         Route::get(SlugHelper::getPrefix(Product::class, 'products'), [
             'uses' => 'PublicProductController@getProducts',
             'as'   => 'public.products',

@@ -13,12 +13,16 @@ class ThemeSupport
      */
     public static function registerYoutubeShortcode(string $viewPath = null)
     {
-        add_shortcode('youtube-video', __('Youtube video'), __('Add youtube video'),
+        add_shortcode(
+            'youtube-video',
+            __('Youtube video'),
+            __('Add youtube video'),
             function ($shortcode) use ($viewPath) {
                 $url = Youtube::getYoutubeVideoEmbedURL($shortcode->content);
 
                 return view(($viewPath ?: 'packages/theme::shortcodes') . '.youtube', compact('url'))->render();
-            });
+            }
+        );
 
         shortcode()->setAdminConfig('youtube-video', function ($attributes, $content) use ($viewPath) {
             return view(($viewPath ?: 'packages/theme::shortcodes') . '.youtube-admin-config', compact('attributes', 'content'))->render();

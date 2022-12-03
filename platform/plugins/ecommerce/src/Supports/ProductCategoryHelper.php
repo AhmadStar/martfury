@@ -2,9 +2,12 @@
 
 namespace Botble\Ecommerce\Supports;
 
+use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Supports\SortItemsWithChildrenHelper;
 use Botble\Ecommerce\Repositories\Interfaces\ProductCategoryInterface;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Language;
 
 class ProductCategoryHelper
 {
@@ -14,16 +17,32 @@ class ProductCategoryHelper
     protected $allCategories = [];
 
     /**
+     * @var Collection
+     */
+    protected $treeCategories = [];
+
+    /**
+     * @param array $params
+     * @param bool $onlyParent
      * @return Collection
      */
-    public function getAllProductCategories(): Collection
+    public function getAllProductCategories(array $params = [], bool $onlyParent = false): Collection
     {
         if (!$this->allCategories instanceof Collection) {
             $this->allCategories = collect([]);
         }
 
         if ($this->allCategories->count() == 0) {
-            $this->allCategories = app(ProductCategoryInterface::class)->getProductCategories();
+            $with = array_merge(Arr::get($params, 'with', []), ['slugable', 'metadata']);
+            if (is_plugin_active('language-advanced') && Language::getCurrentLocaleCode() != Language::getDefaultLocaleCode()) {
+                $with[] = 'translations';
+            }
+
+            $this->allCategories = app(ProductCategoryInterface::class)->getProductCategories(
+                Arr::get($params, 'condition', []),
+                $with, Arr::get($params, 'withCount', []),
+                $onlyParent
+            );
         }
 
         return $this->allCategories;
@@ -81,7 +100,7 @@ class ProductCategoryHelper
      */
     public function getProductCategoriesWithIndent(string $indent = '&nbsp;&nbsp;', bool $sortChildren = true): Collection
     {
-        $categories = $this->getAllProductCategories();
+        $categories = $this->getAllProductCategoriesSortByChildren();
 
         foreach ($categories as $category) {
             $depth = (int)$category->depth;
@@ -106,7 +125,7 @@ class ProductCategoryHelper
     public function getProductCategoriesWithIndentName($categories = [], string $indent = '&nbsp;&nbsp;'): array
     {
         if (!$categories instanceof Collection) {
-            $categories = $this->getAllProductCategories()->whereIn('parent_id', [0, null]);
+            $categories = $this->getAllProductCategories([], true);
         }
         $results = [];
         $this->appendIndentTextToProductCategoryName($categories, 0, $results, $indent);
@@ -123,17 +142,42 @@ class ProductCategoryHelper
      */
     public function appendIndentTextToProductCategoryName(
         Collection $categories,
-        int $depth = 0,
-        &$results = [],
-        string $indent = '&nbsp;&nbsp;'
-    ) {
+        int        $depth = 0,
+        array      &$results = [],
+        string     $indent = '&nbsp;&nbsp;'
+    ): bool
+    {
         foreach ($categories as $category) {
             $results[$category->id] = str_repeat($indent, $depth) . $category->name;
+
             if ($category->children->count()) {
                 $this->appendIndentTextToProductCategoryName($category->children, $depth + 1, $results, $indent);
             }
         }
 
         return true;
+    }
+
+    /**
+     * @return Collection
+     */
+    public function getActiveTreeCategories(): Collection
+    {
+        if (!$this->treeCategories instanceof Collection) {
+            $this->treeCategories = collect([]);
+        }
+
+        if ($this->treeCategories->count() == 0) {
+
+            $this->treeCategories = $this->getAllProductCategories(
+                [
+                    'condition' => ['status' => BaseStatusEnum::PUBLISHED],
+                    'with'      => ['activeChildren'],
+                ],
+                true
+            );
+        }
+
+        return $this->treeCategories;
     }
 }

@@ -45,11 +45,9 @@ Route::group(['namespace' => 'Botble\Language\Http\Controllers', 'middleware' =>
                 'permission' => 'languages.edit',
             ]);
         });
-
     });
 
     Route::group(['prefix' => 'languages'], function () {
-
         Route::post('change-item-language', [
             'as'         => 'languages.change.item.language',
             'uses'       => 'LanguageController@postChangeItemLanguage',

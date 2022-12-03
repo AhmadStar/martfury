@@ -7,7 +7,6 @@ use Illuminate\Support\ServiceProvider;
 
 class FormServiceProvider extends ServiceProvider
 {
-
     public function boot()
     {
         Form::component('permalink', 'packages/slug::permalink', [
@@ -18,6 +17,7 @@ class FormServiceProvider extends ServiceProvider
             'preview'    => false,
             'attributes' => [],
             'editable'   => true,
+            'model'      => '',
         ]);
     }
 }

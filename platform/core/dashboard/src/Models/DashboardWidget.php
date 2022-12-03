@@ -3,11 +3,10 @@
 namespace Botble\Dashboard\Models;
 
 use Botble\Base\Models\BaseModel;
-use Illuminate\Database\Eloquent\Relations\hasMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DashboardWidget extends BaseModel
 {
-
     /**
      * @var string
      */
@@ -29,9 +28,9 @@ class DashboardWidget extends BaseModel
     ];
 
     /**
-     * @return hasMany
+     * @return HasMany
      */
-    public function settings()
+    public function settings(): HasMany
     {
         return $this->hasMany(DashboardWidgetSetting::class, 'widget_id', 'id');
     }

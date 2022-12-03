@@ -318,7 +318,6 @@ class ProductCategorySeeder extends BaseSeeder
 
         $count = 1;
         foreach ($translations as $translation) {
-
             $translation['lang_code'] = 'vi';
             $translation['ec_product_categories_id'] = $count;
 
@@ -328,7 +327,6 @@ class ProductCategorySeeder extends BaseSeeder
 
             if (isset($translation['children'])) {
                 foreach ($translation['children'] as $child) {
-
                     $child['lang_code'] = 'vi';
                     $child['ec_product_categories_id'] = $count;
 
@@ -338,7 +336,6 @@ class ProductCategorySeeder extends BaseSeeder
 
                     if (isset($child['children'])) {
                         foreach ($child['children'] as $item) {
-
                             $item['lang_code'] = 'vi';
                             $item['ec_product_categories_id'] = $count;
 

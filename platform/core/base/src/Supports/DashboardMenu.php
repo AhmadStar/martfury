@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Psr\SimpleCache\InvalidArgumentException;
 use RuntimeException;
-use URL;
+use Illuminate\Support\Facades\URL;
 
 class DashboardMenu
 {
@@ -63,7 +63,6 @@ class DashboardMenu
         }
 
         if (isset($this->links[$id])) {
-
             $options['children'] = array_merge($options['children'], $this->links[$id]['children']);
             $options['permissions'] = array_merge($options['permissions'], $this->links[$id]['permissions']);
 
@@ -103,12 +102,13 @@ class DashboardMenu
         foreach ($id as $item) {
             if (!$parentId) {
                 Arr::forget($this->links, $item);
-            } else {
-                foreach ($this->links[$parentId]['children'] as $key => $child) {
-                    if ($child['id'] === $item) {
-                        Arr::forget($this->links[$parentId]['children'], $key);
-                        break;
-                    }
+                break;
+            }
+
+            foreach ($this->links[$parentId]['children'] as $key => $child) {
+                if ($child['id'] === $item) {
+                    Arr::forget($this->links[$parentId]['children'], $key);
+                    break;
                 }
             }
         }
@@ -118,17 +118,19 @@ class DashboardMenu
 
     /**
      * @param string $id
-     * @param null|string $parentId
+     * @param string|null $parentId
      * @return bool
      */
-    public function hasItem($id, $parentId = null): bool
+    public function hasItem(string $id, ?string $parentId = null): bool
     {
         if ($parentId) {
             if (!isset($this->links[$parentId])) {
                 return false;
             }
+
             $id = $parentId . '.children.' . $id;
         }
+
         return Arr::has($this->links, $id . '.name');
     }
 
@@ -170,6 +172,7 @@ class DashboardMenu
         } else {
             $protocol = 'http://';
         }
+
         $protocol .= BaseHelper::getAdminPrefix();
 
         foreach ($links as $key => &$link) {
@@ -179,9 +182,9 @@ class DashboardMenu
             }
 
             $link['active'] = $currentUrl == $link['url'] ||
-                            (Str::contains($link['url'], $routePrefix) &&
+                            (Str::contains((string) $link['url'], $routePrefix) &&
                                 !in_array($routePrefix, ['//', '/' . BaseHelper::getAdminPrefix()]) &&
-                                !Str::startsWith($link['url'], $protocol));
+                                !Str::startsWith((string) $link['url'], $protocol));
             if (!count($link['children'])) {
                 continue;
             }
@@ -194,7 +197,7 @@ class DashboardMenu
                     continue;
                 }
 
-                if ($currentUrl == $subMenu['url'] || Str::contains($currentUrl, $subMenu['url'])) {
+                if ($currentUrl == $subMenu['url'] || Str::contains($currentUrl, (string) $subMenu['url'])) {
                     $link['children'][$subKey]['active'] = true;
                     $link['active'] = true;
                 }

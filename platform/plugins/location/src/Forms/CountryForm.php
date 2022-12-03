@@ -6,18 +6,16 @@ use Botble\Base\Forms\FormAbstract;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Location\Http\Requests\CountryRequest;
 use Botble\Location\Models\Country;
-use Html;
 
 class CountryForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
     public function buildForm()
     {
         $this
-            ->setupModel(new Country)
+            ->setupModel(new Country())
             ->setValidatorClass(CountryRequest::class)
             ->withCustomFields()
             ->add('name', 'text', [

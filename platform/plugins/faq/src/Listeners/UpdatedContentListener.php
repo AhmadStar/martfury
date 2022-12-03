@@ -9,7 +9,6 @@ use MetaBox;
 
 class UpdatedContentListener
 {
-
     /**
      * Handle the event.
      *

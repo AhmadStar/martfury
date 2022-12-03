@@ -41,10 +41,10 @@ class HandleApplyPromotionsService
     /**
      * @param null $token
      * @param array $data
-     * @param string $prefix
+     * @param string|null $prefix
      * @return float
      */
-    public function execute($token = null, array $data = [], $prefix = '')
+    public function execute($token = null, array $data = [], ?string $prefix = '')
     {
         if (empty($this->promotions)) {
             $promotions = $this->discountRepository->getAvailablePromotions();
@@ -116,14 +116,17 @@ class HandleApplyPromotionsService
                                         ->pluck('ec_product_collections.id')
                                         ->all();
 
-                                    if (!empty(array_intersect($productCollections,
-                                        $discountProductCollections))) {
+                                    if (!empty(array_intersect(
+                                        $productCollections,
+                                        $discountProductCollections
+                                    ))) {
                                         $promotionDiscountAmount += ($item->price - $promotion->value) * $item->qty;
                                     }
                                 }
                             }
                         }
                     }
+
                     break;
             }
         }

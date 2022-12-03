@@ -4,7 +4,6 @@
 // You can delete this route group if you don't need to add your custom routes.
 Route::group(['namespace' => 'Theme\Martfury\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group(apply_filters(BASE_FILTER_GROUP_PUBLIC_ROUTE, []), function () {
-
         Route::get('ajax/products', 'MartfuryController@ajaxGetProducts')
             ->name('public.ajax.products');
 
@@ -62,7 +61,6 @@ Theme::routes();
 
 Route::group(['namespace' => 'Theme\Martfury\Http\Controllers', 'middleware' => ['web', 'core']], function () {
     Route::group(apply_filters(BASE_FILTER_GROUP_PUBLIC_ROUTE, []), function () {
-
         Route::get('/', 'MartfuryController@getIndex')
             ->name('public.index');
 
@@ -71,6 +69,5 @@ Route::group(['namespace' => 'Theme\Martfury\Http\Controllers', 'middleware' => 
 
         Route::get('{slug?}' . config('core.base.general.public_single_ending_url'), 'MartfuryController@getView')
             ->name('public.single');
-
     });
 });

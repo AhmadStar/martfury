@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class ProductAttributeSetsTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -141,8 +140,11 @@ class ProductAttributeSetsTable extends TableAbstract
      */
     public function bulkActions(): array
     {
-        return $this->addDeleteAction(route('product-attribute-sets.deletes'), 'product-attribute-sets.destroy',
-            parent::bulkActions());
+        return $this->addDeleteAction(
+            route('product-attribute-sets.deletes'),
+            'product-attribute-sets.destroy',
+            parent::bulkActions()
+        );
     }
 
     /**

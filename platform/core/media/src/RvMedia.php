@@ -2,6 +2,7 @@
 
 namespace Botble\Media;
 
+use BaseHelper;
 use Botble\Media\Http\Resources\FileResource;
 use Botble\Media\Models\MediaFile;
 use Botble\Media\Repositories\Interfaces\MediaFileInterface;
@@ -9,7 +10,7 @@ use Botble\Media\Repositories\Interfaces\MediaFolderInterface;
 use Botble\Media\Services\ThumbnailService;
 use Botble\Media\Services\UploadsManager;
 use Exception;
-use File;
+use Illuminate\Config\Repository;
 use Illuminate\Contracts\Filesystem\FileExistsException;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
@@ -21,6 +22,7 @@ use Illuminate\Http\Response;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Image;
 use League\Flysystem\FileNotFoundException;
@@ -31,7 +33,6 @@ use Validator;
 
 class RvMedia
 {
-
     /**
      * @var array
      */
@@ -68,8 +69,7 @@ class RvMedia
         MediaFolderInterface $folderRepository,
         UploadsManager       $uploadManager,
         ThumbnailService     $thumbnailService
-    )
-    {
+    ) {
         $this->fileRepository = $fileRepository;
         $this->folderRepository = $folderRepository;
         $this->uploadManager = $uploadManager;
@@ -186,7 +186,19 @@ class RvMedia
 
             $settingName = 'media_sizes_' . $name;
 
-            $sizes[$name] = setting($settingName . '_width', $size[0]) . 'x' . setting($settingName . '_height', $size[1]);
+            $width = setting($settingName . '_width', $size[0]);
+
+            $height = setting($settingName . '_height', $size[1]);
+
+            if (!$width) {
+                $width = 'auto';
+            }
+
+            if (!$height) {
+                $height = 'auto';
+            }
+
+            $sizes[$name] = $width . 'x' . $height;
         }
 
         return $sizes;
@@ -394,6 +406,14 @@ class RvMedia
      */
     public function addSize(string $name, $width, $height = 'auto'): self
     {
+        if (!$width) {
+            $width = 'auto';
+        }
+
+        if (!$height) {
+            $height = 'auto';
+        }
+
         config(['core.media.media.sizes.' . $name => $width . 'x' . $height]);
 
         return $this;
@@ -455,18 +475,18 @@ class RvMedia
     }
 
     /**
-     * @param UploadedFile $fileUpload
+     * @param UploadedFile|null $fileUpload
      * @param int|null $folderId
      * @param string|null $folderSlug
      * @param bool $skipValidation
      * @return JsonResponse|array
      */
-    public function handleUpload(UploadedFile $fileUpload, ?int $folderId = 0, ?string $folderSlug = null, bool $skipValidation = false): array
+    public function handleUpload(?UploadedFile $fileUpload, ?int $folderId = 0, ?string $folderSlug = null, bool $skipValidation = false): array
     {
         $request = request();
 
         if ($request->input('path')) {
-            $folderId = $this->handleTargetFolder($folderId, $request->input('path'));
+            $folderId = $this->handleTargetFolder($folderId, $request->input('path', ''));
         }
 
         if (!$fileUpload) {
@@ -479,7 +499,6 @@ class RvMedia
         $allowedMimeTypes = $this->getConfig('allowed_mime_types');
 
         if (!$this->isChunkUploadEnabled()) {
-
             if (!$skipValidation) {
                 $validator = Validator::make(['uploaded_file' => $fileUpload], [
                     'uploaded_file' => 'required|mimes:' . $allowedMimeTypes,
@@ -493,12 +512,21 @@ class RvMedia
                 }
             }
 
+            $maxUploadFilesizeAllowed = setting('max_upload_filesize');
+
+            if ($maxUploadFilesizeAllowed && ($fileUpload->getSize() / 1024) / 1024 > (float)$maxUploadFilesizeAllowed) {
+                return [
+                    'error'   => true,
+                    'message' => trans('core/media::media.file_too_big_readable_size', ['size' => BaseHelper::humanFilesize($maxUploadFilesizeAllowed * 1024 * 1024)]),
+                ];
+            }
+
             $maxSize = $this->getServerConfigMaxUploadFileSize();
 
             if ($fileUpload->getSize() / 1024 > (int)$maxSize) {
                 return [
                     'error'   => true,
-                    'message' => trans('core/media::media.file_too_big', ['size' => human_file_size($maxSize)]),
+                    'message' => trans('core/media::media.file_too_big_readable_size', ['size' => BaseHelper::humanFilesize($maxSize)]),
                 ];
             }
         }
@@ -540,7 +568,7 @@ class RvMedia
             $fileName = $this->fileRepository->createSlug(
                 $file->name,
                 $fileExtension,
-                Storage::path($folderPath)
+                Storage::path($folderPath ?: '')
             );
 
             $filePath = $fileName;
@@ -631,7 +659,7 @@ class RvMedia
             return false;
         }
 
-        $folderIds = json_decode(setting('media_folders_can_add_watermark'), true);
+        $folderIds = json_decode(setting('media_folders_can_add_watermark', ''), true);
 
         if (empty($folderIds) || in_array($file->folder_id, $folderIds)) {
             $this->insertWatermark($file->url);
@@ -681,8 +709,10 @@ class RvMedia
 
         // 10% less then an actual image (play with this value)
         // Watermark will be 10 less then the actual width of the image
-        $watermarkSize = round($imageSource->width() * ((int)setting('media_watermark_size',
-                    $this->getConfig('watermark.size')) / 100), 2);
+        $watermarkSize = round($imageSource->width() * ((int)setting(
+            'media_watermark_size',
+            $this->getConfig('watermark.size')
+        ) / 100), 2);
 
         // Resize watermark width keep height auto
         $watermark
@@ -691,14 +721,18 @@ class RvMedia
             })
             ->opacity((int)setting('media_watermark_opacity', $this->getConfig('watermark.opacity')));
 
-        $imageSource->insert($watermark,
+        $imageSource->insert(
+            $watermark,
             setting('media_watermark_position', $this->getConfig('watermark.position')),
             (int)setting('watermark_position_x', $this->getConfig('watermark.x')),
             (int)setting('watermark_position_y', $this->getConfig('watermark.y'))
         );
 
-        $destinationPath = sprintf('%s/%s', trim(File::dirname($image), '/'),
-            File::name($image) . '.' . File::extension($image));
+        $destinationPath = sprintf(
+            '%s/%s',
+            trim(File::dirname($image), '/'),
+            File::name($image) . '.' . File::extension($image)
+        );
 
         $this->uploadManager->saveFile($destinationPath, $imageSource->stream()->__toString());
 
@@ -786,7 +820,7 @@ class RvMedia
         $fileName = File::name($info['basename']);
         $fileExtension = File::extension($info['basename']);
         if (empty($fileExtension)) {
-            $mimeTypeDetection = new MimeTypes;
+            $mimeTypeDetection = new MimeTypes();
 
             $fileExtension = $mimeTypeDetection->getExtension($mimeType);
         }
@@ -825,7 +859,7 @@ class RvMedia
         $fileName = File::name($path);
         $fileExtension = File::extension($path);
         if (empty($fileExtension)) {
-            $mimeTypeDetection = new MimeTypes;
+            $mimeTypeDetection = new MimeTypes();
 
             $fileExtension = $mimeTypeDetection->getExtension($mimeType);
         }
@@ -848,7 +882,7 @@ class RvMedia
      */
     public function getUploadURL(): string
     {
-        return str_replace('/index.php', '', url('storage'));
+        return str_replace('/index.php', '', $this->getConfig('default_upload_url'));
     }
 
     /**
@@ -876,7 +910,7 @@ class RvMedia
             return null;
         }
 
-        $mimeTypeDetection = new MimeTypes;
+        $mimeTypeDetection = new MimeTypes();
 
         return $mimeTypeDetection->getMimeType(File::extension($url));
     }
@@ -887,6 +921,10 @@ class RvMedia
      */
     public function canGenerateThumbnails(?string $mimeType): bool
     {
+        if (!$this->getConfig('generate_thumbnails_enabled')) {
+            return false;
+        }
+
         if (!$mimeType) {
             return false;
         }
@@ -947,7 +985,7 @@ class RvMedia
     /**
      * @param null $key
      * @param null $default
-     * @return array|\ArrayAccess|\Illuminate\Config\Repository|\Illuminate\Contracts\Foundation\Application|mixed
+     * @return array|\ArrayAccess|Repository|Application
      */
     public function getConfig($key = null, $default = null)
     {
@@ -965,7 +1003,7 @@ class RvMedia
      */
     public function imageValidationRule(): string
     {
-        return 'required|image|mimes:jpg,jpeg,png,webp';
+        return 'required|image|mimes:jpg,jpeg,png,webp,gif,bmp';
     }
 
     /**

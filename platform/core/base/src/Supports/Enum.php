@@ -3,14 +3,14 @@
 namespace Botble\Base\Supports;
 
 use BadMethodCallException;
-use JsonSerializable;
-use Lang;
-use Log;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\HtmlString;
 use ReflectionClass;
 use ReflectionException;
 use UnexpectedValueException;
 
-abstract class Enum implements JsonSerializable
+abstract class Enum
 {
     /**
      * Store existing constants in a static cache per object.
@@ -66,7 +66,7 @@ abstract class Enum implements JsonSerializable
      * @param string|int $value
      * @return bool
      */
-    public static function isValid($value)
+    public static function isValid($value): bool
     {
         return in_array($value, static::toArray(), true);
     }
@@ -101,7 +101,7 @@ abstract class Enum implements JsonSerializable
      *
      * @return array
      */
-    public static function keys()
+    public static function keys(): array
     {
         return array_keys(static::toArray());
     }
@@ -111,7 +111,7 @@ abstract class Enum implements JsonSerializable
      *
      * @return static[] Constant name in key, Enum instance in value
      */
-    public static function values()
+    public static function values(): array
     {
         $values = [];
 
@@ -131,7 +131,7 @@ abstract class Enum implements JsonSerializable
      * @return static
      * @throws BadMethodCallException
      */
-    public static function __callStatic($name, $arguments)
+    public static function __callStatic(string $name, array $arguments)
     {
         $array = static::toArray();
         if (isset($array[$name]) || array_key_exists($name, $array)) {
@@ -208,7 +208,7 @@ abstract class Enum implements JsonSerializable
      * @param Enum|null $enum
      * @return bool True if Enums are equal, false if not equal
      */
-    final public function equals(Enum $enum = null)
+    final public function equals(Enum $enum = null): bool
     {
         return $enum !== null && $this->getValue() === $enum->getValue() && get_called_class() === get_class($enum);
     }
@@ -234,10 +234,10 @@ abstract class Enum implements JsonSerializable
     }
 
     /**
-     * @return string
+     * @return HtmlString
      */
     public function toHtml()
     {
-        return apply_filters(BASE_FILTER_ENUM_HTML, $this->value, get_called_class());
+        return new HtmlString(apply_filters(BASE_FILTER_ENUM_HTML, $this->value, get_called_class()));
     }
 }

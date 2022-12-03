@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import VerifyLicenseComponent from './components/VerifyLicenseComponent';
-import CheckUpdateComponent from "./components/CheckUpdateComponent";
+import CheckUpdateComponent from './components/CheckUpdateComponent';
 
 Vue.component('verify-license-component', VerifyLicenseComponent);
 Vue.component('check-update-component', CheckUpdateComponent);

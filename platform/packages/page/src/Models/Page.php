@@ -42,8 +42,6 @@ class Page extends BaseModel
     protected $dontKeepRevisionOf = ['content'];
 
     /**
-     * The date fields for the model.clear
-     *
      * @var array
      */
     protected $dates = [
@@ -69,7 +67,6 @@ class Page extends BaseModel
         'image',
         'template',
         'description',
-        'is_featured',
         'status',
         'user_id',
     ];
@@ -77,7 +74,7 @@ class Page extends BaseModel
     /**
      * @return BelongsTo
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withDefault();
     }

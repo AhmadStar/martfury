@@ -13,7 +13,6 @@ Route::group(['namespace' => 'Botble\Base\Http\Controllers', 'middleware' => ['w
         });
 
         Route::group(['prefix' => 'system/cache'], function () {
-
             Route::get('', [
                 'as'         => 'system.cache',
                 'uses'       => 'SystemController@getCacheManagement',

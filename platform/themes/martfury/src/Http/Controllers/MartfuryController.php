@@ -13,13 +13,17 @@ use Botble\Theme\Http\Controllers\PublicController;
 use Cart;
 use EcommerceHelper;
 use EmailHandler;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Theme;
 use Theme\Martfury\Http\Requests\SendDownloadAppLinksRequest;
 use Theme\Martfury\Http\Resources\BrandResource;
 use Theme\Martfury\Http\Resources\PostResource;
 use Theme\Martfury\Http\Resources\ProductCategoryResource;
 use Theme\Martfury\Http\Resources\ReviewResource;
+use Throwable;
 
 class MartfuryController extends PublicController
 {
@@ -227,7 +231,7 @@ class MartfuryController extends PublicController
      * @param Request $request
      * @param int $id
      * @param BaseHttpResponse $response
-     * @return mixed
+     * @return BaseHttpResponse
      */
     public function getQuickView(Request $request, $id, BaseHttpResponse $response)
     {
@@ -245,6 +249,9 @@ class MartfuryController extends PublicController
                 'slugable',
                 'tags',
                 'tags.slugable',
+                'options' => function($query) {
+                    return $query->with('values');
+                }
             ],
             'withCount' => EcommerceHelper::withReviewsCount(),
         ]);
@@ -255,7 +262,7 @@ class MartfuryController extends PublicController
 
         Theme::asset()->remove('app-js');
 
-        list($productImages, $productVariation, $selectedAttrs) = EcommerceHelper::getProductVariationInfo($product);
+        [$productImages, $productVariation, $selectedAttrs] = EcommerceHelper::getProductVariationInfo($product);
 
         return $response->setData(Theme::partial('quick-view', compact('product', 'selectedAttrs', 'productImages')));
     }
@@ -264,7 +271,7 @@ class MartfuryController extends PublicController
      * @param Request $request
      * @param BaseHttpResponse $response
      * @param PostInterface $postRepository
-     * @return BaseHttpResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Http\Resources\Json\JsonResource
+     * @return BaseHttpResponse|RedirectResponse|JsonResource
      */
     public function ajaxGetFeaturedPosts(Request $request, BaseHttpResponse $response, PostInterface $postRepository)
     {
@@ -362,6 +369,7 @@ class MartfuryController extends PublicController
     /**
      * @param Request $request
      * @param BaseHttpResponse $response
+     * @param GetProductService $productService
      * @return BaseHttpResponse
      */
     public function ajaxSearchProducts(Request $request, BaseHttpResponse $response, GetProductService $productService)
@@ -390,8 +398,8 @@ class MartfuryController extends PublicController
      * @param SendDownloadAppLinksRequest $request
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
-     * @throws \Throwable
+     * @throws FileNotFoundException
+     * @throws Throwable
      */
     public function ajaxSendDownloadAppLinks(SendDownloadAppLinksRequest $request, BaseHttpResponse $response)
     {
@@ -462,7 +470,6 @@ class MartfuryController extends PublicController
         BaseHttpResponse $response,
         ProductCategoryInterface $productCategoryRepository
     ) {
-
         if (!$request->ajax() || !$request->wantsJson()) {
             return $response->setNextUrl(route('public.index'));
         }

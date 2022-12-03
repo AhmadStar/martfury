@@ -12,7 +12,6 @@ use Yajra\DataTables\DataTables;
 
 class FaqTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

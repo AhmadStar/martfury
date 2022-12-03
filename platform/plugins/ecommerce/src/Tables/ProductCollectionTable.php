@@ -14,7 +14,6 @@ use Yajra\DataTables\DataTables;
 
 class ProductCollectionTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -64,8 +63,11 @@ class ProductCollectionTable extends TableAbstract
                 return Html::link(route('product-collections.edit', $item->id), BaseHelper::clean($item->name));
             })
             ->editColumn('image', function ($item) {
-                return Html::image(RvMedia::getImageUrl($item->image, 'thumb', false, RvMedia::getDefaultImage()),
-                    BaseHelper::clean($item->name), ['width' => 50]);
+                return Html::image(
+                    RvMedia::getImageUrl($item->image, 'thumb', false, RvMedia::getDefaultImage()),
+                    BaseHelper::clean($item->name),
+                    ['width' => 50]
+                );
             })
             ->editColumn('checkbox', function ($item) {
                 return $this->getCheckbox($item->id);
@@ -154,8 +156,11 @@ class ProductCollectionTable extends TableAbstract
      */
     public function bulkActions(): array
     {
-        return $this->addDeleteAction(route('product-collections.deletes'), 'product-collections.destroy',
-            parent::bulkActions());
+        return $this->addDeleteAction(
+            route('product-collections.deletes'),
+            'product-collections.destroy',
+            parent::bulkActions()
+        );
     }
 
     /**

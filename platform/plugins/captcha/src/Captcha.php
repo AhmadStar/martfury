@@ -9,7 +9,7 @@ use ReCaptcha\ReCaptcha;
 
 class Captcha
 {
-    const CAPTCHA_CLIENT_API = 'https://www.google.com/recaptcha/api.js';
+    public const CAPTCHA_CLIENT_API = 'https://www.google.com/recaptcha/api.js';
 
     /**
      * Name of callback function
@@ -59,7 +59,7 @@ class Captcha
      *
      * @return string
      */
-    public function display($attributes = [], $options = [])
+    public function display(array $attributes = [], array $options = []): ?string
     {
         if (!$this->optionOrConfig($options, 'site_key')) {
             return null;
@@ -87,7 +87,7 @@ class Captcha
             $attributes = array_merge($attributeOptions, $attributes);
         }
         if ($isMultiple) {
-            array_push($this->captchaAttributes, $attributes);
+            $this->captchaAttributes[] = $attributes;
         } else {
             $attributes['data-sitekey'] = $this->optionOrConfig($options, 'site_key');
         }
@@ -102,10 +102,13 @@ class Captcha
      *
      * @return mixed
      */
-    protected function optionOrConfig($options = [], $key = '', $default = null)
+    protected function optionOrConfig(array $options = [], string $key = '', $default = null)
     {
-        return Arr::get($options, str_replace('options.', '', $key),
-            $this->config->get('plugins.captcha.general.' . $key, $default));
+        return Arr::get(
+            $options,
+            str_replace('options.', '', $key),
+            $this->config->get('plugins.captcha.general.' . $key, $default)
+        );
     }
 
     /**
@@ -113,7 +116,7 @@ class Captcha
      *
      * @return string
      */
-    protected function randomCaptchaId()
+    protected function randomCaptchaId(): string
     {
         return 'buzzNoCaptchaId_' . md5(uniqid(rand(), true));
     }
@@ -125,7 +128,7 @@ class Captcha
      *
      * @return string
      */
-    public function getJsLink($options = [])
+    public function getJsLink(array $options = []): string
     {
         $query = [];
         if ($this->optionOrConfig($options, 'options.multiple')) {
@@ -149,7 +152,7 @@ class Captcha
      *
      * @return string
      */
-    protected function buildAttributes(array $attributes)
+    protected function buildAttributes(array $attributes): string
     {
         $html = [];
         foreach ($attributes as $key => $value) {
@@ -166,7 +169,7 @@ class Captcha
      *
      * @return string
      */
-    public function displayMultiple($options = [])
+    public function displayMultiple(array $options = []): string
     {
         if (!$this->optionOrConfig($options, 'options.multiple')) {
             return '';
@@ -187,7 +190,7 @@ class Captcha
      *
      * @return string
      */
-    protected function buildCaptchaHtml($captchaAttribute = [], $options = [])
+    protected function buildCaptchaHtml(array $captchaAttribute = [], array $options = []): string
     {
         $options = array_merge(
             ['sitekey' => $this->optionOrConfig($options, 'site_key')],
@@ -206,16 +209,18 @@ class Captcha
      * @param array $attributes
      * @return string
      */
-    public function displayJs($options = [], $attributes = ['async', 'defer'])
+    public function displayJs(array $options = [], array $attributes = ['async', 'defer']): string
     {
-        return '<script src="' . htmlspecialchars($this->getJsLink($options)) . '" ' . implode(' ',
-                $attributes) . '></script>';
+        return '<script src="' . htmlspecialchars($this->getJsLink($options)) . '" ' . implode(
+            ' ',
+            $attributes
+        ) . '></script>';
     }
 
     /**
      * @param boolean $multiple
      */
-    public function multiple($multiple = true)
+    public function multiple(bool $multiple = true)
     {
         $this->config->set('plugins.captcha.general.options.multiple', $multiple);
     }
@@ -223,7 +228,7 @@ class Captcha
     /**
      * @param array $options
      */
-    public function setOptions($options = [])
+    public function setOptions(array $options = [])
     {
         $this->config->set('plugins.captcha.general.options', $options);
     }
@@ -232,12 +237,12 @@ class Captcha
      * Verify captcha
      *
      * @param string $response
-     * @param string $clientIp
+     * @param string|null $clientIp
      * @param array $options
      *
      * @return bool
      */
-    public function verify($response, $clientIp = null, $options = [])
+    public function verify(string $response, string $clientIp = null, array $options = []): bool
     {
         if (empty($response)) {
             return false;

@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class NewsletterTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

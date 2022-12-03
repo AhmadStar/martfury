@@ -6,7 +6,6 @@ use Botble\Base\Supports\BaseSeeder;
 use Botble\Language\Models\Language as LanguageModel;
 use Botble\Language\Models\LanguageMeta;
 use Botble\Setting\Models\Setting as SettingModel;
-use Language;
 
 class LanguageSeeder extends BaseSeeder
 {

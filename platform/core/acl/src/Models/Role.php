@@ -13,16 +13,12 @@ class Role extends BaseModel
     use PermissionTrait;
 
     /**
-     * The database table used by the model.
-     *
-     * @var string
+     * {@inheritDoc}
      */
     protected $table = 'roles';
 
     /**
-     * The date fields for the model.clear
-     *
-     * @var array
+     * {@inheritDoc}
      */
     protected $dates = [
         'created_at',
@@ -30,7 +26,7 @@ class Role extends BaseModel
     ];
 
     /**
-     * @var array
+     * {@inheritDoc}
      */
     protected $fillable = [
         'name',
@@ -43,31 +39,21 @@ class Role extends BaseModel
     ];
 
     /**
-     * @var array
+     * {@inheritDoc}
      */
     protected $casts = [
         'permissions' => 'json',
     ];
 
-    /**
-     * @param string $value
-     * @return array
-     */
-    public function getPermissionsAttribute($value)
+    public function getPermissionsAttribute(?string $value): array
     {
         try {
-            return json_decode($value, true) ?: [];
+            return json_decode((string)$value, true) ?: [];
         } catch (Exception $exception) {
             return [];
         }
     }
 
-    /**
-     * Set mutator for the "permissions" attribute.
-     *
-     * @param array $permissions
-     * @return void
-     */
     public function setPermissionsAttribute(array $permissions)
     {
         $this->attributes['permissions'] = $permissions ? json_encode($permissions) : '';
@@ -76,7 +62,7 @@ class Role extends BaseModel
     /**
      * {@inheritDoc}
      */
-    public function delete()
+    public function delete(): ?bool
     {
         if ($this->exists) {
             $this->users()->detach();
@@ -85,18 +71,14 @@ class Role extends BaseModel
         return parent::delete();
     }
 
-    /**
-     * @return BelongsToMany
-     */
-    public function users()
+    public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'role_users', 'role_id', 'user_id')->withTimestamps();
+        return $this
+            ->belongsToMany(User::class, 'role_users', 'role_id', 'user_id')
+            ->withTimestamps();
     }
 
-    /**
-     * @return BelongsTo
-     */
-    public function author()
+    public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by')->withDefault();
     }

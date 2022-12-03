@@ -1,12 +1,6 @@
 <?php
 
 Route::group(['namespace' => 'Botble\Payment\Http\Controllers', 'middleware' => ['web', 'core']], function () {
-    Route::group(['prefix' => 'payments'], function () {
-        Route::post('checkout', 'PaymentController@postCheckout')->name('payments.checkout');
-
-        Route::get('status', 'PaymentController@getPayPalStatus')->name('payments.paypal.status');
-    });
-
     Route::group(['prefix' => BaseHelper::getAdminPrefix(), 'middleware' => 'auth'], function () {
         Route::group(['prefix' => 'payments/methods', 'permission' => 'payments.settings'], function () {
             Route::get('', [
@@ -60,6 +54,5 @@ Route::group(['namespace' => 'Botble\Payment\Http\Controllers', 'middleware' => 
                 'permission' => 'payment.index',
             ]);
         });
-
     });
 });

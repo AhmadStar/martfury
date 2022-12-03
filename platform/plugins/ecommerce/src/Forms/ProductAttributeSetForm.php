@@ -10,7 +10,6 @@ use Language;
 
 class ProductAttributeSetForm extends FormAbstract
 {
-
     /**
      * {@inheritDoc}
      */
@@ -33,7 +32,7 @@ class ProductAttributeSetForm extends FormAbstract
             $this->request->input('ref_lang') != Language::getDefaultLocaleCode();
 
         $this
-            ->setupModel(new ProductAttributeSet)
+            ->setupModel(new ProductAttributeSet())
             ->setValidatorClass(ProductAttributeSetsRequest::class)
             ->setFormOption('class', 'update-attribute-set-form')
             ->withCustomFields()
@@ -93,8 +92,10 @@ class ProductAttributeSetForm extends FormAbstract
             ->addMetaBoxes([
                 'attributes_list' => [
                     'title'   => trans('plugins/ecommerce::product-attribute-sets.attributes_list'),
-                    'content' => view('plugins/ecommerce::product-attributes.sets.list',
-                        compact('attributes', 'isNotDefaultLanguage'))->render(),
+                    'content' => view(
+                        'plugins/ecommerce::product-attributes.sets.list',
+                        compact('attributes', 'isNotDefaultLanguage')
+                    )->render(),
                 ],
             ]);
     }

@@ -205,6 +205,7 @@ class BlogSeeder extends BaseSeeder
             $item['is_featured'] = $index < 10;
             $item['image'] = 'news/' . ($index + 1) . '.jpg';
             $item['description'] = 'You should pay more attention when you choose your wallets. There are a lot of them on the market with the different designs and styles. When you choose carefully, you would be able to buy a wallet that is catered to your needs. Not to mention that it will help to enhance your style significantly.';
+            $item['content'] = str_replace(url(''), '', $item['content']);
 
             $post = Post::create(Arr::except($item, ['layout']));
 

@@ -6,7 +6,6 @@ use Closure;
 
 class Asset
 {
-
     /**
      * Path to assets.
      *

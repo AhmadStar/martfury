@@ -8,7 +8,6 @@ use Illuminate\Validation\Rule;
 
 class UpdatePaymentRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

@@ -109,7 +109,6 @@
                                 @php
                                     $product = get_products([
                                         'condition' => [
-                                            'ec_products.status' => \Botble\Base\Enums\BaseStatusEnum::PUBLISHED,
                                             'ec_products.id' => $orderProduct->product_id,
                                         ],
                                         'take' => 1,
@@ -124,46 +123,61 @@
                                             'ec_products.end_date',
                                             'ec_products.sku',
                                             'ec_products.is_variation',
+                                            'ec_products.status',
+                                            'ec_products.order',
+                                            'ec_products.created_at',
                                         ],
+                                        'include_out_of_stock_products' => true,
                                     ]);
+
                                 @endphp
-                                @if ($product)
-                                    <tr>
-                                        <td class="text-center">{{ $key + 1 }}</td>
-                                        <td class="text-center">
-                                            <img src="{{ RvMedia::getImageUrl($product->image, 'thumb', false, RvMedia::getDefaultImage()) }}" width="50" alt="{{ $product->name }}"></td>
-                                        <td>
-                                            {{ $product->name }} @if ($product->sku) ({{ $product->sku }}) @endif
+                                <tr>
+                                    <td class="text-center">{{ $key + 1 }}</td>
+                                    <td class="text-center">
+                                        <img src="{{ RvMedia::getImageUrl($product ? $product->image : null, 'thumb', false, RvMedia::getDefaultImage()) }}" width="50" alt="{{ $orderProduct->product_name }}">
+                                    </td>
+                                    <td>
+                                        @if ($product)
+                                            {{ $product->original_product->name }} @if ($product->sku) ({{ $product->sku }}) @endif
                                             @if ($product->is_variation)
                                                 <p class="mb-0">
-                                                    <small>{{ $product->variation_attributes }}</small>
-                                                </p>
-                                            @endif
-
-                                            @if (!empty($orderProduct->options) && is_array($orderProduct->options))
-                                                @foreach($orderProduct->options as $option)
-                                                    @if (!empty($option['key']) && !empty($option['value']))
-                                                        <p class="mb-0"><small>{{ $option['key'] }}: <strong> {{ $option['value'] }}</strong></small></p>
-                                                    @endif
-                                                @endforeach
-                                            @endif
-
-                                            @if (is_plugin_active('marketplace') && $product->original_product->store->id)
-                                                <p class="d-block mb-0 sold-by">
-                                                    <small>{{ __('Sold by') }}: <a href="{{ $product->original_product->store->url }}">{{ $product->original_product->store->name }}</a>
+                                                    <small>
+                                                        @php $attributes = get_product_attributes($product->id) @endphp
+                                                        @if (!empty($attributes))
+                                                            @foreach ($attributes as $attribute)
+                                                                {{ $attribute->attribute_set_title }}: {{ $attribute->title }}@if (!$loop->last), @endif
+                                                            @endforeach
+                                                        @endif
                                                     </small>
                                                 </p>
                                             @endif
-                                        </td>
-                                        <td>{{ format_price($orderProduct->price, $orderProduct->currency) }}</td>
-                                        <td class="text-center">{{ $orderProduct->qty }}</td>
-                                        <td class="money text-right">
-                                            <strong>
-                                                {{ format_price($orderProduct->price * $orderProduct->qty, $orderProduct->currency) }}
-                                            </strong>
-                                        </td>
-                                    </tr>
-                                @endif
+                                        @else
+                                            {{ $orderProduct->product_name }}
+                                        @endif
+
+                                        @if (!empty($orderProduct->options) && is_array($orderProduct->options))
+                                            @foreach($orderProduct->options as $option)
+                                                @if (!empty($option['key']) && !empty($option['value']))
+                                                    <p class="mb-0"><small>{{ $option['key'] }}: <strong> {{ $option['value'] }}</strong></small></p>
+                                                @endif
+                                            @endforeach
+                                        @endif
+
+                                        @if (is_plugin_active('marketplace') && $product->original_product->store->id)
+                                            <p class="d-block mb-0 sold-by">
+                                                <small>{{ __('Sold by') }}: <a href="{{ $product->original_product->store->url }}">{{ $product->original_product->store->name }}</a>
+                                                </small>
+                                            </p>
+                                        @endif
+                                    </td>
+                                    <td>{{ format_price($orderProduct->price, $orderProduct->currency) }}</td>
+                                    <td class="text-center">{{ $orderProduct->qty }}</td>
+                                    <td class="money text-right">
+                                        <strong>
+                                            {{ format_price($orderProduct->price * $orderProduct->qty, $orderProduct->currency) }}
+                                        </strong>
+                                    </td>
+                                </tr>
                             @endforeach
                             </tbody>
                         </table>

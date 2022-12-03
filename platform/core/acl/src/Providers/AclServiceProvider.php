@@ -20,6 +20,7 @@ use Exception;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Routing\Events\RouteMatched;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,24 +30,16 @@ class AclServiceProvider extends ServiceProvider
 
     public function register()
     {
-        /**
-         * @var Router $router
-         */
-        $router = $this->app['router'];
-
-        $router->aliasMiddleware('auth', Authenticate::class);
-        $router->aliasMiddleware('guest', RedirectIfAuthenticated::class);
-
         $this->app->bind(UserInterface::class, function () {
-            return new UserRepository(new User);
+            return new UserRepository(new User());
         });
 
         $this->app->bind(ActivationInterface::class, function () {
-            return new ActivationRepository(new Activation);
+            return new ActivationRepository(new Activation());
         });
 
         $this->app->bind(RoleInterface::class, function () {
-            return new RoleCacheDecorator(new RoleRepository(new Role));
+            return new RoleCacheDecorator(new RoleRepository(new Role()));
         });
     }
 
@@ -89,11 +82,19 @@ class AclServiceProvider extends ServiceProvider
                     'url'         => route('users.index'),
                     'permissions' => ['users.index'],
                 ]);
+
+            /**
+             * @var Router $router
+             */
+            $router = $this->app['router'];
+
+            $router->aliasMiddleware('auth', Authenticate::class);
+            $router->aliasMiddleware('guest', RedirectIfAuthenticated::class);
         });
 
-        $this->app->booted(function () {
-            config()->set(['auth.providers.users.model' => User::class]);
+        config()->set(['auth.providers.users.model' => User::class]);
 
+        $this->app->booted(function () {
             EmailHandler::addTemplateSettings('acl', config('core.acl.email', []), 'core');
 
             $this->app->register(HookServiceProvider::class);
@@ -110,7 +111,7 @@ class AclServiceProvider extends ServiceProvider
     {
         $config = $this->app->make('config')->get('core.acl.general');
 
-        $this->sweep($this->app->make(ActivationInterface::class), $config['activations']['lottery']);
+        $this->sweep($this->app->make(ActivationInterface::class), Arr::get($config, 'activations.lottery', [2, 100]));
     }
 
     /**
@@ -137,7 +138,7 @@ class AclServiceProvider extends ServiceProvider
      * @param array $lottery
      * @return bool
      */
-    protected function configHitsLottery(array $lottery)
+    protected function configHitsLottery(array $lottery): bool
     {
         return mt_rand(1, $lottery[1]) <= $lottery[0];
     }

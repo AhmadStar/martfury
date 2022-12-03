@@ -8,7 +8,6 @@ use Theme;
 
 class ThemeIconField extends FormField
 {
-
     /**
      * {@inheritDoc}
      */

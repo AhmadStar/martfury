@@ -14,7 +14,6 @@ use Yajra\DataTables\DataTables;
 
 class StateTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

@@ -6,6 +6,7 @@ use Assets;
 use Botble\Contact\Enums\ContactStatusEnum;
 use Botble\Contact\Repositories\Interfaces\ContactInterface;
 use Html;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 use Theme;
@@ -14,7 +15,7 @@ use Throwable;
 class HookServiceProvider extends ServiceProvider
 {
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function boot()
     {
@@ -23,7 +24,13 @@ class HookServiceProvider extends ServiceProvider
         add_filter(BASE_FILTER_MENU_ITEMS_COUNT, [$this, 'getMenuItemCount'], 120);
 
         if (function_exists('add_shortcode')) {
-            add_shortcode('contact-form', trans('plugins/contact::contact.shortcode_name'), trans('plugins/contact::contact.shortcode_description'), [$this, 'form']);
+            add_shortcode(
+                'contact-form',
+                trans('plugins/contact::contact.shortcode_name'),
+                trans('plugins/contact::contact.shortcode_description'),
+                [$this, 'form']
+            );
+
             shortcode()
                 ->setAdminConfig('contact-form', view('plugins/contact::partials.short-code-admin-config')->render());
         }
@@ -32,12 +39,11 @@ class HookServiceProvider extends ServiceProvider
     }
 
     /**
-     * @param string $options
+     * @param string|null $options
      * @return string
-     *
-     * @throws \Throwable
+     * @throws BindingResolutionException
      */
-    public function registerTopHeaderNotification($options)
+    public function registerTopHeaderNotification(?string $options): ?string
     {
         if (Auth::user()->hasPermission('contacts.edit')) {
             $contacts = $this->app->make(ContactInterface::class)
@@ -64,12 +70,11 @@ class HookServiceProvider extends ServiceProvider
     }
 
     /**
-     * @param int $number
-     * @param string $menuId
+     * @param int|null|string $number
+     * @param string|null $menuId
      * @return string
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
-    public function getUnreadCount($number, $menuId)
+    public function getUnreadCount($number, string $menuId)
     {
         if ($menuId == 'cms-plugins-contact') {
             $attributes = [
@@ -87,7 +92,7 @@ class HookServiceProvider extends ServiceProvider
      * @param array $data
      * @return array
      */
-    public function getMenuItemCount(array $data = []) : array
+    public function getMenuItemCount(array $data = []): array
     {
         if (Auth::user()->hasPermission('contacts.index')) {
             $data[] = [
@@ -100,10 +105,10 @@ class HookServiceProvider extends ServiceProvider
     }
 
     /**
+     * @param $shortcode
      * @return string
-     * @throws \Throwable
      */
-    public function form($shortcode)
+    public function form($shortcode): string
     {
         $view = apply_filters(CONTACT_FORM_TEMPLATE_VIEW, 'plugins/contact::forms.contact');
 
@@ -116,8 +121,13 @@ class HookServiceProvider extends ServiceProvider
                 Theme::asset()
                     ->container('footer')
                     ->usePath(false)
-                    ->add('contact-public-js', asset('vendor/core/plugins/contact/js/contact-public.js'),
-                        ['jquery'], [], '1.0.0');
+                    ->add(
+                        'contact-public-js',
+                        asset('vendor/core/plugins/contact/js/contact-public.js'),
+                        ['jquery'],
+                        [],
+                        '1.0.0'
+                    );
             });
         }
 
@@ -125,7 +135,7 @@ class HookServiceProvider extends ServiceProvider
             $view = $shortcode->view;
         }
 
-        return view($view)->render();
+        return view($view, compact('shortcode'))->render();
     }
 
     /**

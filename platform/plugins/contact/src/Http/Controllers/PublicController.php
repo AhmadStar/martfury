@@ -49,12 +49,12 @@ class PublicController extends Controller
             }
         }
 
-        $blacklistWords = trim(setting('blacklist_keywords'));
+        $blacklistWords = trim(setting('blacklist_keywords', ''));
 
         if ($blacklistWords) {
             $content = strtolower($request->input('content'));
 
-            $badWords = collect(json_decode( $blacklistWords, true))
+            $badWords = collect(json_decode($blacklistWords, true))
                 ->filter(function ($item) use ($content) {
                     $matches = [];
                     $pattern = '/\b' . $item['value'] . '\b/iu';

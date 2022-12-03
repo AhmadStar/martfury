@@ -7,7 +7,6 @@ use Botble\Support\Http\Requests\Request;
 
 class LocaleRequest extends Request
 {
-
     /**
      * Get the validation rules that apply to the request.
      *

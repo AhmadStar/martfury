@@ -2,6 +2,7 @@
 
 namespace Botble\Ecommerce\Http\Controllers\Fronts;
 
+use BaseHelper;
 use Botble\Base\Enums\BaseStatusEnum;
 use Botble\Base\Http\Responses\BaseHttpResponse;
 use Botble\Base\Supports\Helper;
@@ -22,7 +23,6 @@ use Botble\Ecommerce\Services\Products\GetProductService;
 use Botble\SeoHelper\SeoOpenGraph;
 use Botble\Slug\Repositories\Interfaces\SlugInterface;
 use EcommerceHelper;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -34,6 +34,7 @@ use RvMedia;
 use SeoHelper;
 use SlugHelper;
 use Theme;
+use Throwable;
 
 class PublicProductController
 {
@@ -77,12 +78,12 @@ class PublicProductController
      * @param SlugInterface $slugRepository
      */
     public function __construct(
-        ProductInterface $productRepository,
-        ProductCategoryInterface $productCategoryRepository,
+        ProductInterface             $productRepository,
+        ProductCategoryInterface     $productCategoryRepository,
         ProductAttributeSetInterface $productAttributeSet,
-        BrandInterface $brandRepository,
-        ProductVariationInterface $productVariationRepository,
-        SlugInterface $slugRepository
+        BrandInterface               $brandRepository,
+        ProductVariationInterface    $productVariationRepository,
+        SlugInterface                $slugRepository
     ) {
         $this->productRepository = $productRepository;
         $this->productCategoryRepository = $productCategoryRepository;
@@ -97,9 +98,14 @@ class PublicProductController
      * @param GetProductService $productService
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse|Response
+     * @throws Throwable
      */
     public function getProducts(Request $request, GetProductService $productService, BaseHttpResponse $response)
     {
+        if (!EcommerceHelper::productFilterParamsValidated($request)) {
+            return $response->setNextUrl(route('public.products'));
+        }
+
         $query = $request->input('q');
 
         $with = [
@@ -125,8 +131,11 @@ class PublicProductController
                 ->add(__('Home'), route('public.index'))
                 ->add(__('Search'), route('public.products'));
 
-            return Theme::scope('ecommerce.search', compact('products', 'query'),
-                'plugins/ecommerce::themes.search')->render();
+            return Theme::scope(
+                'ecommerce.search',
+                compact('products', 'query'),
+                'plugins/ecommerce::themes.search'
+            )->render();
         }
 
         $products = $productService->getProduct($request, null, null, $with, $withCount);
@@ -143,14 +152,17 @@ class PublicProductController
 
         do_action(PRODUCT_MODULE_SCREEN_NAME);
 
-        return Theme::scope('ecommerce.products', compact('products'),
-            'plugins/ecommerce::themes.products')->render();
+        return Theme::scope(
+            'ecommerce.products',
+            compact('products'),
+            'plugins/ecommerce::themes.products'
+        )->render();
     }
 
     /**
      * @param string $slug
      * @param Request $request
-     * @return Response|RedirectResponse|Response
+     * @return Response|RedirectResponse
      */
     public function getProduct($slug, Request $request)
     {
@@ -182,6 +194,9 @@ class PublicProductController
                 'tags.slugable',
                 'categories',
                 'categories.slugable',
+                'options' => function($query) {
+                    return $query->with('values');
+                }
             ],
             'withCount' => EcommerceHelper::withReviewsCount(),
         ]);
@@ -196,7 +211,7 @@ class PublicProductController
 
         SeoHelper::setTitle($product->name)->setDescription($product->description);
 
-        $meta = new SeoOpenGraph;
+        $meta = new SeoOpenGraph();
         if ($product->image) {
             $meta->setImage(RvMedia::getImageUrl($product->image));
         }
@@ -228,16 +243,20 @@ class PublicProductController
         Theme::breadcrumb()->add($product->name, $product->url);
 
         admin_bar()
-            ->registerLink(trans('plugins/ecommerce::products.edit_this_product'),
-                route('products.edit', $product->id));
+            ->registerLink(
+                trans('plugins/ecommerce::products.edit_this_product'),
+                route('products.edit', $product->id)
+            );
 
         do_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, PRODUCT_MODULE_SCREEN_NAME, $product);
 
         [$productImages, $productVariation, $selectedAttrs] = EcommerceHelper::getProductVariationInfo($product);
 
-        return Theme::scope('ecommerce.product',
+        return Theme::scope(
+            'ecommerce.product',
             compact('product', 'selectedAttrs', 'productImages', 'productVariation'),
-            'plugins/ecommerce::themes.product')
+            'plugins/ecommerce::themes.product'
+        )
             ->render();
     }
 
@@ -247,6 +266,7 @@ class PublicProductController
      * @param ProductTagInterface $tagRepository
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse|RedirectResponse|Response
+     * @throws Throwable
      */
     public function getProductTag(
         $slug,
@@ -283,6 +303,10 @@ class PublicProductController
             return redirect()->to($tag->url);
         }
 
+        if (!EcommerceHelper::productFilterParamsValidated($request)) {
+            return $response->setNextUrl($tag->url);
+        }
+
         $withCount = EcommerceHelper::withReviewsCount();
 
         $products = $this->productRepository->getProductByTags([
@@ -310,7 +334,7 @@ class PublicProductController
 
         SeoHelper::setTitle($tag->name)->setDescription($tag->description);
 
-        $meta = new SeoOpenGraph;
+        $meta = new SeoOpenGraph();
         $meta->setDescription($tag->description);
         $meta->setUrl($tag->url);
         $meta->setTitle($tag->name);
@@ -324,8 +348,11 @@ class PublicProductController
 
         do_action(BASE_ACTION_PUBLIC_RENDER_SINGLE, PRODUCT_TAG_MODULE_SCREEN_NAME, $tag);
 
-        return Theme::scope('ecommerce.product-tag', compact('tag', 'products'),
-            'plugins/ecommerce::themes.product-tag')->render();
+        return Theme::scope(
+            'ecommerce.product-tag',
+            compact('tag', 'products'),
+            'plugins/ecommerce::themes.product-tag'
+        )->render();
     }
 
     /**
@@ -335,7 +362,7 @@ class PublicProductController
      * @param GetProductService $getProductService
      * @param BaseHttpResponse $response
      * @return BaseHttpResponse|RedirectResponse|Response
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function getProductCategory(
         $slug,
@@ -373,6 +400,10 @@ class PublicProductController
             return redirect()->to($category->url);
         }
 
+        if (!EcommerceHelper::productFilterParamsValidated($request)) {
+            return $response->setNextUrl($category->url);
+        }
+
         $with = [
             'slugable',
             'variations',
@@ -391,7 +422,7 @@ class PublicProductController
 
         SeoHelper::setTitle($category->name)->setDescription($category->description);
 
-        $meta = new SeoOpenGraph;
+        $meta = new SeoOpenGraph();
         if ($category->image) {
             $meta->setImage(RvMedia::getImageUrl($category->image));
         }
@@ -419,8 +450,11 @@ class PublicProductController
             return $this->ajaxFilterProductsResponse($products, $request, $response);
         }
 
-        return Theme::scope('ecommerce.product-category', compact('category', 'products'),
-            'plugins/ecommerce::themes.product-category')->render();
+        return Theme::scope(
+            'ecommerce.product-category',
+            compact('category', 'products'),
+            'plugins/ecommerce::themes.product-category'
+        )->render();
     }
 
     /**
@@ -585,7 +619,8 @@ class PublicProductController
                 $key,
                 $variationNextIds,
                 $variationInfo,
-                $unavailableAttributeIds);
+                $unavailableAttributeIds
+            );
         }
 
         if (!$product) {
@@ -603,7 +638,8 @@ class PublicProductController
      * @param Request $request
      * @param GetProductService $getProductService
      * @param BaseHttpResponse $response
-     * @return BaseHttpResponse|RedirectResponse|\Illuminate\Http\Response|Response
+     * @return BaseHttpResponse|RedirectResponse|Response
+     * @throws Throwable
      */
     public function getBrand($slug, Request $request, GetProductService $getProductService, BaseHttpResponse $response)
     {
@@ -625,6 +661,10 @@ class PublicProductController
 
         if ($brand->slugable->key !== $slug->key) {
             return redirect()->to($brand->url);
+        }
+
+        if (!EcommerceHelper::productFilterParamsValidated($request)) {
+            return $response->setNextUrl($brand->url);
         }
 
         $products = $getProductService->getProduct(
@@ -649,7 +689,7 @@ class PublicProductController
 
         Theme::breadcrumb()->add(__('Home'), route('public.index'))->add($brand->name, $brand->url);
 
-        $meta = new SeoOpenGraph;
+        $meta = new SeoOpenGraph();
         if ($brand->logo) {
             $meta->setImage(RvMedia::getImageUrl($brand->logo));
         }
@@ -669,13 +709,16 @@ class PublicProductController
      * @param mixed $products
      * @param Request $request
      * @param BaseHttpResponse $response
-     * @return mixed
+     * @return BaseHttpResponse
+     * @throws Throwable
      */
     protected function ajaxFilterProductsResponse($products, Request $request, BaseHttpResponse $response)
     {
         $total = $products->total();
-        $message = $total > 1 ? __(':total Products found', compact('total')) : __(':total Product found',
-            compact('total'));
+        $message = $total > 1 ? __(':total Products found', compact('total')) : __(
+            ':total Product found',
+            compact('total')
+        );
 
         $view = Theme::getThemeNamespace('views.ecommerce.includes.product-items');
 
@@ -733,7 +776,7 @@ class PublicProductController
             abort(404);
         }
 
-        $code = str_replace('#', '', $request->input('order_id'));
+        $code = BaseHelper::removeSpecialCharacters(str_replace('#', '', $request->input('order_id')));
 
         SeoHelper::setTitle(__('Order tracking :code', ['code' => $code ? ' #' . $code : '']));
 

@@ -7,7 +7,6 @@ use Botble\Translation\Manager;
 
 class ResetCommand extends Command
 {
-
     /**
      * The console command name.
      *

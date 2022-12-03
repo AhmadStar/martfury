@@ -65,6 +65,6 @@ class SlugService
                     'prefix' => $prefix,
                 ])
                 ->where('id', '!=', (int)$slugId)
-                ->count() > 0;
+                ->exists();
     }
 }

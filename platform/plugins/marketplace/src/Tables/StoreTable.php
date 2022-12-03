@@ -14,7 +14,6 @@ use Yajra\DataTables\DataTables;
 
 class StoreTable extends TableAbstract
 {
-
     /**
      * @var bool
      */
@@ -60,14 +59,17 @@ class StoreTable extends TableAbstract
             ->eloquent($this->query())
             ->editColumn('name', function ($item) {
                 if (!Auth::user()->hasPermission('marketplace.store.edit')) {
-                    return clean($item->name);
+                    return BaseHelper::clean($item->name);
                 }
 
-                return Html::link(route('marketplace.store.edit', $item->id), clean($item->name));
+                return Html::link(route('marketplace.store.edit', $item->id), BaseHelper::clean($item->name));
             })
             ->editColumn('logo', function ($item) {
-                return Html::image(RvMedia::getImageUrl($item->logo, 'thumb', false, RvMedia::getDefaultImage()),
-                    BaseHelper::clean($item->name), ['width' => 50]);
+                return Html::image(
+                    RvMedia::getImageUrl($item->logo, 'thumb', false, RvMedia::getDefaultImage()),
+                    BaseHelper::clean($item->name),
+                    ['width' => 50]
+                );
             })
             ->editColumn('checkbox', function ($item) {
                 return $this->getCheckbox($item->id);
@@ -82,17 +84,22 @@ class StoreTable extends TableAbstract
                 return $item->products_count;
             })
             ->editColumn('status', function ($item) {
-                return clean($item->status->toHtml());
+                return BaseHelper::clean($item->status->toHtml());
             })
             ->addColumn('operations', function ($item) {
                 $viewBtn = '';
                 if ($this->canEditWalletBalance && $item->customer->id) {
-                    $viewBtn = Html::link(route('marketplace.store.view', $item->id),
-                        '<i class="fa fa-eye"></i>', [
+                    $viewBtn = Html::link(
+                        route('marketplace.store.view', $item->id),
+                        '<i class="fa fa-eye"></i>',
+                        [
                             'class'                  => 'btn btn-info',
                             'data-bs-toggle'         => 'tooltip',
                             'data-bs-original-title' => trans('plugins/marketplace::store.view'),
-                        ], null, false);
+                        ],
+                        null,
+                        false
+                    );
                 }
 
                 return $this->getOperations('marketplace.store.edit', 'marketplace.store.destroy', $item, $viewBtn);
@@ -175,8 +182,11 @@ class StoreTable extends TableAbstract
      */
     public function bulkActions(): array
     {
-        return $this->addDeleteAction(route('marketplace.store.deletes'), 'marketplace.store.destroy',
-            parent::bulkActions());
+        return $this->addDeleteAction(
+            route('marketplace.store.deletes'),
+            'marketplace.store.destroy',
+            parent::bulkActions()
+        );
     }
 
     /**

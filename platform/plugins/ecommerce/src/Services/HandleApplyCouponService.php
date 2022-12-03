@@ -4,8 +4,11 @@ namespace Botble\Ecommerce\Services;
 
 use Botble\Ecommerce\Repositories\Interfaces\DiscountInterface;
 use Botble\Ecommerce\Repositories\Interfaces\ProductInterface;
+use Carbon\Carbon;
 use Cart;
+use Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use OrderHelper;
@@ -37,10 +40,10 @@ class HandleApplyCouponService
      * @param string $coupon
      * @param array $sessionData
      * @param array $cartData
-     * @param string $prefix
+     * @param string|null $prefix
      * @return array
      */
-    public function execute(string $coupon, $sessionData = [], $cartData = [], $prefix = '')
+    public function execute(string $coupon, array $sessionData = [], array $cartData = [], ?string $prefix = ''): array
     {
         $token = OrderHelper::getOrderSessionToken();
 
@@ -108,7 +111,16 @@ class HandleApplyCouponService
                         case 'amount-minimum-order':
                             if ($discount->min_order_price <= $rawTotal) {
                                 $couponDiscountAmount += $discount->value;
+                            } else {
+                                return [
+                                    'error'   => true,
+                                    'message' => trans('plugins/ecommerce::discount.minimum_order_amount_error', [
+                                        'minimum_amount' => format_price($discount->min_order_price),
+                                        'add_more'       => format_price($rawTotal - $discount->min_order_price),
+                                    ]),
+                                ];
                             }
+
                             break;
                         case 'all-orders':
                             $couponDiscountAmount += $discount->value;
@@ -118,7 +130,7 @@ class HandleApplyCouponService
                             foreach ($cartItems as $item) {
                                 if (in_array($item->id, $discount->products()->pluck('product_id')->all())) {
                                     $discountValue = $item->price - $discount->value;
-                                    $couponDiscountAmount += $discountValue > 0 ? $discountValue : 0;
+                                    $couponDiscountAmount += max($discountValue, 0);
                                 }
                             }
                             break;
@@ -160,7 +172,7 @@ class HandleApplyCouponService
                             in_array($item->id, $discount->products()->pluck('product_id')->all())
                         ) {
                             $discountValue = $item->price - $discount->value;
-                            $couponDiscountAmount += $discountValue > 0 ? $discountValue : 0;
+                            $couponDiscountAmount += max($discountValue, 0);
                         } elseif ($product = $this->productRepository->findById($item->id)) {
                             $productCollections = $product
                                 ->productCollections()
@@ -174,7 +186,7 @@ class HandleApplyCouponService
 
                             if (!empty(array_intersect($productCollections, $discountProductCollections))) {
                                 $discountValue = $item->price - $discount->value;
-                                $couponDiscountAmount += $discountValue > 0 ? $discountValue : 0;
+                                $couponDiscountAmount += max($discountValue, 0);
                             }
                         }
                     }
@@ -216,17 +228,17 @@ class HandleApplyCouponService
     /**
      * @param string $couponCode
      * @param array $sessionData
-     * @return mixed
+     * @return Eloquent|Builder|Model|object|null
      */
-    public function getCouponData($couponCode, $sessionData)
+    public function getCouponData(string $couponCode, array $sessionData)
     {
         $couponCode = trim($couponCode);
 
-        $discount = $this->discountRepository
+        return $this->discountRepository
             ->getModel()
             ->where('code', $couponCode)
             ->where('type', 'coupon')
-            ->where('start_date', '<=', now())
+            ->where('start_date', '<=', Carbon::now())
             ->where(function ($query) use ($sessionData) {
                 /**
                  * @var Builder $query
@@ -244,7 +256,7 @@ class HandleApplyCouponService
                                  */
                                 return $subSub
                                     ->whereNull('end_date')
-                                    ->orWhere('end_date', '>=', now());
+                                    ->orWhere('end_date', '>=', Carbon::now());
                             });
                     })
                     ->orWhere(function ($sub) use ($sessionData) {
@@ -281,15 +293,13 @@ class HandleApplyCouponService
                     ->orWhereRaw('quantity > total_used');
             })
             ->first();
-
-        return $discount;
     }
 
     /**
      * @param Request $request
      * @return array
      */
-    public function applyCouponWhenCreatingOrderFromAdmin(Request $request)
+    public function applyCouponWhenCreatingOrderFromAdmin(Request $request): array
     {
         $couponCode = trim($request->input('coupon_code'));
 
@@ -369,7 +379,6 @@ class HandleApplyCouponService
                     break;
                 case 'same-price':
                     foreach ($request->input('product_ids', []) as $productId) {
-
                         $product = $this->productRepository->findById($productId);
 
                         if (!$product) {
@@ -381,7 +390,7 @@ class HandleApplyCouponService
                         ) {
                             $discountValue = $product->original_price - $discount->value;
 
-                            $couponDiscountAmount += $discountValue > 0 ? $discountValue : 0;
+                            $couponDiscountAmount += max($discountValue, 0);
                         } else {
                             $productCollections = $product
                                 ->productCollections()
@@ -396,10 +405,12 @@ class HandleApplyCouponService
                             if (!empty(array_intersect($productCollections, $discountProductCollections))) {
                                 $discountValue = $product->original_price - $discount->value;
 
-                                $couponDiscountAmount += $discountValue > 0 ? $discountValue : 0;
+                                $couponDiscountAmount += max($discountValue, 0);
                             }
                         }
                     }
+
+                    break;
             }
         }
 

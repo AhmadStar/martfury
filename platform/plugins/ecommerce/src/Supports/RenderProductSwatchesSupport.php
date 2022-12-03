@@ -66,10 +66,17 @@ class RenderProductSwatchesSupport
         ], ['product', 'productAttributes']);
 
         $productVariationsInfo = app(ProductVariationItemInterface::class)
-                    ->getVariationsInfo($productVariations->pluck('id')->toArray());
+            ->getVariationsInfo($productVariations->pluck('id')->toArray());
 
         $selected = $params['selected'];
 
-        return view($params['view'], compact('attributeSets', 'attributes', 'product', 'selected', 'productVariationsInfo', 'productVariations'))->render();
+        return view($params['view'], compact(
+            'attributeSets',
+            'attributes',
+            'product',
+            'selected',
+            'productVariationsInfo',
+            'productVariations'
+        ))->render();
     }
 }

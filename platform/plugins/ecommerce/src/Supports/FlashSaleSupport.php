@@ -2,7 +2,6 @@
 
 namespace Botble\Ecommerce\Supports;
 
-use Botble\Ecommerce\Models\Discount;
 use Botble\Ecommerce\Models\Product;
 use Botble\Ecommerce\Repositories\Interfaces\FlashSaleInterface;
 use Illuminate\Support\Collection;

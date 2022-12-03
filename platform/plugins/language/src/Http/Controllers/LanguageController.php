@@ -3,6 +3,7 @@
 namespace Botble\Language\Http\Controllers;
 
 use Assets;
+use BaseHelper;
 use Botble\Base\Events\CreatedContentEvent;
 use Botble\Base\Events\DeletedContentEvent;
 use Botble\Base\Events\UpdatedContentEvent;
@@ -16,15 +17,17 @@ use Botble\Language\Repositories\Interfaces\LanguageInterface;
 use Botble\Language\Repositories\Interfaces\LanguageMetaInterface;
 use Botble\Setting\Models\Setting;
 use Botble\Setting\Supports\SettingStore;
+use Botble\Translation\Manager;
 use Botble\Widget\Models\Widget;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\View\View;
 use Language as LanguageFacade;
 use Theme;
 use Throwable;
@@ -53,7 +56,7 @@ class LanguageController extends BaseController
     }
 
     /**
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function index()
     {
@@ -92,28 +95,38 @@ class LanguageController extends BaseController
                 $request->merge(['lang_is_default' => 1]);
             }
 
-            if (!File::isWritable(resource_path('lang')) || !File::isWritable(resource_path('lang/vendor'))) {
+            if (!File::isWritable(lang_path()) || !File::isWritable(lang_path('vendor'))) {
                 return $response
-                    ->setError(true)
-                    ->setMessage(trans('plugins/translation::translation.folder_is_not_writeable'));
+                    ->setError()
+                    ->setMessage(trans('plugins/translation::translation.folder_is_not_writeable', ['lang_path' => lang_path()]));
             }
 
             $locale = $request->input('lang_locale');
 
-            if (!File::isDirectory(resource_path('lang/' . $locale))) {
-                $defaultLocale = resource_path('lang/en');
-                if (File::exists($defaultLocale)) {
-                    File::copyDirectory($defaultLocale, resource_path('lang/' . $locale));
+            if (!File::isDirectory(lang_path($locale))) {
+                $importedLocale = false;
+
+                if (is_plugin_active('translation')) {
+                    $result = app(Manager::class)->downloadRemoteLocale($locale);
+
+                    $importedLocale = !$result['error'];
                 }
 
-                $this->createLocaleInPath(resource_path('lang/vendor/core'), $locale);
-                $this->createLocaleInPath(resource_path('lang/vendor/packages'), $locale);
-                $this->createLocaleInPath(resource_path('lang/vendor/plugins'), $locale);
+                if (!$importedLocale) {
+                    $defaultLocale = lang_path('en');
+                    if (File::exists($defaultLocale)) {
+                        File::copyDirectory($defaultLocale, lang_path($locale));
+                    }
 
-                $themeLocale = Arr::first(scan_folder(theme_path(Theme::getThemeName() . '/lang')));
+                    $this->createLocaleInPath(lang_path('vendor/core'), $locale);
+                    $this->createLocaleInPath(lang_path('vendor/packages'), $locale);
+                    $this->createLocaleInPath(lang_path('vendor/plugins'), $locale);
 
-                if ($themeLocale) {
-                    File::copy(theme_path(Theme::getThemeName() . '/lang/' . $themeLocale), resource_path('lang/' . $locale . '.json'));
+                    $themeLocale = Arr::first(BaseHelper::scanFolder(theme_path(Theme::getThemeName() . '/lang')));
+
+                    if ($themeLocale) {
+                        File::copy(theme_path(Theme::getThemeName() . '/lang/' . $themeLocale), lang_path($locale . '.json'));
+                    }
                 }
             }
 
@@ -128,7 +141,6 @@ class LanguageController extends BaseController
 
                 if ($this->languageRepository->count() == 1) {
                     foreach ($models as $model) {
-
                         if (!class_exists($model)) {
                             continue;
                         }
@@ -137,7 +149,7 @@ class LanguageController extends BaseController
                             ->pluck('reference_id')
                             ->all();
 
-                        $table = (new $model)->getTable();
+                        $table = (new $model())->getTable();
 
                         $referenceIds = DB::table($table)
                             ->whereNotIn('id', $ids)
@@ -243,8 +255,10 @@ class LanguageController extends BaseController
 
         $languages = $this->languageRepository->all();
         foreach ($languages as $language) {
-            if (!array_key_exists($language->lang_code,
-                    $data) && $language->lang_code != $request->input('lang_meta_current_language')) {
+            if (!array_key_exists(
+                $language->lang_code,
+                $data
+            ) && $language->lang_code != $request->input('lang_meta_current_language')) {
                 $data[$language->lang_code]['lang_flag'] = $language->lang_flag;
                 $data[$language->lang_code]['lang_name'] = $language->lang_name;
                 $data[$language->lang_code]['reference_id'] = null;
@@ -393,8 +407,10 @@ class LanguageController extends BaseController
             ->set('language_switcher_display', $request->input('language_switcher_display'))
             ->set('language_hide_languages', json_encode($request->input('language_hide_languages', [])))
             ->set('language_auto_detect_user_language', $request->input('language_auto_detect_user_language'))
-            ->set('language_show_default_item_if_current_version_not_existed',
-                $request->input('language_show_default_item_if_current_version_not_existed'))
+            ->set(
+                'language_show_default_item_if_current_version_not_existed',
+                $request->input('language_show_default_item_if_current_version_not_existed')
+            )
             ->save();
 
         return $response->setMessage(trans('core/base::notices.update_success_message'));
@@ -421,9 +437,9 @@ class LanguageController extends BaseController
     /**
      * @param string $path
      * @param string $locale
-     * @return int|void
+     * @return int
      */
-    protected function createLocaleInPath(string $path, $locale)
+    protected function createLocaleInPath(string $path, string $locale): int
     {
         $folders = File::directories($path);
 
@@ -441,10 +457,9 @@ class LanguageController extends BaseController
     /**
      * @return bool
      */
-    public function clearRoutesCache()
+    public function clearRoutesCache(): bool
     {
         foreach (LanguageFacade::getSupportedLanguagesKeys() as $locale) {
-
             $path = app()->getCachedRoutesPath();
 
             if (!$locale) {

@@ -8,7 +8,7 @@ use Botble\Base\Models\BaseModel;
 use Botble\Page\Models\Page;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\View\View;
+use Illuminate\Contracts\View\View;
 use MetaBox;
 use SeoHelper;
 
@@ -21,8 +21,9 @@ class HookServiceProvider extends ServiceProvider
     }
 
     /**
-     * @param string $screen
+     * @param $priority
      * @param BaseModel $data
+     * @return bool
      */
     public function addMetaBox($priority, $data)
     {
@@ -33,8 +34,15 @@ class HookServiceProvider extends ServiceProvider
 
             Assets::addScriptsDirectly('vendor/core/packages/seo-helper/js/seo-helper.js')
                 ->addStylesDirectly('vendor/core/packages/seo-helper/css/seo-helper.css');
-            MetaBox::addMetaBox('seo_wrap', trans('packages/seo-helper::seo-helper.meta_box_header'), [$this, 'seoMetaBox'],
-                get_class($data), 'advanced', 'low');
+
+            MetaBox::addMetaBox(
+                'seo_wrap',
+                trans('packages/seo-helper::seo-helper.meta_box_header'),
+                [$this, 'seoMetaBox'],
+                get_class($data),
+                'advanced',
+                'low'
+            );
 
             return true;
         }

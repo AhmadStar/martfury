@@ -34,5 +34,3 @@ class CustomerAddressResource extends JsonResource
         ];
     }
 }
-
-

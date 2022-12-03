@@ -136,8 +136,7 @@ class MySqlDump
         $pass = '',
         $dumpSettings = [],
         $pdoSettings = []
-    )
-    {
+    ) {
         $dumpSettingsDefault = [
             'include-tables'             => [],
             'exclude-tables'             => [],

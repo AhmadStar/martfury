@@ -5,10 +5,13 @@ namespace Botble\ACL\Http\Controllers\Auth;
 use Assets;
 use Botble\Base\Http\Controllers\BaseController;
 use Botble\Base\Http\Responses\BaseHttpResponse;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Botble\ACL\Traits\SendsPasswordResetEmails;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
 
 class ForgotPasswordController extends BaseController
 {
@@ -42,7 +45,7 @@ class ForgotPasswordController extends BaseController
     }
 
     /**
-     * @return Factory|View
+     * @return Factory|Application|View
      */
     public function showLinkRequestForm()
     {
@@ -74,7 +77,7 @@ class ForgotPasswordController extends BaseController
      *
      * @param Request $request
      * @param string $response
-     * @return BaseHttpResponse
+     * @return JsonResponse|RedirectResponse
      */
     protected function sendResetLinkResponse(Request $request, $response)
     {

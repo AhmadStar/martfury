@@ -13,7 +13,6 @@ use Yajra\DataTables\DataTables;
 
 class ProductLabelTable extends TableAbstract
 {
-
     /**
      * @var bool
      */

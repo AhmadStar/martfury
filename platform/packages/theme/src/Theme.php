@@ -2,13 +2,14 @@
 
 namespace Botble\Theme;
 
+use BaseHelper;
 use Botble\Theme\Contracts\Theme as ThemeContract;
 use Botble\Theme\Exceptions\UnknownLayoutFileException;
 use Botble\Theme\Exceptions\UnknownPartialFileException;
 use Botble\Theme\Exceptions\UnknownThemeException;
 use Closure;
 use Exception;
-use File;
+use Illuminate\Support\Facades\File;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Events\Dispatcher;
@@ -157,9 +158,7 @@ class Theme implements ThemeContract
 
         self::uses($this->getThemeName())->layout(setting('layout', 'default'));
 
-        SeoHelper::meta()
-            ->setGoogle(setting('google_analytics'))
-            ->addWebmaster('google', setting('google_site_verification'));
+        SeoHelper::meta()->setGoogle(setting('google_analytics'));
     }
 
     /**
@@ -218,6 +217,20 @@ class Theme implements ThemeContract
         // Before from a public theme config.
         $this->fire('appendBefore', $this);
 
+        $assetPath = $this->getThemeAssetsPath();
+
+        // Add asset path to asset container.
+        $this->asset->addPath($assetPath . '/' . $this->getConfig('containerDir.asset'));
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     * @throws FileNotFoundException
+     */
+    protected function getThemeAssetsPath(): string
+    {
         $publicThemeName = $this->getPublicThemeName();
 
         $currentTheme = $this->getThemeName();
@@ -228,10 +241,7 @@ class Theme implements ThemeContract
             $assetPath = substr($assetPath, 0, -strlen($currentTheme)) . $publicThemeName;
         }
 
-        // Add asset path to asset container.
-        $this->asset->addPath($assetPath . '/' . $this->getConfig('containerDir.asset'));
-
-        return $this;
+        return $assetPath;
     }
 
     /**
@@ -393,7 +403,7 @@ class Theme implements ThemeContract
             return $theme;
         }
 
-        return Arr::first(scan_folder(theme_path()));
+        return Arr::first(BaseHelper::scanFolder(theme_path()));
     }
 
     /**
@@ -553,7 +563,7 @@ class Theme implements ThemeContract
      * Check having binded data.
      *
      * @param string $variable
-     * @return boolean
+     * @return bool
      */
     public function binded(string $variable): bool
     {
@@ -906,7 +916,7 @@ class Theme implements ThemeContract
      * @return Theme
      * @throws FileNotFoundException
      */
-    public function load(string $view, array $args = [])
+    public function load(string $view, array $args = []): self
     {
         $view = ltrim($view, '/');
 
@@ -1008,7 +1018,7 @@ class Theme implements ThemeContract
         }
 
         $content->withHeaders([
-            'CMS-Version'       => '5.27.1',
+            'CMS-Version'       => '5.30.3',
             'Authorization-At'  => setting('membership_authorization_at'),
             'Activated-License' => !empty(setting('licensed_to')) ? 'Yes' : 'No',
         ]);
@@ -1077,7 +1087,7 @@ class Theme implements ThemeContract
      */
     public function getStyleIntegrationPath(): string
     {
-        return public_path(Theme::path() . '/css/style.integration.css');
+        return public_path($this->getThemeAssetsPath() . '/css/style.integration.css');
     }
 
     /**
@@ -1095,5 +1105,25 @@ class Theme implements ThemeContract
         $this->fire('beforeRenderLayout.' . $this->layout, $this);
 
         return $this;
+    }
+
+    /**
+     * @param string $theme
+     * @return string
+     * @throws FileNotFoundException
+     */
+    public function getThemeScreenshot(string $theme): string
+    {
+        $publicThemeName = Theme::getPublicThemeName();
+
+        $themeName = Theme::getThemeName() == $theme && $publicThemeName ? $publicThemeName : $theme;
+
+        $screenshot = public_path(config('packages.theme.general.themeDir') . '/' . $themeName . '/screenshot.png');
+
+        if (!File::exists($screenshot)) {
+            $screenshot = theme_path($theme . '/screenshot.png');
+        }
+
+        return 'data:image/png;base64,' . base64_encode(File::get($screenshot));
     }
 }

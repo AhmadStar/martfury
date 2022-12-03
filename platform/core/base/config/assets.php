@@ -330,7 +330,7 @@ return [
                 'location' => 'header',
                 'src'      => [
                     'local' => '/vendor/core/core/base/libraries/font-awesome/css/fontawesome.min.css',
-                    'cdn'   => '//use.fontawesome.com/releases/v5.0.13/css/all.css',
+                    'cdn'   => '//use.fontawesome.com/releases/v6.1.1/css/all.css',
                 ],
             ],
             'simple-line-icons'  => [

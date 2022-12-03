@@ -11,21 +11,23 @@
     @endif
 
     {!! Html::style('vendor/core/core/base/libraries/font-awesome/css/fontawesome.min.css') !!}
-    {!! Html::style('vendor/core/plugins/ecommerce/css/front-theme.css?v=1.0.13') !!}
+    {!! Html::style('vendor/core/plugins/ecommerce/css/front-theme.css?v=1.2.0') !!}
 
     @if (BaseHelper::siteLanguageDirection() == 'rtl')
-        {!! Html::style('vendor/core/plugins/ecommerce/css/front-theme-rtl.css?v=1.0.13') !!}
+        {!! Html::style('vendor/core/plugins/ecommerce/css/front-theme-rtl.css?v=1.2.0') !!}
     @endif
 
     {!! Html::style('vendor/core/core/base/libraries/toastr/toastr.min.css') !!}
 
-    {!! Html::script('vendor/core/plugins/ecommerce/js/checkout.js?v=1.0.13') !!}
+    {!! Html::script('vendor/core/plugins/ecommerce/js/checkout.js?v=1.2.0') !!}
 
     @if (EcommerceHelper::loadCountriesStatesCitiesFromPluginLocation())
-        <script src="{{ asset('vendor/core/plugins/location/js/location.js') }}?v=1.0.13"></script>
+        <script src="{{ asset('vendor/core/plugins/location/js/location.js') }}?v=1.2.0"></script>
     @endif
 
     {!! apply_filters('ecommerce_checkout_header', null) !!}
+
+    @stack('header')
 </head>
 <body class="checkout-page" @if (BaseHelper::siteLanguageDirection() == 'rtl') dir="rtl" @endif>
     {!! apply_filters('ecommerce_checkout_body', null) !!}
@@ -36,6 +38,8 @@
             </div>
         </div>
     </div>
+
+    @stack('footer')
 
     {!! Html::script('vendor/core/plugins/ecommerce/js/utilities.js') !!}
     {!! Html::script('vendor/core/core/base/libraries/toastr/toastr.min.js') !!}
@@ -49,7 +53,7 @@
 
     @if (session()->has('success_msg') || session()->has('error_msg') || isset($errors))
         <script type="text/javascript">
-            $(document).ready(function () {
+            window.onload = function () {
                 @if (session()->has('success_msg'))
                     MainCheckout.showNotice('success', '{{ session('success_msg') }}');
                 @endif
@@ -61,7 +65,7 @@
                         MainCheckout.showNotice('error', '{{ $error }}');
                     @endforeach
                 @endif
-            });
+            };
         </script>
     @endif
 

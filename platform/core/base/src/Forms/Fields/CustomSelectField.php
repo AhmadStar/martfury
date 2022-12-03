@@ -6,7 +6,6 @@ use Kris\LaravelFormBuilder\Fields\SelectType;
 
 class CustomSelectField extends SelectType
 {
-
     /**
      * {@inheritDoc}
      */

@@ -7,7 +7,6 @@ use Exception;
 
 class UpdatedContentListener
 {
-
     /**
      * Handle the event.
      *

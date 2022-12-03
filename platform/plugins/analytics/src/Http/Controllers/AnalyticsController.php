@@ -16,7 +16,6 @@ use Throwable;
 
 class AnalyticsController extends BaseController
 {
-
     /**
      * @param Request $request
      * @param BaseHttpResponse $response
@@ -25,11 +24,13 @@ class AnalyticsController extends BaseController
      */
     public function getGeneral(Request $request, BaseHttpResponse $response)
     {
-        $dashboardInstance = new DashboardWidgetInstance;
+        $dashboardInstance = new DashboardWidgetInstance();
         $predefinedRangeFound = $dashboardInstance->getFilterRange($request->input('predefined_range'));
         if ($request->input('changed_predefined_range')) {
-            $dashboardInstance->saveSettings('widget_analytics_general',
-                ['predefined_range' => $predefinedRangeFound['key']]);
+            $dashboardInstance->saveSettings(
+                'widget_analytics_general',
+                ['predefined_range' => $predefinedRangeFound['key']]
+            );
         }
 
         $startDate = $predefinedRangeFound['startDate'];
@@ -56,13 +57,20 @@ class AnalyticsController extends BaseController
             }
 
             $stats = collect($visitorData);
-            $country_stats = Analytics::performQuery($period, 'ga:sessions',
-                ['dimensions' => 'ga:countryIsoCode'])->rows;
-            $total = Analytics::performQuery($period,
-                'ga:sessions, ga:users, ga:pageviews, ga:percentNewSessions, ga:bounceRate, ga:pageviewsPerVisit, ga:avgSessionDuration, ga:newUsers')->totalsForAllResults;
+            $country_stats = Analytics::performQuery(
+                $period,
+                'ga:sessions',
+                ['dimensions' => 'ga:countryIsoCode']
+            )->rows;
+            $total = Analytics::performQuery(
+                $period,
+                'ga:sessions, ga:users, ga:pageviews, ga:percentNewSessions, ga:bounceRate, ga:pageviewsPerVisit, ga:avgSessionDuration, ga:newUsers'
+            )->totalsForAllResults;
 
-            return $response->setData(view('plugins/analytics::widgets.general',
-                compact('stats', 'country_stats', 'total'))->render());
+            return $response->setData(view(
+                'plugins/analytics::widgets.general',
+                compact('stats', 'country_stats', 'total')
+            )->render());
         } catch (InvalidConfiguration $exception) {
             return $response
                 ->setError()
@@ -115,12 +123,14 @@ class AnalyticsController extends BaseController
      */
     public function getTopVisitPages(Request $request, BaseHttpResponse $response)
     {
-        $dashboardInstance = new DashboardWidgetInstance;
+        $dashboardInstance = new DashboardWidgetInstance();
         $predefinedRangeFound = $dashboardInstance->getFilterRange($request->input('predefined_range'));
 
         if ($request->input('changed_predefined_range')) {
-            $dashboardInstance->saveSettings('widget_analytics_page',
-                ['predefined_range' => $predefinedRangeFound['key']]);
+            $dashboardInstance->saveSettings(
+                'widget_analytics_page',
+                ['predefined_range' => $predefinedRangeFound['key']]
+            );
         }
 
         $startDate = $predefinedRangeFound['startDate'];
@@ -149,12 +159,14 @@ class AnalyticsController extends BaseController
      */
     public function getTopBrowser(Request $request, BaseHttpResponse $response)
     {
-        $dashboardInstance = new DashboardWidgetInstance;
+        $dashboardInstance = new DashboardWidgetInstance();
         $predefinedRangeFound = $dashboardInstance->getFilterRange($request->input('predefined_range'));
 
         if ($request->input('changed_predefined_range')) {
-            $dashboardInstance->saveSettings('widget_analytics_browser',
-                ['predefined_range' => $predefinedRangeFound['key']]);
+            $dashboardInstance->saveSettings(
+                'widget_analytics_browser',
+                ['predefined_range' => $predefinedRangeFound['key']]
+            );
         }
 
         $startDate = $predefinedRangeFound['startDate'];
@@ -183,12 +195,14 @@ class AnalyticsController extends BaseController
      */
     public function getTopReferrer(Request $request, BaseHttpResponse $response)
     {
-        $dashboardInstance = new DashboardWidgetInstance;
+        $dashboardInstance = new DashboardWidgetInstance();
         $predefinedRangeFound = $dashboardInstance->getFilterRange($request->input('predefined_range'));
 
         if ($request->input('changed_predefined_range')) {
-            $dashboardInstance->saveSettings('widget_analytics_referrer',
-                ['predefined_range' => $predefinedRangeFound['key']]);
+            $dashboardInstance->saveSettings(
+                'widget_analytics_referrer',
+                ['predefined_range' => $predefinedRangeFound['key']]
+            );
         }
 
         $startDate = $predefinedRangeFound['startDate'];

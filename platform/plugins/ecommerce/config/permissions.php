@@ -347,4 +347,60 @@ return [
         'flag'        => 'ecommerce.export.products.index',
         'parent_flag' => 'plugins.ecommerce',
     ],
+
+    [
+        'name'        => 'Order Returns',
+        'flag'        => 'order_returns.index',
+        'parent_flag' => 'plugins.ecommerce',
+    ],
+    [
+        'name'        => 'Edit',
+        'flag'        => 'order_returns.edit',
+        'parent_flag' => 'order_returns.index',
+    ],
+    [
+        'name'        => 'Delete',
+        'flag'        => 'order_returns.destroy',
+        'parent_flag' => 'order_returns.index',
+    ],
+
+    /**
+     * Global option
+     */
+
+    [
+        'name'        => 'Global Option',
+        'flag'        => 'global-option.index',
+        'parent_flag' => 'plugins.ecommerce',
+    ],
+    [
+        'name'        => 'Create Global Option',
+        'flag'        => 'global-option.create',
+        'parent_flag' => 'global-option.index',
+    ],
+    [
+        'name'        => 'Edit Global Option',
+        'flag'        => 'global-option.edit',
+        'parent_flag' => 'global-option.index',
+    ],
+    [
+        'name'        => 'Delete Global Option',
+        'flag'        => 'global-option.destroy',
+        'parent_flag' => 'global-option.index',
+    ],
+
+    [
+        'name' => 'Invoices',
+        'flag' => 'ecommerce.invoice.index',
+    ],
+    [
+        'name'        => 'Edit',
+        'flag'        => 'ecommerce.invoice.edit',
+        'parent_flag' => 'ecommerce.invoice.index',
+    ],
+    [
+        'name'        => 'Delete',
+        'flag'        => 'ecommerce.invoice.destroy',
+        'parent_flag' => 'ecommerce.invoice.index',
+    ],
 ];

@@ -51,7 +51,7 @@ class ResetPasswordNotification extends Notification
         $template = 'password-reminder';
         $content = EmailHandler::prepareData(EmailHandler::getTemplateContent($template));
 
-        return (new MailMessage)
+        return (new MailMessage())
             ->view(['html' => new HtmlString($content)])
             ->subject(EmailHandler::getTemplateSubject($template));
     }

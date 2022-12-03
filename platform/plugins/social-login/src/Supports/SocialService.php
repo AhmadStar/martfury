@@ -25,12 +25,13 @@ class SocialService
     /**
      * @return array
      */
-    public function supportedModules()
+    public function supportedModules(): array
     {
-        return config('plugins.social-login.general.supported', []);
+        return (array) config('plugins.social-login.general.supported', []);
     }
 
     /**
+     * @param string $model
      * @return bool
      */
     public function isSupportedModule(string $model): bool
@@ -39,22 +40,25 @@ class SocialService
     }
 
     /**
+     * @param string $key
      * @return bool
      */
-    public function isSupportedModuleByKey(string $key)
+    public function isSupportedModuleByKey(string $key): bool
     {
         return !!$this->getModule($key);
     }
 
     /**
+     * @param string $key
      * @return array|null
      */
-    public function getModule(string $key)
+    public function getModule(string $key): ?array
     {
         return Arr::get($this->supportedModules(), $key);
     }
 
     /**
+     * @param string $guard
      * @return bool
      */
     public function isSupportedGuard(string $guard): bool
@@ -65,15 +69,16 @@ class SocialService
     /**
      * @return array
      */
-    public function getEnvDisableData()
+    public function getEnvDisableData(): array
     {
         return ['demo'];
     }
 
     /**
+     * @param string $key
      * @return string
      */
-    public function getDataDisable($key)
+    public function getDataDisable(string $key): string
     {
         $setting = $this->setting($key);
 
@@ -85,11 +90,13 @@ class SocialService
     }
 
     /**
+     * @param string $key
+     * @param bool $default
      * @return string
      */
-    public function setting(string $key, $default = false)
+    public function setting(string $key, bool $default = false): string
     {
-        return setting('social_login_' . $key, $default);
+        return (string)setting('social_login_' . $key, $default);
     }
 
     /**
@@ -130,7 +137,7 @@ class SocialService
     /**
      * @return array
      */
-    public function getDataProviderDefault()
+    public function getDataProviderDefault(): array
     {
         return [
             'data'    => [
@@ -144,9 +151,10 @@ class SocialService
     }
 
     /**
+     * @param string $provider
      * @return string
      */
-    public function getProviderEnabled(string $provider)
+    public function getProviderEnabled(string $provider): string
     {
         return $this->setting($provider . '_enable');
     }
@@ -157,8 +165,8 @@ class SocialService
     public function getProviderKeysEnabled(): array
     {
         return collect($this->getProviderKeys())
-            ->filter(function ($k) {
-                return $this->getProviderEnabled($k);
+            ->filter(function ($key) {
+                return $this->getProviderEnabled($key);
             })
             ->toArray();
     }

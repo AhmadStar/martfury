@@ -119,7 +119,7 @@ class BreadcrumbsManager
      * @return array|null
      * @throws Exception
      */
-    protected function getCurrentRoute()
+    protected function getCurrentRoute(): ?array
     {
         // Manually set route
         if ($this->route) {
@@ -186,14 +186,14 @@ class BreadcrumbsManager
             try {
                 [$name, $params] = $this->getCurrentRoute();
             } catch (Exception $exception) {
-                return new Collection;
+                return new Collection();
             }
         }
 
         try {
             return $this->generator->generate($this->callbacks, $this->before, $this->after, $name, $params);
         } catch (Exception $exception) {
-            return new Collection;
+            return new Collection();
         }
     }
 
